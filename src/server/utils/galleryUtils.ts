@@ -40,6 +40,7 @@ function getRelativeTimeText(timestamp: number): string {
 /**
  * @typedef {object} GalleryImageData
  * @property {string} path - The ComfyUIMini url path for the image file.
+ * @property {bool} isVideo - If this is a video file
  * @property {number} time - Latest file modification time in ms since Unix epoch.
  * @property {string} timeText - Human-readable relative time since last image mofification, e.g. '2 hour(s) ago'.
  */
@@ -99,17 +100,22 @@ function getGalleryPageData(page = 0, subfolder = '', itemsPerPage = 20) {
     const filteredFiles = files
         .filter((file) => {
             const ext = path.extname(file).toLowerCase();
-            const isFileImage = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif', '.tiff', '.webp'].includes(
+            const isFileImage = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif', '.tiff', '.webp', '.mp4'].includes(
                 ext
             );
 
             return isFileImage;
         })
         .map((file) => {
+            const ext = path.extname(file).toLowerCase();
+            const isVideo = ['.mp4'].includes(
+                ext
+            );
             const mtime = fs.statSync(path.join(targetPath, file)).mtime.getTime();
 
             return {
                 path: `/comfyui/image?filename=${file}&subfolder=${subfolder}&type=output`,
+                isVideo: isVideo,
                 time: mtime,
                 timeText: getRelativeTimeText(mtime),
             };

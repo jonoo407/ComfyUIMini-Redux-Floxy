@@ -23,7 +23,11 @@
             <% for (const image of scanned.images) { %>
                 <div class="image-item">
                     <span><%= image.timeText %> </span>
-                    <img src="<%= image.path %>">
+                    <% if (image.isVideo) { %>
+                        <video src="<%= image.path %>" loop controls></video>
+                    <% } else { %>
+                        <img src="<%= image.path %>">
+                    <% } %>
                 </div>
             <% } %>
         </div>
