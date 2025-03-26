@@ -14,9 +14,11 @@
     <%- include('../partials/sidebar', { activePage: 'gallery' }) %>
     <div class="main-container">
         <div id="subfolders-list">
-            <a href="/gallery" class="subfolder-link">(Default)</a>
-            <% for (const subfolder of scanned.subfolders) { %>
-                <a href="/gallery/<%= subfolder %>" class="subfolder-link"><%= subfolder %></a>
+            <a href="/gallery/" class="subfolder-link">(Default)</a>
+            <% 
+              const galleryPath = currentSubfolder ? `gallery/${currentSubfolder}` : 'gallery';
+              for (const subfolder of scanned.subfolders) { %>
+                <a href="/<%= galleryPath %>/<%= subfolder %>" class="subfolder-link"><%= subfolder %></a>
             <% } %>
         </div>
         <div id="images-grid">

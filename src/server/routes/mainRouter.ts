@@ -105,9 +105,10 @@ router.get('/workflow/:type/:identifier', (req: RequestWithTheme, res) => {
     loadAndRenderWorkflow(workflowType, workflowIdentifier, req, res, 'pages/workflow');
 });
 
-router.get('/gallery/:subfolder?', (req: RequestWithTheme, res) => {
+router.get('/gallery/*', (req: RequestWithTheme, res) => {
+    const fullPath = req.params[0] || '';
+    const subfolder = fullPath.split('?')[0];
     const page = Number(req.query.page) || 0;
-    const subfolder = req.params.subfolder || '';
     const itemsPerPage = Number(req.cookies['galleryItemsPerPage']) || 20;
 
     const pageData = getGalleryPageData(page, subfolder, itemsPerPage);

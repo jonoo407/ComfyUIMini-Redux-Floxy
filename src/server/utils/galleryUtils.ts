@@ -47,6 +47,7 @@ function getRelativeTimeText(timestamp: number): string {
 
 /**
  * @typedef {object} GalleryPageData
+ * @property {string} currentSubfolder - Currently the subfolder we are in.
  * @property {Object} scanned - List of images and available subfolders.
  * @property {GalleryImageData[]} scanned.images - List of image data.
  * @property {string[]} scanned.subfolders - List of subfolders in the currently opened subfolder.
@@ -90,6 +91,7 @@ function getGalleryPageData(page = 0, subfolder = '', itemsPerPage = 20) {
     if (!fs.existsSync(targetPath)) {
         return {
             error: 'Invalid subfolder path.',
+            currentSubfolder: subfolder,
             scanned: { subfolders: [], images: [] },
             pageInfo: { prevPage: 0, currentPage: 0, nextPage: 0, totalPages: 0 },
         };
@@ -130,8 +132,8 @@ function getGalleryPageData(page = 0, subfolder = '', itemsPerPage = 20) {
     let subfolders: string[];
     try {
         subfolders = fs
-            .readdirSync(imageOutputPath)
-            .filter((item) => fs.statSync(path.join(imageOutputPath, item)).isDirectory());
+            .readdirSync(targetPath)
+            .filter((item) => fs.statSync(path.join(targetPath, item)).isDirectory());
     } catch (error) {
         console.log('Error getting subfolders:', error);
         subfolders = [];
@@ -142,6 +144,7 @@ function getGalleryPageData(page = 0, subfolder = '', itemsPerPage = 20) {
     const nextPage = page + 1 <= totalPages ? page + 1 : totalPages;
 
     return {
+        currentSubfolder: subfolder,
         scanned: { subfolders: subfolders, images: paginatedFiles },
         pageInfo: { prevPage: prevPage, currentPage: page, nextPage: nextPage, totalPages: totalPages },
         error: null,
