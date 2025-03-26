@@ -146,9 +146,10 @@ export class WorkflowInstance {
      *
      * @param workflow The workflow to generate metadata for.
      * @param filename The optional filename to use for the title of the workflow.
+     * @param disable_all_inputs Optional if all inputs should be set to hide/disabled at the start
      * @returns The workflow with the generated metadata.
      */
-    public static generateMetadataForWorkflow(workflow: Workflow, filename?: string): WorkflowWithMetadata {
+    public static generateMetadataForWorkflow(workflow: Workflow, filename?: string, disable_all_inputs?: boolean): WorkflowWithMetadata {
         const metadata: WorkflowMetadata = {
             title: filename ?? 'Unnamed Workflow',
             description: '',
@@ -173,7 +174,7 @@ export class WorkflowInstance {
                     node_id: nodeId,
                     input_name_in_node: inputName,
                     title: `[${nodeId}] ${nodeTitle}: ${inputName}`,
-                    disabled: false,
+                    disabled: disable_all_inputs ?? false,
                 });
             }
         }
