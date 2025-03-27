@@ -139,7 +139,7 @@ function getGalleryPageData(page = 0, subfolder = '', itemsPerPage = 20) {
         subfolders = [];
     }
 
-    const totalPages = Math.floor(filteredFiles.length / itemsPerPage) - 1;
+    const totalPages = Math.ceil(filteredFiles.length / itemsPerPage) - 1;
     const prevPage = page - 1 >= 0 ? page - 1 : 0;
     const nextPage = page + 1 <= totalPages ? page + 1 : totalPages;
 
