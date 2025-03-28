@@ -41,6 +41,10 @@ You can find a guide to installing and running the app on the **[getting started
 
 ## Donating
 
-If you find this WebUI to be useful and want to support development you can donate using the button below.
+This is a fork from the original author. If you find this WebUI to be useful and want to support him, you can donate using the button below:
 
 <a href="https://www.buymeacoffee.com/ImDarkTom" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-yellow.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+
+While this fork is mainly for myself, I appreciate any donations if you find this fork useful:
+
+<a href="https://www.buymeacoffee.com/bjew" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-yellow.png" alt="Buy Me A Coffee" height="41" width="174"></a>
