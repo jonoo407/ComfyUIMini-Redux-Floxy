@@ -26,6 +26,11 @@
     border-radius: 0.5rem;
 }
 
+.image-item video {
+    width: 100%;
+    border-radius: 0.5rem;
+}
+
 .image-item span {
     position: absolute;
     bottom: 0.5rem;

@@ -145,7 +145,8 @@ function generateWorkflowMetadataAndSaveToFile(workflowObjectWithoutMetadata: Wo
 
     const workflowWithGenMetadata = WorkflowInstance.generateMetadataForWorkflow(
         workflowObjectWithoutMetadata,
-        workflowFilename
+        workflowFilename,
+        config.get('hide_all_input_on_auto_covert')
     );
 
     try {

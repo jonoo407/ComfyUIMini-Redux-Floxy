@@ -40,12 +40,14 @@ function getRelativeTimeText(timestamp: number): string {
 /**
  * @typedef {object} GalleryImageData
  * @property {string} path - The ComfyUIMini url path for the image file.
+ * @property {bool} isVideo - If this is a video file
  * @property {number} time - Latest file modification time in ms since Unix epoch.
  * @property {string} timeText - Human-readable relative time since last image mofification, e.g. '2 hour(s) ago'.
  */
 
 /**
  * @typedef {object} GalleryPageData
+ * @property {string} currentSubfolder - Currently the subfolder we are in.
  * @property {Object} scanned - List of images and available subfolders.
  * @property {GalleryImageData[]} scanned.images - List of image data.
  * @property {string[]} scanned.subfolders - List of subfolders in the currently opened subfolder.
@@ -89,6 +91,7 @@ function getGalleryPageData(page = 0, subfolder = '', itemsPerPage = 20) {
     if (!fs.existsSync(targetPath)) {
         return {
             error: 'Invalid subfolder path.',
+            currentSubfolder: subfolder,
             scanned: { subfolders: [], images: [] },
             pageInfo: { prevPage: 0, currentPage: 0, nextPage: 0, totalPages: 0 },
         };
@@ -99,17 +102,22 @@ function getGalleryPageData(page = 0, subfolder = '', itemsPerPage = 20) {
     const filteredFiles = files
         .filter((file) => {
             const ext = path.extname(file).toLowerCase();
-            const isFileImage = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif', '.tiff', '.webp'].includes(
+            const isFileImage = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif', '.tiff', '.webp', '.mp4'].includes(
                 ext
             );
 
             return isFileImage;
         })
         .map((file) => {
+            const ext = path.extname(file).toLowerCase();
+            const isVideo = ['.mp4'].includes(
+                ext
+            );
             const mtime = fs.statSync(path.join(targetPath, file)).mtime.getTime();
 
             return {
                 path: `/comfyui/image?filename=${file}&subfolder=${subfolder}&type=output`,
+                isVideo: isVideo,
                 time: mtime,
                 timeText: getRelativeTimeText(mtime),
             };
@@ -124,18 +132,19 @@ function getGalleryPageData(page = 0, subfolder = '', itemsPerPage = 20) {
     let subfolders: string[];
     try {
         subfolders = fs
-            .readdirSync(imageOutputPath)
-            .filter((item) => fs.statSync(path.join(imageOutputPath, item)).isDirectory());
+            .readdirSync(targetPath)
+            .filter((item) => fs.statSync(path.join(targetPath, item)).isDirectory());
     } catch (error) {
         console.log('Error getting subfolders:', error);
         subfolders = [];
     }
 
-    const totalPages = Math.floor(filteredFiles.length / itemsPerPage) - 1;
+    const totalPages = Math.ceil(filteredFiles.length / itemsPerPage) - 1;
     const prevPage = page - 1 >= 0 ? page - 1 : 0;
     const nextPage = page + 1 <= totalPages ? page + 1 : totalPages;
 
     return {
+        currentSubfolder: subfolder,
         scanned: { subfolders: subfolders, images: paginatedFiles },
         pageInfo: { prevPage: prevPage, currentPage: page, nextPage: nextPage, totalPages: totalPages },
         error: null,
