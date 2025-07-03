@@ -12,7 +12,7 @@ export interface ObjectInfoPartial {
 }
 
 export interface NormalisedComfyInputInfo {
-    type: 'ARRAY' | 'STRING' | 'INT' | 'FLOAT';
+    type: 'ARRAY' | 'STRING' | 'INT' | 'FLOAT' | 'BOOLEAN';
     userAccessible: boolean;
     list: string[];
     default?: string;

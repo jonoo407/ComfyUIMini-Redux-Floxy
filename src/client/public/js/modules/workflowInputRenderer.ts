@@ -1,5 +1,5 @@
 import { InputOption, WorkflowWithMetadata } from '@shared/types/Workflow.js';
-import { BaseRenderConfig, renderNumberInput, renderSelectInput, renderTextInput } from './inputRenderers.js';
+import { BaseRenderConfig, renderNumberInput, renderSelectInput, renderTextInput, renderBooleanInput } from './inputRenderers.js';
 import { NormalisedComfyInputInfo, ProcessedObjectInfo } from '@shared/types/ComfyObjectInfo.js';
 import { getSavedInputValue } from './savedInputValues.js';
 import { openPopupWindow, PopupWindowType } from '../common/popupWindow.js';
@@ -95,6 +95,10 @@ export function renderInput(
             };
 
             return renderSelectInput(selectRenderOptions);
+        }
+
+        case 'BOOLEAN': {
+            return renderBooleanInput(baseRenderOptions);
         }
 
         default: {

@@ -20,6 +20,8 @@ export interface SelectRenderConfig extends BaseRenderConfig {
     imageUpload?: boolean;
 }
 
+export interface BooleanRenderConfig extends BaseRenderConfig {}
+
 const createInputContainer = (id: string, title: string, inputHtml: string, additionalClass?: string): string => `
     <div class="workflow-input-container ${additionalClass}">
         <label for="${id}">${title}</label>
@@ -129,5 +131,15 @@ export function renderNumberInput(inputOptions: NumberRenderConfig): string {
         ${showRandomiseToggle ? randomiseToggleHTML : ''}
         ${showResolutionSelector ? resolutionSelectorHTML : ''}
     `
+    );
+}
+
+export function renderBooleanInput(inputOptions: BooleanRenderConfig): string {
+    const id = `input-${inputOptions.node_id}-${inputOptions.input_name_in_node}`;
+    const checked = ['true', '1'].includes(String(inputOptions.default).toLowerCase()) ? 'checked' : '';
+    return createInputContainer(
+        id,
+        inputOptions.title,
+        `<input type="checkbox" id="${id}" class="workflow-input" ${checked}>`
     );
 }

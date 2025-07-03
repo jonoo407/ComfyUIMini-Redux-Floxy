@@ -15,7 +15,7 @@ export interface WorkflowMetadata {
 }
 
 export interface NodeInputs {
-    [key: string]: string | number | string[] | number[];
+    [key: string]: string | number | boolean | string[] | number[];
 }
 
 export interface WorkflowNode {

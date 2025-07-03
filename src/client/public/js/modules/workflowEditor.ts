@@ -109,7 +109,15 @@ export class WorkflowEditor {
                 continue;
             }
 
-            modifiedWorkflow[inputNodeId].inputs[inputNameInNode] = defaultValueElement.value;
+            const inputNode = this.workflowObject.getNode(inputNodeId);
+            const comfyInputType = this.comfyInputsInfo?.[inputNode.class_type]?.[inputNameInNode]?.type;
+
+            if (comfyInputType === 'BOOLEAN') {
+                // Save as boolean
+                modifiedWorkflow[inputNodeId].inputs[inputNameInNode] = (defaultValueElement as HTMLInputElement).checked;
+            } else {
+                modifiedWorkflow[inputNodeId].inputs[inputNameInNode] = defaultValueElement.value;
+            }
 
             inputOptionsList.push(inputOptions);
         }
@@ -283,6 +291,12 @@ export class WorkflowEditor {
             case 'FLOAT':
                 inputHTML += `
                     <input type="number" id="${idPrefix}-default" placeholder="${inputDefault}" value="${inputDefault}" class="workflow-input workflow-input-default">
+                `;
+                break;
+            case 'BOOLEAN':
+                const checked = ['true', '1'].includes(String(inputDefault).toLowerCase()) ? 'checked' : '';
+                inputHTML += `
+                    <input type="checkbox" id="${idPrefix}-default" class="workflow-input workflow-input-default" ${checked}>
                 `;
                 break;
             case `STRING`:

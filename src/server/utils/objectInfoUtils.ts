@@ -64,7 +64,7 @@ function getNormalisedInfo(inputInfo: any): NormalisedComfyInputInfo {
         return normalisedInfo as NormalisedComfyInputInfo;
     }
 
-    if (['INT', 'FLOAT', 'STRING'].includes(inputInfo[0])) {
+    if (["INT", "FLOAT", "STRING", "BOOLEAN"].includes(inputInfo[0])) {
         // data can contain default, tooltip for any type, min, max for int, and min max, and step for ints, and multiline, dynamicPrompts for strings
         normalisedInfo.userAccessible = true;
         normalisedInfo.type = inputInfo[0];
