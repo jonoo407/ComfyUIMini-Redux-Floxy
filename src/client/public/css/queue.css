@@ -1,6 +1,8 @@
 .main-container {
     position: relative;
     /* No padding needed since pull indicator is now absolute positioned */
+    overflow-x: hidden;
+    /* Prevent horizontal overflow during pull */
 }
 
 .loading {
@@ -127,6 +129,8 @@
     transform: translateY(-60px);
     overflow: hidden;
     z-index: 10;
+    /* Maximum pull distance - prevents going too far */
+    max-height: 80px;
 }
 
 .pull-indicator-content {

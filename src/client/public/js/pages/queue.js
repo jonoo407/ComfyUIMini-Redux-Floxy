@@ -164,11 +164,16 @@ function updatePullIndicator(pullDistance) {
     if (!indicator) return;
     
     if (pullDistance > 0) {
-        const maxPull = Math.min(pullDistance, pullThreshold);
-        const pullPercentage = maxPull / pullThreshold;
+        // Limit the maximum pull distance to prevent going too far
+        const maxPullDistance = pullThreshold + 20;
+        const limitedPullDistance = Math.min(pullDistance, maxPullDistance);
+        const pullPercentage = limitedPullDistance / pullThreshold;
         const indicatorOffset = -60 + (pullPercentage * 60);
         
-        indicator.style.transform = `translateY(${indicatorOffset}px)`;
+        // Ensure the indicator doesn't go beyond the maximum
+        const finalOffset = Math.min(indicatorOffset, 20);
+        
+        indicator.style.transform = `translateY(${finalOffset}px)`;
         
         const pullText = indicator.querySelector('.pull-text');
         const pullIcon = indicator.querySelector('.pull-icon');
@@ -185,16 +190,14 @@ function updatePullIndicator(pullDistance) {
     }
 }
 
-
-
-
-
 // PWA-compatible touch handling
 function handleTouchStart(e) {
     // Only allow pull-to-refresh when at the top of the page
     if (window.scrollY <= 0) {
         startY = e.touches[0].clientY;
         isPulling = true;
+    } else {
+        isPulling = false;
     }
 }
 
@@ -205,12 +208,12 @@ function handleTouchMove(e) {
     const pullDistance = currentY - startY;
     
     if (pullDistance > 0) {
-        // Prevent default scroll behavior in PWA
-        e.preventDefault();
-        e.stopPropagation();
-        
         // Update pull indicator
         updatePullIndicator(pullDistance);
+        
+        // Prevent the page from scrolling past the top
+        e.preventDefault();
+        e.stopPropagation();
     }
 }
 
@@ -243,6 +246,6 @@ function handleTouchEnd(e) {
 }
 
 // Add event listeners with proper options for PWA
-document.addEventListener('touchstart', handleTouchStart, { passive: false });
+document.addEventListener('touchstart', handleTouchStart, { passive: true });
 document.addEventListener('touchmove', handleTouchMove, { passive: false });
-document.addEventListener('touchend', handleTouchEnd, { passive: false });
+document.addEventListener('touchend', handleTouchEnd, { passive: true });
