@@ -1,3 +1,8 @@
+.main-container {
+    position: relative;
+    /* No padding needed since pull indicator is now absolute positioned */
+}
+
 .loading {
     text-align: center;
     padding: 2rem;
@@ -103,4 +108,42 @@
 .queue-item-images .image-item img {
     width: 100%;
     border-radius: 0.5rem;
-} 
+}
+
+/* Pull-to-refresh indicator styles */
+#pull-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+    transform: translateY(-60px);
+    overflow: hidden;
+    z-index: 10;
+}
+
+.pull-indicator-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.pull-icon {
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+}
+
+.pull-text {
+    font-weight: 500;
+}
+
+ 

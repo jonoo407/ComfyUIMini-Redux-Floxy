@@ -9,6 +9,12 @@
     <%- include('../partials/navbar') %>
     <%- include('../partials/sidebar', { activePage: 'queue' }) %>
     <div class="main-container">
+        <div id="pull-indicator" class="pull-indicator">
+            <div class="pull-indicator-content">
+                <span class="pull-icon">↓</span>
+                <span class="pull-text">Pull down to refresh</span>
+            </div>
+        </div>
         <h1>Queue</h1>
         <div id="queue-container">
             <div class="loading">Loading queue...</div>

@@ -43,9 +43,9 @@ async function displayQueue(queueData) {
         const completedItems = Array.isArray(queueData.queue_completed) ? queueData.queue_completed : [queueData.queue_completed];
 
         // Handle all items concurrently for better performance
-        const pendingPromises = pendingItems.map(item => createQueueItemHtml(item, 'pending'));
-        const runningPromises = runningItems.map(item => createQueueItemHtml(item, 'running'));
-        const completedPromises = completedItems.reverse().map(item => createQueueItemHtml(item, 'completed'));
+        const pendingPromises = pendingItems.map(item => createQueueItemHtml(item, 'Pending'));
+        const runningPromises = runningItems.map(item => createQueueItemHtml(item, 'Running'));
+        const completedPromises = completedItems.reverse().map(item => createQueueItemHtml(item, 'Completed'));
         
         // Wait for all promises to resolve
         const [pendingResults, runningResults, completedResults] = await Promise.all([
@@ -81,9 +81,8 @@ async function createQueueItemHtml(item, status = 'pending') {
     const title = `Item ${promptId}`;
     let imagesHtml = '';
     
-    if (status === 'completed') {
+    if (status === 'Completed') {
         try {
-            console.log(item);
             // Fetch history for the completed item
             const response = await fetch(`/comfyui/history/${promptId}`);
             if (response.ok) {
@@ -127,7 +126,7 @@ async function createQueueItemHtml(item, status = 'pending') {
                     <div class="queue-item-title">${title}</div>
                 </div>
                 <div class="queue-item-status ${status}">
-                    ${status.charAt(0).toUpperCase() + status.slice(1)}
+                    ${status}
                 </div>
             </div>
             ${imagesHtml}
@@ -138,5 +137,112 @@ async function createQueueItemHtml(item, status = 'pending') {
 // Load queue when page loads
 document.addEventListener('DOMContentLoaded', loadQueue);
 
-// Set up periodic refresh to show completed items
-setInterval(loadQueue, 60000); // Refresh every minute 
+// Set up pull-to-refresh functionality for PWA
+let startY = 0;
+let currentY = 0;
+let isPulling = false;
+const pullThreshold = 100; // pixels to pull down before triggering refresh
+
+// Get the pull indicator from the DOM
+let pullIndicator;
+
+// Function to get or initialize pull indicator
+function getPullIndicator() {
+    if (!pullIndicator) {
+        pullIndicator = document.getElementById('pull-indicator');
+        if (pullIndicator) {
+            // Initially hide the pull indicator
+            pullIndicator.style.transform = 'translateY(-60px)';
+        }
+    }
+    return pullIndicator;
+}
+
+// Function to update pull indicator visibility and position
+function updatePullIndicator(pullDistance) {
+    const indicator = getPullIndicator();
+    if (!indicator) return;
+    
+    if (pullDistance > 0) {
+        const maxPull = Math.min(pullDistance, pullThreshold);
+        const pullPercentage = maxPull / pullThreshold;
+        const indicatorOffset = -60 + (pullPercentage * 60);
+        
+        indicator.style.transform = `translateY(${indicatorOffset}px)`;
+        
+        const pullText = indicator.querySelector('.pull-text');
+        const pullIcon = indicator.querySelector('.pull-icon');
+        
+        if (pullDistance >= pullThreshold) {
+            pullText.textContent = 'Release to refresh';
+            pullIcon.textContent = '↑';
+        } else {
+            pullText.textContent = 'Pull down to refresh';
+            pullIcon.textContent = '↓';
+        }
+    } else {
+        indicator.style.transform = 'translateY(-60px)';
+    }
+}
+
+
+
+
+
+// PWA-compatible touch handling
+function handleTouchStart(e) {
+    // Only allow pull-to-refresh when at the top of the page
+    if (window.scrollY <= 0) {
+        startY = e.touches[0].clientY;
+        isPulling = true;
+    }
+}
+
+function handleTouchMove(e) {
+    if (!isPulling) return;
+    
+    currentY = e.touches[0].clientY;
+    const pullDistance = currentY - startY;
+    
+    if (pullDistance > 0) {
+        // Prevent default scroll behavior in PWA
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Update pull indicator
+        updatePullIndicator(pullDistance);
+    }
+}
+
+function handleTouchEnd(e) {
+    if (!isPulling) return;
+    
+    const pullDistance = currentY - startY;
+    const indicator = getPullIndicator();
+    
+    if (pullDistance > pullThreshold) {
+        // Show loading state
+        const pullText = indicator.querySelector('.pull-text');
+        const pullIcon = indicator.querySelector('.pull-icon');
+        pullText.textContent = 'Refreshing...';
+        pullIcon.textContent = '⟳';
+        
+        // Trigger refresh
+        loadQueue().then(() => {
+            // Hide indicator after refresh completes
+            setTimeout(() => {
+                updatePullIndicator(0);
+            }, 500);
+        });
+    } else {
+        // Hide pull indicator if not enough pull
+        updatePullIndicator(0);
+    }
+    
+    isPulling = false;
+}
+
+// Add event listeners with proper options for PWA
+document.addEventListener('touchstart', handleTouchStart, { passive: false });
+document.addEventListener('touchmove', handleTouchMove, { passive: false });
+document.addEventListener('touchend', handleTouchEnd, { passive: false });
