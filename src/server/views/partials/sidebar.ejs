@@ -16,6 +16,10 @@
         <div class="sidebar-dropdown-list hidden">
             <span>Loading workflows...</span>
         </div>
+        <a href="/queue" class="sidebar-list-item <%= activePage === 'queue' ? 'active' : '' %>">
+            <span class="icon clock"></span>
+            <span class="sidebar-list-item-text">Queue <span id="queue-count"></span></span>
+        </a>
         <a href="/gallery/" class="sidebar-list-item <%= activePage === 'gallery' ? 'active' : '' %>">
             <span class="icon gallery"></span>
             <span class="sidebar-list-item-text">Gallery</span>

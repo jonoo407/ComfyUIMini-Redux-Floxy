@@ -1,0 +1,70 @@
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.queue-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.queue-item-info {
+    flex: 1;
+}
+
+.queue-item-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.queue-item-details {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.queue-item-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.queue-item-status.pending {
+    background: var(--warning-bg);
+    color: var(--warning-text);
+}
+
+.queue-item-status.executing {
+    background: var(--info-bg);
+    color: var(--info-text);
+}
+
+.queue-item-status.completed {
+    background: var(--success-bg);
+    color: var(--success-text);
+}
+
+.queue-item-status.failed {
+    background: var(--error-bg);
+    color: var(--error-text);
+}
+
+.empty-queue {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+}
+
+.empty-queue .icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+} 

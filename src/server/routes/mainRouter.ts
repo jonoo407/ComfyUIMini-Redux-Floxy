@@ -120,6 +120,21 @@ router.get('/settings', (req: RequestWithTheme, res) => {
     res.render('pages/settings', { theme: req.theme });
 });
 
+router.get('/queue', (req: RequestWithTheme, res) => {
+    res.render('pages/queue', { theme: req.theme });
+});
+
+router.get('/api/queue', async (req, res) => {
+    try {
+        const getQueue = (await import('../utils/comfyAPIUtils/getQueue')).default;
+        const queueData = await getQueue();
+        res.json(queueData);
+    } catch (error) {
+        console.error('Error fetching queue:', error);
+        res.status(500).json({ error: 'Failed to fetch queue data' });
+    }
+});
+
 router.get('/allserverworkflows', async (req, res) => {
     const infoList = Object.entries(serverWorkflowMetadata).map((workflowMetadata) => {
         return {

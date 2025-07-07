@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head', { title: "Queue", theme }) %>
+    <link rel="stylesheet" href="/css/queue.css">
+    <script src="/js/pages/queue.js" type="module" defer></script>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+    <%- include('../partials/sidebar', { activePage: 'queue' }) %>
+    <div class="main-container">
+        <h1>Queue</h1>
+        <div id="queue-container">
+            <div class="loading">Loading queue...</div>
+        </div>
+    </div>
+</body>
+</html> 

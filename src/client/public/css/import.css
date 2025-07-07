@@ -188,3 +188,7 @@
 .export-buttons .buttons-divider {
     width: 0.5rem;
 }
+
+input[type="checkbox"] {
+    height: 2rem;
+}
