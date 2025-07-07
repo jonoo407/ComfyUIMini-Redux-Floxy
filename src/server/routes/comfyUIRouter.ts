@@ -17,7 +17,7 @@ router.get('/history/:promptId', async (req, res) => {
         res.send('Prompt id cannot be undefined').status(400);
     }
 
-    const promptHistory = getHistory(promptId);
+    const promptHistory = await getHistory(promptId);
 
     res.json(promptHistory);
 });

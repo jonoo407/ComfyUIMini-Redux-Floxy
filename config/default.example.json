@@ -5,7 +5,9 @@
     "reject_unauthorised_cert": true,
     "optional_log": {
         "generation_finish": true,
-        "queue_image": false
+        "queue_image": false,
+        "fetch_queue": false,
+        "fetch_history": false
     },
     "auto_convert_comfyui_workflows": true,
     "hide_all_input_on_auto_covert": false,

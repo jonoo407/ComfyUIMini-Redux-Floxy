@@ -6,7 +6,7 @@ import sendCachedImages from "../sendCachedImages";
 
 async function handleOpenComfyWsConnection(clientWs: WebSocket, promptId: string) {
     try {
-        logger.logOptional('queue_image', 'Queued image.');
+        logger.logOptional('queue_image', `Queued image: ${promptId}`);
 
         const queueJson = await getQueue();
 
