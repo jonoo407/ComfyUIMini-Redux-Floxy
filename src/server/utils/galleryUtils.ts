@@ -145,6 +145,7 @@ function getGalleryPageData(page = 0, subfolder = '', itemsPerPage = 20) {
 
     return {
         currentSubfolder: subfolder,
+        parentSubfolder: subfolder ? path.dirname(subfolder) : null,
         scanned: { subfolders: subfolders, images: paginatedFiles },
         pageInfo: { prevPage: prevPage, currentPage: page, nextPage: nextPage, totalPages: totalPages },
         error: null,

@@ -15,6 +15,9 @@
     <div class="main-container">
         <div id="subfolders-list">
             <a href="/gallery/" class="subfolder-link">(Default)</a>
+            <% if (parentSubfolder !== null) { %>
+                <a href="/gallery/<%= parentSubfolder %>" class="subfolder-link">..</a>
+            <% } %>
             <% 
               const galleryPath = currentSubfolder ? `gallery/${currentSubfolder}` : 'gallery';
               for (const subfolder of scanned.subfolders) { %>
