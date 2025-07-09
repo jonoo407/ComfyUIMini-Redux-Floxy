@@ -1,4 +1,4 @@
-import { openImageModal, openVideoModal } from '../common/imageModal.js';
+import { openImageModal } from '../common/imageModal.js';
 
 const pageInput = document.getElementById('page-input') as HTMLInputElement;
 
@@ -12,10 +12,9 @@ pageInput.addEventListener('keyup', (e) => {
     }
 });
 
-// Add click handlers to all images and videos in the gallery
+// Add click handlers to all images in the gallery (videos don't need modal)
 document.addEventListener('DOMContentLoaded', () => {
     const images = document.querySelectorAll('.image-item img');
-    const videos = document.querySelectorAll('.image-item video');
     
     images.forEach((img) => {
         const imageElement = img as HTMLImageElement;
@@ -25,16 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const imageSrc = imageElement.src;
             const imageAlt = imageElement.alt || 'Gallery image';
             openImageModal(imageSrc, imageAlt);
-        });
-    });
-    
-    videos.forEach((video) => {
-        const videoElement = video as HTMLVideoElement;
-        videoElement.style.cursor = 'pointer';
-        videoElement.addEventListener('click', (e) => {
-            e.preventDefault();
-            const videoSrc = videoElement.src;
-            openVideoModal(videoSrc);
         });
     });
 });

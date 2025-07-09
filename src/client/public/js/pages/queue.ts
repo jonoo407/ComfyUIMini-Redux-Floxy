@@ -1,5 +1,11 @@
+// Import imageModal functions for handling images only
+import { openImageModal } from '../common/imageModal.js';
+// Import types from shared types
+import { QueueItem, HistoryData, HistoryOutput, MediaItem } from '../../../../shared/types/History.js';
+
 async function loadQueue() {
     const queueContainer = document.getElementById('queue-container');
+    if (!queueContainer) return;
     
     try {
         const response = await fetch('/api/queue');
@@ -8,6 +14,7 @@ async function loadQueue() {
         }
         
         const queueData = await response.json();
+        console.log(queueData);
         await displayQueue(queueData);
     } catch (error) {
         console.error('Error loading queue:', error);
@@ -20,8 +27,9 @@ async function loadQueue() {
     }
 }
 
-async function displayQueue(queueData) {
+async function displayQueue(queueData: any) {
     const queueContainer = document.getElementById('queue-container');
+    if (!queueContainer) return;
     
     if (!queueData || (Array.isArray(queueData) && queueData.length === 0)) {
         queueContainer.innerHTML = `
@@ -43,9 +51,9 @@ async function displayQueue(queueData) {
         const completedItems = Array.isArray(queueData.queue_completed) ? queueData.queue_completed : [queueData.queue_completed];
 
         // Handle all items concurrently for better performance
-        const pendingPromises = pendingItems.map(item => createQueueItemHtml(item, 'Pending'));
-        const runningPromises = runningItems.map(item => createQueueItemHtml(item, 'Running'));
-        const completedPromises = completedItems.reverse().map(item => createQueueItemHtml(item, 'Completed'));
+        const pendingPromises = pendingItems.map((item: QueueItem) => createQueueItemHtml(item, 'Pending'));
+        const runningPromises = runningItems.map((item: QueueItem) => createQueueItemHtml(item, 'Running'));
+        const completedPromises = completedItems.reverse().map((item: QueueItem) => createQueueItemHtml(item, 'Completed'));
         
         // Wait for all promises to resolve
         const [pendingResults, runningResults, completedResults] = await Promise.all([
@@ -74,9 +82,12 @@ async function displayQueue(queueData) {
     }
     
     queueContainer.innerHTML = html;
+    
+    // Add click handlers for images and videos after DOM is updated
+    addMediaClickHandlers();
 }
 
-async function createQueueItemHtml(item, status = 'pending') {
+async function createQueueItemHtml(item: QueueItem, status: string = 'pending'): Promise<string> {
     const promptId = item[1];
     const title = `Item ${promptId}`;
     let imagesHtml = '';
@@ -86,30 +97,60 @@ async function createQueueItemHtml(item, status = 'pending') {
             // Fetch history for the completed item
             const response = await fetch(`/comfyui/history/${promptId}`);
             if (response.ok) {
-                const historyData = await response.json();
+                const historyData: HistoryData = await response.json();
+                console.log(historyData);
                 
-                // Extract image URLs from the history response
-                const imageUrls = [];
+                // Extract image and video URLs from the history response
+                const mediaItems: MediaItem[] = [];
                 if (historyData[promptId] && historyData[promptId].outputs) {
-                    Object.values(historyData[promptId].outputs).forEach(output => {
+                    Object.values(historyData[promptId].outputs).forEach((output: HistoryOutput) => {
+                        // Handle images
                         if (output.images) {
-                            output.images.forEach(image => {
-                                const imageUrl = `/comfyui/image?filename=${image.filename}&subfolder=${image.subfolder}&type=${image.type}`;
-                                imageUrls.push(imageUrl);
+                            output.images.forEach((image: { filename: string; subfolder: string; type: string }) => {
+                                const mediaUrl = `/comfyui/image?filename=${image.filename}&subfolder=${image.subfolder}&type=${image.type}`;
+                                mediaItems.push({
+                                    url: mediaUrl,
+                                    isVideo: false,
+                                    filename: image.filename
+                                });
+                            });
+                        }
+                        
+                        // Handle videos
+                        if (output.videos) {
+                            output.videos.forEach((video: { filename: string; subfolder: string; type: string; format: string; frame_rate: number; fullpath: string }) => {
+                                const mediaUrl = `/comfyui/image?filename=${video.filename}&subfolder=${video.subfolder}&type=${video.type}`;
+                                mediaItems.push({
+                                    url: mediaUrl,
+                                    isVideo: true,
+                                    filename: video.filename
+                                });
                             });
                         }
                     });
                 }
                 
-                // Create HTML for images
-                if (imageUrls.length > 0) {
+                // Create HTML for images and videos
+                if (mediaItems.length > 0) {
                     imagesHtml = `
                         <div class="queue-item-images">
-                            ${imageUrls.map(url => `
-                                <div class="image-item">
-                                    <img src="${url}" alt="Generated image">
-                                </div>
-                            `).join('')}
+                            ${mediaItems.map((item: MediaItem) => {
+                                if (item.isVideo) {
+                                    return `
+                                        <div class="image-item">
+                                            <video src="${item.url}" alt="Generated video" style="cursor: pointer;">
+                                                Your browser does not support the video tag.
+                                            </video>
+                                        </div>
+                                    `;
+                                } else {
+                                    return `
+                                        <div class="image-item">
+                                            <img src="${item.url}" alt="Generated image" style="cursor: pointer;">
+                                        </div>
+                                    `;
+                                }
+                            }).join('')}
                         </div>
                     `;
                 }
@@ -134,6 +175,21 @@ async function createQueueItemHtml(item, status = 'pending') {
     `;
 }
 
+// Add click handlers to all images in the queue (videos don't need modal)
+function addMediaClickHandlers(): void {
+    const images = document.querySelectorAll('.queue-item-images .image-item img');
+    
+    images.forEach((img) => {
+        const imageElement = img as HTMLImageElement;
+        imageElement.addEventListener('click', (e) => {
+            e.preventDefault();
+            const imageSrc = imageElement.src;
+            const imageAlt = imageElement.alt || 'Queue image';
+            openImageModal(imageSrc, imageAlt);
+        });
+    });
+}
+
 // Load queue when page loads
 document.addEventListener('DOMContentLoaded', loadQueue);
 
@@ -144,10 +200,10 @@ let isPulling = false;
 const pullThreshold = 100; // pixels to pull down before triggering refresh
 
 // Get the pull indicator from the DOM
-let pullIndicator;
+let pullIndicator: HTMLElement | null = null;
 
 // Function to get or initialize pull indicator
-function getPullIndicator() {
+function getPullIndicator(): HTMLElement | null {
     if (!pullIndicator) {
         pullIndicator = document.getElementById('pull-indicator');
         if (pullIndicator) {
@@ -159,7 +215,7 @@ function getPullIndicator() {
 }
 
 // Function to update pull indicator visibility and position
-function updatePullIndicator(pullDistance) {
+function updatePullIndicator(pullDistance: number): void {
     const indicator = getPullIndicator();
     if (!indicator) return;
     
@@ -175,8 +231,8 @@ function updatePullIndicator(pullDistance) {
         
         indicator.style.transform = `translateY(${finalOffset}px)`;
         
-        const pullText = indicator.querySelector('.pull-text');
-        const pullIcon = indicator.querySelector('.pull-icon');
+        const pullText = indicator.querySelector('.pull-text') as HTMLElement;
+        const pullIcon = indicator.querySelector('.pull-icon') as HTMLElement;
         
         if (pullDistance >= pullThreshold) {
             pullText.textContent = 'Release to refresh';
@@ -191,7 +247,7 @@ function updatePullIndicator(pullDistance) {
 }
 
 // PWA-compatible touch handling
-function handleTouchStart(e) {
+function handleTouchStart(e: TouchEvent): void {
     // Only allow pull-to-refresh when at the top of the page
     if (window.scrollY <= 0) {
         startY = e.touches[0].clientY;
@@ -201,7 +257,7 @@ function handleTouchStart(e) {
     }
 }
 
-function handleTouchMove(e) {
+function handleTouchMove(e: TouchEvent): void {
     if (!isPulling) return;
     
     currentY = e.touches[0].clientY;
@@ -217,7 +273,7 @@ function handleTouchMove(e) {
     }
 }
 
-function handleTouchEnd(e) {
+function handleTouchEnd(e: TouchEvent): void {
     if (!isPulling) return;
     
     const pullDistance = currentY - startY;
@@ -225,10 +281,12 @@ function handleTouchEnd(e) {
     
     if (pullDistance > pullThreshold) {
         // Show loading state
-        const pullText = indicator.querySelector('.pull-text');
-        const pullIcon = indicator.querySelector('.pull-icon');
-        pullText.textContent = 'Refreshing...';
-        pullIcon.textContent = '⟳';
+        const pullText = indicator?.querySelector('.pull-text') as HTMLElement;
+        const pullIcon = indicator?.querySelector('.pull-icon') as HTMLElement;
+        if (pullText && pullIcon) {
+            pullText.textContent = 'Refreshing...';
+            pullIcon.textContent = '⟳';
+        }
         
         // Trigger refresh
         loadQueue().then(() => {

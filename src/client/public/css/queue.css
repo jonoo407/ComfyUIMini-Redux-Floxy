@@ -107,7 +107,8 @@
     border-radius: 0.5rem;
 }
 
-.queue-item-images .image-item img {
+.queue-item-images .image-item img,
+.queue-item-images .image-item video {
     width: 100%;
     border-radius: 0.5rem;
 }
