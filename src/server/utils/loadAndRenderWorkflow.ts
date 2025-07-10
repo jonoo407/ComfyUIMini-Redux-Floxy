@@ -1,7 +1,7 @@
 import { RequestWithTheme } from '@shared/types/Requests';
 import { WorkflowType } from '@shared/types/Workflow';
 import { Response } from 'express';
-import { readServerWorkflow } from './workflowUtils';
+import { readServerWorkflow, readWorkflowMetadata } from './workflowUtils';
 
 function loadAndRenderWorkflow(
     workflowType: WorkflowType,
@@ -35,7 +35,9 @@ function loadAndRenderWorkflow(
             }
         }
 
-        const workflowTitle = workflowFileJson['_comfyuimini_meta'].title;
+        // Get metadata from separate file
+        const metadata = readWorkflowMetadata(workflowIdentifier);
+        const workflowTitle = metadata?.title || workflowIdentifier;
 
         res.render(page, {
             workflowTitle: workflowTitle,

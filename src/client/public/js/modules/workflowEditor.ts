@@ -1,6 +1,6 @@
 import { WorkflowInstance } from '@shared/classes/Workflow';
 import { NormalisedComfyInputInfo, ProcessedObjectInfo } from '@shared/types/ComfyObjectInfo';
-import { InputOption, WorkflowMetadata, WorkflowWithMetadata } from '@shared/types/Workflow';
+import { InputOption, WorkflowMetadata, WorkflowWithMetadata, Workflow } from '@shared/types/Workflow';
 
 export class WorkflowEditor {
     containerElem: HTMLElement;
@@ -43,7 +43,7 @@ export class WorkflowEditor {
         const blankMetadata: WorkflowMetadata = {
             title: 'My Workflow',
             description: '',
-            format_version: '2',
+            format_version: '3',
             input_options: [],
         };
 
@@ -62,14 +62,14 @@ export class WorkflowEditor {
     /**
      * Updates a workflow object with data from the inputs.
      *
-     * @returns The exported workflow object.
+     * @returns The exported workflow object
      */
-    public updateJsonWithUserInput(): WorkflowWithMetadata {
+    public updateJsonWithUserInput(): Workflow {
         this.ensureWorkflowObject();
 
         const inputOptionsList = [];
 
-        const modifiedWorkflow = this.workflowObject.workflow;
+        const modifiedWorkflow = structuredClone(this.workflowObject.workflow);
 
         const allInputs = this.containerElem.querySelectorAll('.input-item');
         for (const inputContainer of allInputs) {
@@ -122,14 +122,64 @@ export class WorkflowEditor {
             inputOptionsList.push(inputOptions);
         }
 
-        modifiedWorkflow['_comfyuimini_meta'] = {} as WorkflowMetadata;
-        modifiedWorkflow['_comfyuimini_meta']['title'] = this.titleInput.value || 'Unnamed Workflow';
-        modifiedWorkflow['_comfyuimini_meta']['description'] = this.descriptionInput.value || '';
-        modifiedWorkflow['_comfyuimini_meta']['format_version'] = '2';
+        // Remove any existing metadata from the workflow
+        delete (modifiedWorkflow as any)._comfyuimini_meta;
 
-        modifiedWorkflow['_comfyuimini_meta']['input_options'] = inputOptionsList;
+        return modifiedWorkflow as Workflow;
+    }
 
-        return modifiedWorkflow as WorkflowWithMetadata;
+    /**
+     * Gets the metadata object from the current workflow editor state.
+     *
+     * @returns The metadata object.
+     */
+    public getMetadata(): WorkflowMetadata {
+        this.ensureWorkflowObject();
+
+        const inputOptionsList = [];
+
+        const allInputs = this.containerElem.querySelectorAll('.input-item');
+        for (const inputContainer of allInputs) {
+            const inputNodeId = inputContainer.getAttribute('data-node-id');
+            if (!inputNodeId) {
+                continue;
+            }
+
+            const inputNameInNode = inputContainer.getAttribute('data-node-input-name');
+            if (!inputNameInNode) {
+                continue;
+            }
+
+            const inputOptions: InputOption = {} as InputOption;
+            inputOptions['node_id'] = inputNodeId;
+            inputOptions['input_name_in_node'] = inputNameInNode;
+
+            if (inputContainer.classList.contains('disabled')) {
+                inputOptions['disabled'] = true;
+                inputOptionsList.push(inputOptions);
+                continue;
+            }
+
+            const inputTitleElement = inputContainer.querySelector('.workflow-input-title') as HTMLInputElement;
+
+            if (!inputTitleElement) {
+                alert(`Error while saving workflow, input title element not found for ${inputNameInNode}`);
+                continue;
+            }
+
+            inputOptions['title'] = inputTitleElement.value;
+
+            inputOptionsList.push(inputOptions);
+        }
+
+        const metadata: WorkflowMetadata = {
+            title: this.titleInput.value || 'Unnamed Workflow',
+            description: this.descriptionInput.value || '',
+            format_version: '3',
+            input_options: inputOptionsList,
+        };
+
+        return metadata;
     }
 
     /**

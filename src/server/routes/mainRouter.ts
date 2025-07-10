@@ -6,6 +6,7 @@ import {
     readServerWorkflow,
     serverWorkflowMetadata,
     deleteServerWorkflow,
+    writeWorkflowMetadata,
 } from '../utils/workflowUtils';
 import { getGalleryPageData } from '../utils/galleryUtils';
 import { RequestWithTheme } from '@shared/types/Requests';
@@ -48,11 +49,32 @@ router.get('/edit/:type/:identifier', (req: RequestWithTheme, res) => {
 
 router.put('/edit/:fileName', (req, res) => {
     const workflowFilename = req.params.fileName;
-    const workflowJson = req.body;
+    const requestBody = req.body;
 
-    const finishedSuccessfully = writeServerWorkflow(workflowFilename, workflowJson);
+    let workflowJson;
+    let metadata;
 
-    if (finishedSuccessfully) {
+    // Handle both old format (embedded metadata) and new format (separate metadata)
+    if (requestBody.workflow && requestBody.metadata) {
+        // New format: separate workflow and metadata
+        workflowJson = requestBody.workflow;
+        metadata = requestBody.metadata;
+    } else {
+        // Old format: embedded metadata (for backward compatibility)
+        workflowJson = requestBody;
+        metadata = requestBody._comfyuimini_meta;
+    }
+
+    // Save the workflow (without metadata)
+    const workflowSaved = writeServerWorkflow(workflowFilename, workflowJson);
+    
+    // Save the metadata separately
+    let metadataSaved = true;
+    if (metadata) {
+        metadataSaved = writeWorkflowMetadata(workflowFilename, metadata);
+    }
+
+    if (workflowSaved && metadataSaved) {
         res.status(200).send('Successfully saved edited workflow.');
     } else {
         res.status(500).send('Internal Server Error. Check logs for more info.');
@@ -89,8 +111,12 @@ router.get('/download/:fileName', (req, res) => {
         }
     }
 
+    // Extract the clean workflow without metadata
+    const { _comfyuimini_meta, ...cleanWorkflow } = workflowFile;
+
     res.setHeader('Content-Type', 'application/json');
-    res.send(workflowFile);
+    res.setHeader('Content-Disposition', `attachment; filename="${workflowFilename}"`);
+    res.send(JSON.stringify(cleanWorkflow, null, 2));
 });
 
 router.get('/workflow/:type/:identifier', (req: RequestWithTheme, res) => {

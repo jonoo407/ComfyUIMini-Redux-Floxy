@@ -153,7 +153,7 @@ export class WorkflowInstance {
         const metadata: WorkflowMetadata = {
             title: filename ?? 'Unnamed Workflow',
             description: '',
-            format_version: '2',
+            format_version: '3',
             input_options: [],
         };
 
@@ -185,6 +185,47 @@ export class WorkflowInstance {
         } as WorkflowWithMetadata;
     }
 
+    /**
+     * Creates a default metadata object for a workflow.
+     *
+     * @param workflow The workflow to create metadata for.
+     * @param filename The optional filename to use for the title of the workflow.
+     * @param disable_all_inputs Optional if all inputs should be set to hide/disabled at the start
+     * @returns The metadata object.
+     */
+    public static createDefaultMetadata(workflow: Workflow, filename?: string, disable_all_inputs?: boolean): WorkflowMetadata {
+        const metadata: WorkflowMetadata = {
+            title: filename ?? 'Unnamed Workflow',
+            description: '',
+            format_version: '3',
+            input_options: [],
+        };
+
+        for (const [nodeId, node] of Object.entries(workflow)) {
+            if (nodeId.startsWith('_')) {
+                continue;
+            }
+
+            const nodeTitle = node['_meta'].title;
+
+            for (const [inputName, inputValue] of Object.entries(node.inputs)) {
+                if (Array.isArray(inputValue)) {
+                    // Inputs that come from other nodes come as an array
+                    continue;
+                }
+
+                metadata.input_options.push({
+                    node_id: nodeId,
+                    input_name_in_node: inputName,
+                    title: `[${nodeId}] ${nodeTitle}: ${inputName}`,
+                    disabled: disable_all_inputs ?? false,
+                });
+            }
+        }
+
+        return metadata;
+    }
+
     /** --------------
      * PRIVATE METHODS
     --------------- */
@@ -200,7 +241,12 @@ export class WorkflowInstance {
         if (WorkflowInstance.workflowHasMetadata(workflow)) {
             this.workflow = workflow;
         } else {
-            this.workflow = WorkflowInstance.generateMetadataForWorkflow(workflow);
+            // Create a workflow with default metadata instead of generating it
+            const defaultMetadata = WorkflowInstance.createDefaultMetadata(workflow);
+            this.workflow = {
+                ...workflow,
+                _comfyuimini_meta: defaultMetadata,
+            } as WorkflowWithMetadata;
         }
     }
 

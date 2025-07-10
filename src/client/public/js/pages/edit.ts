@@ -49,6 +49,7 @@ function loadWorkflow() {
 
 export async function saveWorkflow() {
     const updatedWorkflowObject = workflowEditor.updateJsonWithUserInput();
+    const metadata = workflowEditor.getMetadata();
 
     clearSavedInputValuesForWorkflow(workflowType, workflowFilename);
 
@@ -64,18 +65,28 @@ export async function saveWorkflow() {
             return;
         }
 
-        workflows[currentWorkflowIndex] = updatedWorkflowObject;
+        // Combine workflow with metadata for local storage
+        const workflowWithMetadata = {
+            ...updatedWorkflowObject,
+            _comfyuimini_meta: metadata,
+        } as WorkflowWithMetadata;
+
+        workflows[currentWorkflowIndex] = workflowWithMetadata;
 
         localStorage.setItem('workflows', JSON.stringify(workflows));
 
         location.href = '/';
     } else if (workflowType === 'server') {
+        // Send both workflow and metadata separately
         const response = await fetch(`/edit/${workflowFilename}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(updatedWorkflowObject),
+            body: JSON.stringify({
+                workflow: updatedWorkflowObject,
+                metadata: metadata,
+            }),
         });
 
         if (response.status !== 200) {

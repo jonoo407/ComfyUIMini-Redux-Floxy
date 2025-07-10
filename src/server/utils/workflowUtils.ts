@@ -3,7 +3,7 @@ import fs from 'fs';
 import config from 'config';
 import logger from './logger';
 import paths from './paths';
-import { Workflow, WorkflowFileReadError, WorkflowWithMetadata } from '@shared/types/Workflow';
+import { Workflow, WorkflowFileReadError, WorkflowWithMetadata, WorkflowMetadata } from '@shared/types/Workflow';
 import { WorkflowInstance } from '@shared/classes/Workflow';
 
 export interface ServerWorkflowMetadata {
@@ -80,6 +80,83 @@ function checkIfObjectIsValidWorkflow(workflowJson: { [key: string]: any }): boo
 }
 
 /**
+ * Gets the metadata filename for a given workflow filename.
+ *
+ * @param {string} workflowFilename The workflow filename.
+ * @returns {string} The corresponding metadata filename.
+ */
+function getMetadataFilename(workflowFilename: string): string {
+    const baseName = path.basename(workflowFilename, '.json');
+    return `${baseName}.meta`;
+}
+
+/**
+ * Reads metadata from a .meta file.
+ *
+ * @param {string} workflowFilename The workflow filename.
+ * @returns {WorkflowMetadata | null} The metadata object or null if not found.
+ */
+function readWorkflowMetadata(workflowFilename: string): WorkflowMetadata | null {
+    try {
+        const metadataFilename = getMetadataFilename(workflowFilename);
+        const metadataPath = path.join(paths.workflows, metadataFilename);
+        
+        if (!fs.existsSync(metadataPath)) {
+            return null;
+        }
+
+        const metadataContents = fs.readFileSync(metadataPath, 'utf8');
+        const metadata = JSON.parse(metadataContents);
+        
+        return metadata;
+    } catch (error) {
+        logger.error(`Error reading metadata for ${workflowFilename}: ${error}`);
+        return null;
+    }
+}
+
+/**
+ * Writes metadata to a .meta file.
+ *
+ * @param {string} workflowFilename The workflow filename.
+ * @param {WorkflowMetadata} metadata The metadata to write.
+ * @returns {boolean} Whether the metadata was successfully written.
+ */
+function writeWorkflowMetadata(workflowFilename: string, metadata: WorkflowMetadata): boolean {
+    try {
+        const metadataFilename = getMetadataFilename(workflowFilename);
+        const metadataPath = path.join(paths.workflows, metadataFilename);
+        
+        fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), 'utf8');
+        return true;
+    } catch (error) {
+        logger.error(`Error writing metadata for ${workflowFilename}: ${error}`);
+        return false;
+    }
+}
+
+/**
+ * Deletes a .meta file.
+ *
+ * @param {string} workflowFilename The workflow filename.
+ * @returns {boolean} Whether the metadata file was successfully deleted.
+ */
+function deleteWorkflowMetadata(workflowFilename: string): boolean {
+    try {
+        const metadataFilename = getMetadataFilename(workflowFilename);
+        const metadataPath = path.join(paths.workflows, metadataFilename);
+        
+        if (fs.existsSync(metadataPath)) {
+            fs.unlinkSync(metadataPath);
+        }
+        return true;
+    } catch (error) {
+        logger.error(`Error deleting metadata for ${workflowFilename}: ${error}`);
+        return false;
+    }
+}
+
+/**
  * Attempts to get text metadata for all workflows in the server workflows folder.
  *
  * @param {string[]} jsonFileList List of JSON files in the workflows folder.
@@ -96,9 +173,33 @@ function getServerWorkflowMetadata(jsonFileList: string[]): ServerWorkflowMetada
             continue;
         }
 
-        const jsonMetadata = parsedJsonContents['_comfyuimini_meta'];
+        // Check for embedded metadata first (for backward compatibility)
+        const embeddedMetadata = parsedJsonContents['_comfyuimini_meta'];
+        
+        if (embeddedMetadata) {
+            // If embedded metadata exists, migrate it to .meta file
+            if (writeWorkflowMetadata(jsonFilename, embeddedMetadata)) {
+                logger.info(`Migrated embedded metadata to .meta file for ${jsonFilename}`);
+                
+                // Remove the embedded metadata from the original JSON file
+                const { _comfyuimini_meta, ...cleanWorkflow } = parsedJsonContents;
+                try {
+                    fs.writeFileSync(
+                        path.join(paths.workflows, jsonFilename),
+                        JSON.stringify(cleanWorkflow, null, 2),
+                        'utf8'
+                    );
+                    logger.info(`Cleaned embedded metadata from ${jsonFilename}`);
+                } catch (error) {
+                    logger.error(`Error cleaning embedded metadata from ${jsonFilename}: ${error}`);
+                }
+            }
+        }
 
-        if (!jsonMetadata) {
+        // Read metadata from .meta file
+        const metadata = readWorkflowMetadata(jsonFilename);
+
+        if (!metadata) {
             try {
                 generateWorkflowMetadataAndSaveToFile(parsedJsonContents, jsonFilename);
             } catch (error) {
@@ -106,19 +207,29 @@ function getServerWorkflowMetadata(jsonFileList: string[]): ServerWorkflowMetada
                 continue;
             }
 
-            accumulatedWorkflowMetadata[`[CONVERTED] ${jsonFilename}`] = {
-                title: jsonFilename,
-                filename: `[CONVERTED] ${jsonFilename}`,
-                description: 'A ComfyUI workflow.',
-            };
+            // Read the newly created metadata
+            const newMetadata = readWorkflowMetadata(jsonFilename);
+            if (newMetadata) {
+                accumulatedWorkflowMetadata[jsonFilename] = {
+                    title: newMetadata.title,
+                    filename: jsonFilename,
+                    description: newMetadata.description,
+                };
+            } else {
+                accumulatedWorkflowMetadata[jsonFilename] = {
+                    title: jsonFilename,
+                    filename: jsonFilename,
+                    description: 'A ComfyUI workflow.',
+                };
+            }
 
             continue;
         }
 
         accumulatedWorkflowMetadata[jsonFilename] = {
-            title: jsonMetadata.title,
+            title: metadata.title,
             filename: jsonFilename,
-            description: jsonMetadata.description,
+            description: metadata.description,
         };
     }
 
@@ -128,7 +239,7 @@ function getServerWorkflowMetadata(jsonFileList: string[]): ServerWorkflowMetada
 }
 
 /**
- * Auto-generates metadata for a workflow object and saves it to a new file with a [CONVERTED] prefix while keeping a backup of the original file.
+ * Auto-generates metadata for a workflow object and saves it to a .meta file.
  *
  * @param {Workflow} workflowObjectWithoutMetadata The workflow object without metadata.
  * @param {string} workflowFilename The filename of the workflow in the workflows folder.
@@ -143,22 +254,22 @@ function generateWorkflowMetadataAndSaveToFile(workflowObjectWithoutMetadata: Wo
         logger.warn(`${workflowFilename} was not recognized as a valid ComfyUI workflow: ${validateErrorMessage}`);
     }
 
-    const workflowWithGenMetadata = WorkflowInstance.generateMetadataForWorkflow(
+    const metadata = WorkflowInstance.generateMetadataForWorkflow(
         workflowObjectWithoutMetadata,
         workflowFilename,
         config.get('hide_all_input_on_auto_covert')
-    );
+    )._comfyuimini_meta;
 
     try {
-        writeConvertedWorkflowToFile(workflowWithGenMetadata, workflowFilename);
+        if (writeWorkflowMetadata(workflowFilename, metadata)) {
+            logger.info(
+                `Created auto-generated ComfyUIMini metadata for '${workflowFilename}', to disable this feature you can disable 'auto_convert_comfyui_workflows' in config.`
+            );
+        }
     } catch (error) {
-        logger.error(`Error when saving converted workflow to file: ${error}`);
+        logger.error(`Error when saving metadata to file: ${error}`);
         return;
     }
-
-    logger.info(
-        `Created auto-generated ComfyUIMini metadata for '${workflowFilename}', to disable this feature you can disable 'auto_convert_comfyui_workflows' in config.`
-    );
 }
 
 /**
@@ -168,11 +279,22 @@ function generateWorkflowMetadataAndSaveToFile(workflowObjectWithoutMetadata: Wo
  * @param {string} originalWorkflowFilename The original filename of the workflow.
  */
 function writeConvertedWorkflowToFile(workflowObject: object, originalWorkflowFilename: string) {
+    // Extract metadata from the workflow object
+    const workflowWithMetadata = workflowObject as WorkflowWithMetadata;
+    const metadata = workflowWithMetadata._comfyuimini_meta;
+    
+    // Remove metadata from the workflow object
+    const { _comfyuimini_meta, ...workflowWithoutMetadata } = workflowWithMetadata;
+    
+    // Save the clean workflow
     fs.writeFileSync(
         path.join(paths.workflows, `[CONVERTED] ${originalWorkflowFilename}`),
-        JSON.stringify(workflowObject, null, 2),
+        JSON.stringify(workflowWithoutMetadata, null, 2),
         'utf8'
     );
+
+    // Save the metadata to a .meta file
+    writeWorkflowMetadata(`[CONVERTED] ${originalWorkflowFilename}`, metadata);
 
     fs.renameSync(
         path.join(paths.workflows, originalWorkflowFilename),
@@ -191,7 +313,19 @@ function readServerWorkflow(filename: string): WorkflowWithMetadata | WorkflowFi
         const fileContents = fs.readFileSync(workflowFilePath);
         const workflowObject = JSON.parse(fileContents.toString());
 
-        return workflowObject;
+        // Read metadata from .meta file
+        const metadata = readWorkflowMetadata(filename);
+        
+        if (metadata) {
+            // Combine workflow with metadata
+            return {
+                ...workflowObject,
+                _comfyuimini_meta: metadata,
+            } as WorkflowWithMetadata;
+        } else {
+            // Return workflow without metadata (for backward compatibility)
+            return workflowObject;
+        }
     } catch (error: unknown) {
         if (error instanceof SyntaxError) {
             console.error('Error when reading workflow from file:', error);
@@ -219,8 +353,23 @@ function readServerWorkflow(filename: string): WorkflowWithMetadata | WorkflowFi
  */
 function writeServerWorkflow(filename: string, workflowObject: object): boolean {
     try {
-        fs.writeFileSync(path.join(paths.workflows, filename), JSON.stringify(workflowObject, null, 2), 'utf8');
-        return true;
+        const workflowWithMetadata = workflowObject as WorkflowWithMetadata;
+        
+        // Extract metadata if it exists
+        if (workflowWithMetadata._comfyuimini_meta) {
+            const metadata = workflowWithMetadata._comfyuimini_meta;
+            const { _comfyuimini_meta, ...workflowWithoutMetadata } = workflowWithMetadata;
+            
+            // Save the clean workflow
+            fs.writeFileSync(path.join(paths.workflows, filename), JSON.stringify(workflowWithoutMetadata, null, 2), 'utf8');
+            
+            // Save the metadata to a .meta file
+            return writeWorkflowMetadata(filename, metadata);
+        } else {
+            // Save workflow without metadata
+            fs.writeFileSync(path.join(paths.workflows, filename), JSON.stringify(workflowObject, null, 2), 'utf8');
+            return true;
+        }
     } catch (error) {
         console.error('Error when saving workflow to file:', error);
         return false;
@@ -230,6 +379,8 @@ function writeServerWorkflow(filename: string, workflowObject: object): boolean 
 function deleteServerWorkflow(filename: string): boolean {
     try {
         fs.unlinkSync(path.join(paths.workflows, filename));
+        // Also delete the corresponding .meta file
+        deleteWorkflowMetadata(filename);
         return true;
     } catch (error) {
         console.error('Error when deleting workflow from file:', error);
@@ -242,5 +393,8 @@ export {
     readServerWorkflow,
     writeServerWorkflow,
     deleteServerWorkflow,
+    readWorkflowMetadata,
+    writeWorkflowMetadata,
+    deleteWorkflowMetadata,
     fetchedWorkflowMetadata as serverWorkflowMetadata,
 };

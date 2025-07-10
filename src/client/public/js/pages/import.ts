@@ -2,6 +2,7 @@ import { WorkflowInstance } from '@shared/classes/Workflow.js';
 import { getAllWorkflows } from '../modules/getLocalWorkflow.js';
 import { WorkflowEditor } from '../modules/workflowEditor.js';
 import { openPopupWindow, PopupWindowType } from '../common/popupWindow.js';
+import { WorkflowWithMetadata } from '@shared/types/Workflow.js';
 
 /**
  *
@@ -88,10 +89,17 @@ saveToBrowserButton.addEventListener('click', () => {
         return alert('No file selected.');
     }
 
-    const newJson = workflowEditor.updateJsonWithUserInput();
+    const newWorkflow = workflowEditor.updateJsonWithUserInput();
+    const metadata = workflowEditor.getMetadata();
+
+    // Combine workflow with metadata for local storage
+    const workflowWithMetadata = {
+        ...newWorkflow,
+        _comfyuimini_meta: metadata,
+    } as WorkflowWithMetadata;
 
     const workflows = getAllWorkflows();
-    workflows.push(newJson);
+    workflows.push(workflowWithMetadata);
 
     localStorage.setItem('workflows', JSON.stringify(workflows));
 
@@ -99,13 +107,13 @@ saveToBrowserButton.addEventListener('click', () => {
 });
 
 downloadWorkflowButton.addEventListener('click', () => {
-    if (!isFileSelected) {
+    if (!isFileSelected()) {
         return alert('No file selected.');
     }
 
-    const newJson = workflowEditor.updateJsonWithUserInput();
+    const newWorkflow = workflowEditor.updateJsonWithUserInput();
 
-    const jsonString = JSON.stringify(newJson, null, 2);
+    const jsonString = JSON.stringify(newWorkflow, null, 2);
 
     const blob = new Blob([jsonString], { type: 'application/json' });
 

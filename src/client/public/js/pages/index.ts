@@ -119,7 +119,9 @@ function downloadLocalWorkflow(workflowTitle: string) {
         return;
     }
 
-    const workflowString = JSON.stringify(selectedWorkflow, null, 2);
+    // Extract the clean workflow without metadata
+    const { _comfyuimini_meta, ...cleanWorkflow } = selectedWorkflow;
+    const workflowString = JSON.stringify(cleanWorkflow, null, 2);
 
     const blob = new Blob([workflowString], { type: 'application/json' });
 
