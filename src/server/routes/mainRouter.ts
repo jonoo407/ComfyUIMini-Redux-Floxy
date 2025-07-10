@@ -12,6 +12,9 @@ import {
 import { getGalleryPageData } from '../utils/galleryUtils';
 import { RequestWithTheme } from '@shared/types/Requests';
 import loadAndRenderWorkflow from 'server/utils/loadAndRenderWorkflow';
+import fs from 'fs';
+import path from 'path';
+import config from 'config';
 
 const router = express.Router();
 
@@ -142,7 +145,55 @@ router.get('/gallery/*', (req: RequestWithTheme, res) => {
 
     const pageData = getGalleryPageData(page, subfolder, itemsPerPage);
 
-    res.render('pages/gallery', { theme: req.theme, ...pageData });
+    res.render('pages/gallery', { 
+        theme: req.theme, 
+        enableGalleryDelete: config.get('enable_gallery_delete'),
+        ...pageData 
+    });
+});
+
+router.delete('/gallery/delete', (req, res) => {
+    // Check if delete is enabled in config
+    if (!config.get('enable_gallery_delete')) {
+        res.status(403).json({ error: 'Gallery delete is disabled' });
+        return;
+    }
+
+    const { filename, subfolder } = req.body;
+
+    if (!filename || typeof filename !== 'string') {
+        res.status(400).json({ error: 'Filename is required' });
+        return;
+    }
+
+    const outputDir = config.get('output_dir');
+    if (!outputDir || typeof outputDir !== 'string') {
+        res.status(500).json({ error: 'Output directory not configured' });
+        return;
+    }
+
+    const filePath = path.join(outputDir, subfolder || '', filename);
+
+    // Security check: ensure the file is within the output directory
+    const resolvedFilePath = path.resolve(filePath);
+    const resolvedOutputDir = path.resolve(outputDir);
+    
+    if (!resolvedFilePath.startsWith(resolvedOutputDir)) {
+        res.status(403).json({ error: 'Access denied' });
+        return;
+    }
+
+    try {
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            res.json({ success: true, message: 'File deleted successfully' });
+        } else {
+            res.status(404).json({ error: 'File not found' });
+        }
+    } catch (error) {
+        console.error('Error deleting file:', error);
+        res.status(500).json({ error: 'Failed to delete file' });
+    }
 });
 
 router.get('/settings', (req: RequestWithTheme, res) => {

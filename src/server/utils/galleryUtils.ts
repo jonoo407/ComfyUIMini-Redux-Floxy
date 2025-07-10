@@ -117,6 +117,7 @@ function getGalleryPageData(page = 0, subfolder = '', itemsPerPage = 20) {
 
             return {
                 path: `/comfyui/image?filename=${file}&subfolder=${subfolder}&type=output`,
+                filename: file,
                 isVideo: isVideo,
                 time: mtime,
                 timeText: getRelativeTimeText(mtime),

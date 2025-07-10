@@ -12,7 +12,7 @@ A mobile-friendly WebUI to run ComfyUI workflows.
 -   🤖 Automatic workflow importing
 -   🖼️ Gallery of all generated images & videos
 -   📱 **PWA support** for standalone mobile app experience
--   🔄 Queue to track in progress generations
+-   🔄 **Queue** to track in progress generations
 
 ## Recent Improvements
 

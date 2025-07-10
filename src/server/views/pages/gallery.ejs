@@ -3,6 +3,7 @@
 <head>
     <%- include('../partials/head', { title: "Gallery", theme }) %>
     <link rel="stylesheet" href="/css/gallery.css">
+    <link rel="stylesheet" href="/css/partial/overlay.css">
     <script src="/js/pages/gallery.js" type="module" defer></script>
 </head>
 <body 
@@ -14,7 +15,9 @@
     <%- include('../partials/sidebar', { activePage: 'gallery' }) %>
     <div class="main-container">
         <div id="subfolders-list">
-            <a href="/gallery/" class="subfolder-link">(Default)</a>
+            <% if (currentSubfolder && currentSubfolder !== '') { %>
+                <a href="/gallery/" class="subfolder-link">(Default)</a>
+            <% } %>
             <% if (parentSubfolder !== null) { %>
                 <a href="/gallery/<%= parentSubfolder %>" class="subfolder-link">..</a>
             <% } %>
@@ -26,8 +29,11 @@
         </div>
         <div id="images-grid">
             <% for (const image of scanned.images) { %>
-                <div class="image-item">
+                <div class="image-item" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>">
                     <span><%= image.timeText %> </span>
+                    <% if (enableGalleryDelete) { %>
+                        <button class="delete-button" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>">🗑️</button>
+                    <% } %>
                     <% if (image.isVideo) { %>
                         <video src="<%= image.path %>" loop controls></video>
                     <% } else { %>

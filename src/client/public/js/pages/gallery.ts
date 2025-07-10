@@ -1,4 +1,5 @@
 import { openImageModal } from '../common/imageModal.js';
+import { openOverlay } from '../common/overlay.js';
 
 const pageInput = document.getElementById('page-input') as HTMLInputElement;
 
@@ -24,6 +25,86 @@ document.addEventListener('DOMContentLoaded', () => {
             const imageSrc = imageElement.src;
             const imageAlt = imageElement.alt || 'Gallery image';
             openImageModal(imageSrc, imageAlt);
+        });
+    });
+
+    // Add delete handlers for delete buttons
+    const deleteButtons = document.querySelectorAll('.delete-button');
+    
+    deleteButtons.forEach((button) => {
+        button.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const deleteButton = button as HTMLButtonElement;
+            const filename = deleteButton.dataset.filename;
+            const subfolder = deleteButton.dataset.subfolder;
+            
+            if (!filename) {
+                console.error('No filename found for delete button');
+                return;
+            }
+            
+            const imageItem = deleteButton.closest('.image-item') as HTMLElement;
+            if (imageItem) {
+                // Show generic overlay for confirmation
+                openOverlay({
+                    content: 'Are you sure you want to delete?',
+                    buttons: [
+                        {
+                            label: 'Cancel',
+                            className: 'overlay-cancel',
+                        },
+                        {
+                            label: 'Delete',
+                            className: 'overlay-confirm',
+                            onClick: async (close) => {
+                                try {
+                                    const response = await fetch('/gallery/delete', {
+                                        method: 'DELETE',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify({
+                                            filename: filename,
+                                            subfolder: subfolder || ''
+                                        })
+                                    });
+                                    const result = await response.json();
+                                    if (response.ok) {
+                                        // Remove the image item from the DOM
+                                        imageItem.remove();
+                                    } else {
+                                        // Show error overlay
+                                        openOverlay({
+                                            content: `<div class='overlay-error'>Error deleting file: ${result.error}</div>`,
+                                            buttons: [
+                                                {
+                                                    label: 'Dismiss',
+                                                    className: 'overlay-cancel',
+                                                }
+                                            ],
+                                            parent: imageItem
+                                        });
+                                    }
+                                } catch (error) {
+                                    openOverlay({
+                                        content: `<div class='overlay-error'>Failed to delete file. Please try again.</div>`,
+                                        buttons: [
+                                            {
+                                                label: 'Dismiss',
+                                                className: 'overlay-cancel',
+                                            }
+                                        ],
+                                        parent: imageItem
+                                    });
+                                }
+                            }
+                        }
+                    ],
+                    parent: imageItem
+                });
+            }
         });
     });
 });
