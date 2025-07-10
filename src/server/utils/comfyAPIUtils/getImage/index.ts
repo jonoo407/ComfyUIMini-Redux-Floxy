@@ -16,11 +16,23 @@ async function getImage(filename: string, subfolder: string, type: string) {
                 // Fallback if ComfyUI is unavailable
                 if (type === 'output') {
                     const readFile = fs.readFileSync(path.join(config.get('output_dir'), subfolder, filename));
+                    
+                    // Determine content type based on file extension
+                    const ext = path.extname(filename).toLowerCase();
+                    let contentType = 'image/png'; // default
+                    
+                    if (['.jpg', '.jpeg'].includes(ext)) {
+                        contentType = 'image/jpeg';
+                    } else if (['.png', '.ppm', '.bmp', '.pgm', '.tif', '.tiff', '.webp'].includes(ext)) {
+                        contentType = 'image/png';
+                    } else if (['.mp4'].includes(ext)) {
+                        contentType = 'video/mp4';
+                    }
 
                     return {
                         data: readFile,
                         headers: {
-                            'content-type': 'image/png',
+                            'content-type': contentType,
                             'content-length': readFile.length,
                         },
                     };

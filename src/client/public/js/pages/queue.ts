@@ -14,7 +14,6 @@ async function loadQueue() {
         }
         
         const queueData = await response.json();
-        console.log(queueData);
         await displayQueue(queueData);
     } catch (error) {
         console.error('Error loading queue:', error);
@@ -98,7 +97,6 @@ async function createQueueItemHtml(item: QueueItem, status: string = 'pending'):
             const response = await fetch(`/comfyui/history/${promptId}`);
             if (response.ok) {
                 const historyData: HistoryData = await response.json();
-                console.log(historyData);
                 
                 // Extract image and video URLs from the history response
                 const mediaItems: MediaItem[] = [];
