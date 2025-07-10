@@ -388,6 +388,14 @@ function deleteServerWorkflow(filename: string): boolean {
     }
 }
 
+/**
+ * Refreshes the workflow metadata cache by re-reading all workflow files.
+ * This should be called after workflows are modified to keep the cache in sync.
+ */
+function refreshWorkflowMetadataCache(): void {
+    serverWorkflowsCheck();
+}
+
 export {
     serverWorkflowsCheck,
     readServerWorkflow,
@@ -396,5 +404,6 @@ export {
     readWorkflowMetadata,
     writeWorkflowMetadata,
     deleteWorkflowMetadata,
+    refreshWorkflowMetadataCache,
     fetchedWorkflowMetadata as serverWorkflowMetadata,
 };

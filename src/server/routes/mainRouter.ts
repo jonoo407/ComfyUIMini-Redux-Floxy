@@ -7,6 +7,7 @@ import {
     serverWorkflowMetadata,
     deleteServerWorkflow,
     writeWorkflowMetadata,
+    refreshWorkflowMetadataCache,
 } from '../utils/workflowUtils';
 import { getGalleryPageData } from '../utils/galleryUtils';
 import { RequestWithTheme } from '@shared/types/Requests';
@@ -75,6 +76,7 @@ router.put('/edit/:fileName', (req, res) => {
     }
 
     if (workflowSaved && metadataSaved) {
+        refreshWorkflowMetadataCache();
         res.status(200).send('Successfully saved edited workflow.');
     } else {
         res.status(500).send('Internal Server Error. Check logs for more info.');
@@ -87,6 +89,7 @@ router.delete('/edit/:fileName', (req, res) => {
     const finishedSuccessfully = deleteServerWorkflow(workflowFilename);
 
     if (finishedSuccessfully) {
+        refreshWorkflowMetadataCache();
         res.status(200).send('Successfully deleted edited workflow.');
     } else {
         res.status(500).send('Internal Server Error. Check logs for more info.');
