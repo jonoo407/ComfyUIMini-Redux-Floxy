@@ -152,6 +152,61 @@ router.get('/gallery/*', (req: RequestWithTheme, res) => {
     });
 });
 
+// Route to serve individual gallery images
+router.get('/gallery/image/*', (req, res) => {
+    const fullPath = (req.params as any)[0] || '';
+    
+    if (!fullPath) {
+        res.status(400).json({ error: 'Image path is required' });
+        return;
+    }
+
+    const outputDir = config.get('output_dir');
+    if (!outputDir || typeof outputDir !== 'string') {
+        res.status(500).json({ error: 'Output directory not configured' });
+        return;
+    }
+
+    const filePath = path.join(outputDir, fullPath);
+
+    // Security check: ensure the file is within the output directory
+    const resolvedFilePath = path.resolve(filePath);
+    const resolvedOutputDir = path.resolve(outputDir);
+    
+    if (!resolvedFilePath.startsWith(resolvedOutputDir)) {
+        res.status(403).json({ error: 'Access denied' });
+        return;
+    }
+
+    try {
+        if (fs.existsSync(filePath)) {
+            // Get file extension to determine content type
+            const ext = path.extname(filePath).toLowerCase();
+            let contentType = 'application/octet-stream';
+            
+            if (['.jpg', '.jpeg'].includes(ext)) {
+                contentType = 'image/jpeg';
+            } else if (ext === '.png') {
+                contentType = 'image/png';
+            } else if (ext === '.gif') {
+                contentType = 'image/gif';
+            } else if (ext === '.webp') {
+                contentType = 'image/webp';
+            } else if (ext === '.bmp') {
+                contentType = 'image/bmp';
+            }
+            
+            res.setHeader('Content-Type', contentType);
+            res.sendFile(filePath);
+        } else {
+            res.status(404).json({ error: 'Image not found' });
+        }
+    } catch (error) {
+        console.error('Error serving gallery image:', error);
+        res.status(500).json({ error: 'Failed to serve image' });
+    }
+});
+
 router.delete('/gallery/delete', (req, res) => {
     // Check if delete is enabled in config
     if (!config.get('enable_gallery_delete')) {

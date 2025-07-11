@@ -105,4 +105,14 @@
 .overlay-error {
     color: #ff4444;
     font-weight: bold;
+}
+
+.overlay-loading {
+    color: var(--text-primary-color);
+    font-weight: bold;
+}
+
+.overlay-success {
+    color: #4CAF50;
+    font-weight: bold;
 } 

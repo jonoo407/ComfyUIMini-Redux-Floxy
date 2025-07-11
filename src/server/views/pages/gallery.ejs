@@ -4,6 +4,7 @@
     <%- include('../partials/head', { title: "Gallery", theme }) %>
     <link rel="stylesheet" href="/css/gallery.css">
     <link rel="stylesheet" href="/css/partial/overlay.css">
+    <link rel="stylesheet" href="/css/partial/icons.css">
     <script src="/js/pages/gallery.js" type="module" defer></script>
 </head>
 <body 
@@ -33,9 +34,16 @@
             <% for (const image of scanned.images) { %>
                 <div class="image-item" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>">
                     <span><%= image.timeText %> </span>
-                    <% if (enableGalleryDelete) { %>
-                        <button class="delete-button" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>">🗑️</button>
-                    <% } %>
+                    <div class="image-actions">
+                        <% if (!image.isVideo) { %>
+                        <button class="use-as-input-button" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>" title="Use as workflow input">
+                            📥
+                        </button>
+                        <% } %>
+                        <% if (enableGalleryDelete) { %>
+                            <button class="delete-button" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>">🗑️</button>
+                        <% } %>
+                    </div>
                     <% if (image.isVideo) { %>
                         <video src="<%= image.path %>" loop controls></video>
                     <% } else { %>
