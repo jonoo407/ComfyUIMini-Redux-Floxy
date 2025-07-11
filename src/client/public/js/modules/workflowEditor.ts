@@ -9,6 +9,7 @@ export class WorkflowEditor {
     workflowObject: WorkflowInstance | null;
     private inputCount: number;
     private comfyInputsInfo: ProcessedObjectInfo | null;
+    private currentFilter: 'all' | 'visible' | 'hidden' = 'all';
 
     /**
      *
@@ -202,6 +203,39 @@ export class WorkflowEditor {
     }
 
     /**
+     * Filters the inputs based on the current filter setting.
+     */
+    public filterInputs(filter: 'all' | 'visible' | 'hidden') {
+        this.currentFilter = filter;
+        
+        const inputItems = this.containerElem.querySelectorAll('.input-item');
+        
+        inputItems.forEach((item) => {
+            const isDisabled = item.classList.contains('disabled');
+            
+            switch (filter) {
+                case 'all':
+                    item.classList.remove('filtered-out');
+                    break;
+                case 'visible':
+                    if (isDisabled) {
+                        item.classList.add('filtered-out');
+                    } else {
+                        item.classList.remove('filtered-out');
+                    }
+                    break;
+                case 'hidden':
+                    if (isDisabled) {
+                        item.classList.remove('filtered-out');
+                    } else {
+                        item.classList.add('filtered-out');
+                    }
+                    break;
+            }
+        });
+    }
+
+    /**
      * Asserts that the workflow object is not null.
      */
     private ensureWorkflowObject(): asserts this is { workflowObject: WorkflowWithMetadata } {
@@ -317,15 +351,15 @@ export class WorkflowEditor {
 
         this.containerElem.innerHTML += html;
 
-        if (userInputOptions.disabled) {
-            const hideButtonElement = this.containerElem.querySelector(`#hide-button-${idPrefix}`) as HTMLElement;
+                    if (userInputOptions.disabled) {
+                const hideButtonElement = this.containerElem.querySelector(`#hide-button-${idPrefix}`) as HTMLElement;
 
-            if (!hideButtonElement) {
-                return;
+                if (!hideButtonElement) {
+                    return;
+                }
+
+                this.hideInput(hideButtonElement);
             }
-
-            WorkflowEditor.hideInput(hideButtonElement);
-        }
     }
 
     /**
@@ -407,8 +441,26 @@ export class WorkflowEditor {
             } else if (targetHasClass('move-arrow-down')) {
                 WorkflowEditor.moveDown(target.closest('.input-item'));
             } else if (targetHasClass('hide-input-button')) {
-                WorkflowEditor.hideInput(target);
+                this.hideInput(target);
             }
+        });
+
+        // Add filter button event listeners
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        filterButtons.forEach((button) => {
+            button.addEventListener('click', (e) => {
+                const target = e.target as HTMLElement;
+                const filter = target.getAttribute('data-filter') as 'all' | 'visible' | 'hidden';
+                
+                if (filter) {
+                    // Update active button
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    target.classList.add('active');
+                    
+                    // Apply filter
+                    this.filterInputs(filter);
+                }
+            });
         });
     }
 
@@ -459,7 +511,7 @@ export class WorkflowEditor {
      *
      * @param hideButtonElement The hide button element.
      */
-    private static hideInput(hideButtonElement: HTMLElement) {
+    private hideInput(hideButtonElement: HTMLElement) {
         if (hideButtonElement.classList.contains('hide')) {
             hideButtonElement.classList.add('eye');
             hideButtonElement.classList.remove('hide');
@@ -493,5 +545,8 @@ export class WorkflowEditor {
                 element.setAttribute('disabled', 'disabled');
             });
         }
+        
+        // Apply current filter after hiding/showing an input
+        this.filterInputs(this.currentFilter);
     }
 }

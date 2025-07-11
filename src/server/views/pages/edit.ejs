@@ -22,7 +22,14 @@
                 <label for="description-input">Description</label>
                 <textarea id="description-input" class="properties-input" placeholder="This is a workflow to..." disabled></textarea>
             </div>
-            <h2 class="category-title">Inputs</h2>
+            <div class="inputs-header">
+                <h2 class="category-title">Inputs</h2>
+                <div class="input-filters">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="visible">Visible</button>
+                    <button class="filter-btn" data-filter="hidden">Hidden</button>
+                </div>
+            </div>
             <div class="inputs-container"></div>
         </div>
     </div>
