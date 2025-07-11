@@ -79,10 +79,15 @@ export function renderSelectInput(inputOptions: SelectRenderConfig): string {
  */
 export function renderTextInput(inputOptions: TextRenderConfig): string {
     const id = `input-${inputOptions.node_id}-${inputOptions.input_name_in_node}`;
+    const isMultiline = inputOptions.multiline === true;
+    
+    const textareaClass = `workflow-input${isMultiline ? ' auto-expand' : ''}`;
+    const dataAttributes = isMultiline ? 'data-multiline="true"' : '';
+    
     return createInputContainer(
         id,
         inputOptions.title,
-        `<textarea id="${id}" class="workflow-input">${inputOptions.default}</textarea>`
+        `<textarea id="${id}" class="${textareaClass}" ${dataAttributes}>${inputOptions.default}</textarea>`
     );
 }
 

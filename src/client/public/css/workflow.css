@@ -79,6 +79,13 @@ textarea.workflow-input {
     min-height: 2.2rem;
 }
 
+/* Auto-expand textarea styles */
+textarea.workflow-input.auto-expand {
+    resize: none;
+    overflow: hidden;
+    transition: height 0.1s ease;
+}
+
 .inner-input-wrapper {
     display: flex;
     flex-direction: row;

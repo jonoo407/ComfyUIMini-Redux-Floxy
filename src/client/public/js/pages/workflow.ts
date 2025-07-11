@@ -115,6 +115,9 @@ function startEventListeners() {
     elements.allResolutionSelectors.forEach((resolutionSelector) =>
         resolutionSelectorEventListener(resolutionSelector)
     );
+
+    // Initialize auto-expand textareas
+    initializeAutoExpandTextareas();
 }
 
 function resolutionSelectorEventListener(resolutionSelector: HTMLElement) {
@@ -646,6 +649,35 @@ export function cancelRun() {
 
     fetch('/comfyui/interrupt');
     elements.cancelRunButton.classList.add('disabled');
+}
+
+/**
+ * Initializes auto-expand functionality for textareas with the auto-expand class.
+ * Makes textareas automatically resize to fit their content.
+ */
+function initializeAutoExpandTextareas() {
+    const autoExpandTextareas = document.querySelectorAll('textarea.workflow-input.auto-expand') as NodeListOf<HTMLTextAreaElement>;
+    
+    autoExpandTextareas.forEach(textarea => {
+        // Set initial height
+        adjustTextareaHeight(textarea);
+        
+        // Add event listeners for input and focus
+        textarea.addEventListener('input', () => adjustTextareaHeight(textarea));
+        textarea.addEventListener('focus', () => adjustTextareaHeight(textarea));
+    });
+}
+
+/**
+ * Adjusts the height of a textarea to fit its content.
+ * @param textarea The textarea element to adjust
+ */
+function adjustTextareaHeight(textarea: HTMLTextAreaElement) {
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto';
+    
+    // Set height to scrollHeight to fit content
+    textarea.style.height = `${textarea.scrollHeight}px`;
 }
 
 loadWorkflow().catch(error => {
