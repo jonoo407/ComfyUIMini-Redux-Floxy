@@ -10,6 +10,8 @@
 <% if (error) { %>
     data-error="<%= error %>"
 <% } %>
+    data-current-page="<%= pageInfo.currentPage %>"
+    data-total-pages="<%= pageInfo.totalPages %>"
 >
     <%- include('../partials/navbar') %>
     <%- include('../partials/sidebar', { activePage: 'gallery' }) %>

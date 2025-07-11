@@ -3,9 +3,7 @@ const OVERLAY_CONFIG = {
     HEADER_OFFSET_REM: 5, // 5rem = 80px at 16px base font
     BOTTOM_PADDING_REM: 3.125, // 3.125rem = 50px at 16px base font
     SCROLL_THRESHOLD: 1, // Only update if scroll changed by more than 1px
-    FADE_IN_DURATION: 200, // ms
-    FADE_OUT_DURATION: 150, // ms
-    TRANSITION_EASING: 'ease-in-out'
+    FADE_OUT_DURATION: 150 // ms - only this is still needed for timeout
 } as const;
 
 // Cached font size for rem to px conversion
@@ -194,24 +192,17 @@ export function openOverlay({ content, buttons = [], parent }: OverlayOptions) {
         
         if (shouldBeVisible) {
             // Fade in
-            contentWrapper.style.opacity = '0';
-            contentWrapper.style.display = 'flex';
-            contentWrapper.style.visibility = 'visible';
-            
-            requestAnimationFrame(() => {
-                contentWrapper.style.transition = `opacity ${OVERLAY_CONFIG.FADE_IN_DURATION}ms ${OVERLAY_CONFIG.TRANSITION_EASING}`;
-                contentWrapper.style.opacity = '1';
-            });
+            contentWrapper.classList.remove('fade-out', 'hidden');
+            contentWrapper.classList.add('fade-in');
             
             isCurrentlyVisible = true;
         } else {
             // Fade out
-            contentWrapper.style.transition = `opacity ${OVERLAY_CONFIG.FADE_OUT_DURATION}ms ${OVERLAY_CONFIG.TRANSITION_EASING}`;
-            contentWrapper.style.opacity = '0';
+            contentWrapper.classList.remove('fade-in');
+            contentWrapper.classList.add('fade-out');
             
             fadeTimeout = window.setTimeout(() => {
-                contentWrapper.style.display = 'none';
-                contentWrapper.style.visibility = 'hidden';
+                contentWrapper.classList.add('hidden');
                 fadeTimeout = null;
             }, OVERLAY_CONFIG.FADE_OUT_DURATION);
             
@@ -246,11 +237,10 @@ export function openOverlay({ content, buttons = [], parent }: OverlayOptions) {
             return; // Don't update position if not visible
         }
         
-        // Apply positioning
-        contentWrapper.style.position = 'fixed';
-        contentWrapper.style.transform = `translate(${position.left}px, ${position.top}px)`;
-        contentWrapper.style.top = '0';
-        contentWrapper.style.left = '0';
+        // Apply positioning using CSS custom properties
+        contentWrapper.style.setProperty('--overlay-x', `${position.left}px`);
+        contentWrapper.style.setProperty('--overlay-y', `${position.top}px`);
+        contentWrapper.classList.add('positioned');
     };
     
     // Event handlers

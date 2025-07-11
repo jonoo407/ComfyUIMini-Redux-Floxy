@@ -26,7 +26,30 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    /* No default positioning - let JavaScript handle everything */
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.2s ease-in-out;
+    top: 0;
+    left: 0;
+}
+
+.overlay-content-wrapper.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.overlay-content-wrapper.fade-in {
+    transition: opacity 0.2s ease-in-out;
+}
+
+.overlay-content-wrapper.fade-out {
+    transition: opacity 0.15s ease-in-out;
+}
+
+.overlay-content-wrapper.positioned {
+    /* This class indicates the element has been positioned by JavaScript */
+    /* The actual transform will be applied via CSS custom properties */
+    transform: translate(var(--overlay-x, 0), var(--overlay-y, 0));
 }
 
 .overlay-message {
