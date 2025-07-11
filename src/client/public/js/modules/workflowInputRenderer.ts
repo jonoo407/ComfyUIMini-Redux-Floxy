@@ -91,10 +91,21 @@ export function renderInput(
 
     switch (inputType) {
         case 'STRING': {
-            const textRenderOptions = {
+            const textRenderOptions: any = {
                 multiline: comfyInputInfo.multiline,
+                format: userInputMetadata.textfield_format || 'multiline',
                 ...baseRenderOptions,
             };
+
+            // If format is dropdown, parse the default value as comma-delimited options
+            if (textRenderOptions.format === 'dropdown' && defaultValue) {
+                const dropdownOptions = defaultValue.split(',').map(option => option.trim()).filter(option => option.length > 0);
+                if (dropdownOptions.length > 0) {
+                    textRenderOptions.dropdownOptions = dropdownOptions;
+                    // Use the first option as the default value for the dropdown
+                    textRenderOptions.default = dropdownOptions[0];
+                }
+            }
 
             return renderTextInput(textRenderOptions);
         }

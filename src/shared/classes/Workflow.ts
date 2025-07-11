@@ -64,6 +64,7 @@ export class WorkflowInstance {
             node_id: inputOption.node_id,
             input_name_in_node: inputOption.input_name_in_node,
             disabled: inputOption.disabled ?? false,
+            textfield_format: inputOption.textfield_format,
         }));
     }
 

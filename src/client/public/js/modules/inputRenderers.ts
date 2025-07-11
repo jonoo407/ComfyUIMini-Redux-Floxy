@@ -7,6 +7,8 @@ export interface BaseRenderConfig {
 
 export interface TextRenderConfig extends BaseRenderConfig {
     multiline?: boolean;
+    format?: 'single' | 'multiline' | 'dropdown';
+    dropdownOptions?: string[];
 }
 
 export interface NumberRenderConfig extends BaseRenderConfig {
@@ -79,16 +81,33 @@ export function renderSelectInput(inputOptions: SelectRenderConfig): string {
  */
 export function renderTextInput(inputOptions: TextRenderConfig): string {
     const id = `input-${inputOptions.node_id}-${inputOptions.input_name_in_node}`;
-    const isMultiline = inputOptions.multiline === true;
+    const format = inputOptions.format || 'multiline';
     
-    const textareaClass = `workflow-input${isMultiline ? ' auto-expand' : ''}`;
-    const dataAttributes = isMultiline ? 'data-multiline="true"' : '';
+    let inputHtml = '';
     
-    return createInputContainer(
-        id,
-        inputOptions.title,
-        `<textarea id="${id}" class="${textareaClass}" ${dataAttributes}>${inputOptions.default}</textarea>`
-    );
+    switch (format) {
+        case 'single':
+            inputHtml = `<input type="text" id="${id}" class="workflow-input" value="${inputOptions.default}">`;
+            break;
+        case 'dropdown':
+            if (inputOptions.dropdownOptions && inputOptions.dropdownOptions.length > 0) {
+                const optionsHtml = inputOptions.dropdownOptions
+                    .map(option => `<option value="${option}" ${inputOptions.default === option ? 'selected' : ''}>${option}</option>`)
+                    .join('');
+                inputHtml = `<select id="${id}" class="workflow-input">${optionsHtml}</select>`;
+            } else {
+                // Fallback to single line if no dropdown options
+                inputHtml = `<input type="text" id="${id}" class="workflow-input" value="${inputOptions.default}">`;
+            }
+            break;
+        case 'multiline':
+        default:
+            const textareaClass = `workflow-input auto-expand`;
+            inputHtml = `<textarea id="${id}" class="${textareaClass}" data-multiline="true">${inputOptions.default}</textarea>`;
+            break;
+    }
+    
+    return createInputContainer(id, inputOptions.title, inputHtml);
 }
 
 /**

@@ -5,6 +5,7 @@ export interface InputOption {
     input_name_in_node: string;
     title: string;
     disabled?: boolean;
+    textfield_format?: 'single' | 'multiline' | 'dropdown';
 }
 
 export interface WorkflowMetadata {

@@ -71,19 +71,9 @@
     background-color: var(--background-secondary-color);
 }
 
-textarea.workflow-input {
-    height: 5rem;
-    resize: vertical;
-    font-size: 1rem;
-    border-radius: 0.5rem 0.5rem 0 0.5rem;
-    min-height: 2.2rem;
-}
-
-/* Auto-expand textarea styles */
-textarea.workflow-input.auto-expand {
-    resize: none;
-    overflow: hidden;
-    transition: height 0.1s ease;
+/* Format selector styling */
+.workflow-input-format {
+    margin-bottom: 0.5rem;
 }
 
 .inner-input-wrapper {

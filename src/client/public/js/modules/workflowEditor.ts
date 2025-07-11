@@ -102,15 +102,23 @@ export class WorkflowEditor {
 
             inputOptions['title'] = inputTitleElement.value;
 
+            // Get format for STRING type inputs
+            const inputNode = this.workflowObject.getNode(inputNodeId);
+            const comfyInputType = this.comfyInputsInfo?.[inputNode.class_type]?.[inputNameInNode]?.type;
+            
+            if (comfyInputType === 'STRING') {
+                const formatSelectElement = inputContainer.querySelector('.workflow-input-format') as HTMLSelectElement;
+                if (formatSelectElement) {
+                    inputOptions['textfield_format'] = formatSelectElement.value as 'single' | 'multiline' | 'dropdown';
+                }
+            }
+
             const defaultValueElement = inputContainer.querySelector('.workflow-input-default') as HTMLInputElement;
 
             if (!defaultValueElement) {
                 alert(`Error while saving workflow, default value element not found for ${inputNameInNode}`);
                 continue;
             }
-
-            const inputNode = this.workflowObject.getNode(inputNodeId);
-            const comfyInputType = this.comfyInputsInfo?.[inputNode.class_type]?.[inputNameInNode]?.type;
 
             if (comfyInputType === 'BOOLEAN') {
                 // Save as boolean
@@ -168,6 +176,17 @@ export class WorkflowEditor {
             }
 
             inputOptions['title'] = inputTitleElement.value;
+
+            // Get format for STRING type inputs
+            const inputNode = this.workflowObject.getNode(inputNodeId);
+            const comfyInputType = this.comfyInputsInfo?.[inputNode.class_type]?.[inputNameInNode]?.type;
+            
+            if (comfyInputType === 'STRING') {
+                const formatSelectElement = inputContainer.querySelector('.workflow-input-format') as HTMLSelectElement;
+                if (formatSelectElement) {
+                    inputOptions['textfield_format'] = formatSelectElement.value as 'single' | 'multiline' | 'dropdown';
+                }
+            }
 
             inputOptionsList.push(inputOptions);
         }
@@ -287,7 +306,7 @@ export class WorkflowEditor {
                     </div>
                     <label for="${idPrefix}-title">Title</label>
                     <input type="text" id="${idPrefix}-title" placeholder="${inputTitle}" value="${inputTitle}" class="workflow-input workflow-input-title">
-                    ${WorkflowEditor.renderDefaultValueInput(comfyInputTypeMetadata, idPrefix, defaultValue)}
+                    ${WorkflowEditor.renderDefaultValueInput(comfyInputTypeMetadata, idPrefix, defaultValue, userInputOptions)}
                 </div>
                 <div class="move-arrows-container">
                     <span class="move-arrow-up">&#x25B2;</span>
@@ -320,30 +339,31 @@ export class WorkflowEditor {
     private static renderDefaultValueInput(
         inputConfig: NormalisedComfyInputInfo,
         idPrefix: string,
-        defaultValue: string
+        defaultValue: string,
+        userInputOptions?: InputOption
     ): string {
         const inputDefault = defaultValue ?? inputConfig.default ?? '';
 
-        let inputHTML = `<label for="${idPrefix}-default">Default</label>`;
+        let inputHTML = '';
 
         switch (inputConfig.type) {
             case 'ARRAY':
+                inputHTML += `<label for="${idPrefix}-default">Default</label>`;
                 inputHTML += `<select id="${idPrefix}-default" class="workflow-input workflow-input-default">`;
-
                 for (const option of inputConfig.list) {
                     inputHTML += `<option value="${option}" ${inputDefault == option ? 'selected' : ''}>${option}</option>`;
                 }
-
                 inputHTML += '</select>';
-
                 break;
             case 'INT':
             case 'FLOAT':
+                inputHTML += `<label for="${idPrefix}-default">Default</label>`;
                 inputHTML += `
                     <input type="number" id="${idPrefix}-default" placeholder="${inputDefault}" value="${inputDefault}" class="workflow-input workflow-input-default">
                 `;
                 break;
             case 'BOOLEAN':
+                inputHTML += `<label for="${idPrefix}-default">Default</label>`;
                 const checked = ['true', '1'].includes(String(inputDefault).toLowerCase()) ? 'checked' : '';
                 inputHTML += `
                     <input type="checkbox" id="${idPrefix}-default" class="workflow-input workflow-input-default" ${checked}>
@@ -351,7 +371,18 @@ export class WorkflowEditor {
                 break;
             case `STRING`:
             default:
-                inputHTML += `<input type="text" id="${idPrefix}-default" placeholder="${inputDefault}" value="${inputDefault}" class="workflow-input workflow-input-default">`;
+                // Add format selector for STRING inputs
+                const currentFormat = userInputOptions?.textfield_format || 'multiline';
+                inputHTML += `
+                    <label for="${idPrefix}-format">Form Field</label>
+                    <select id="${idPrefix}-format" class="workflow-input workflow-input-format">
+                        <option value="single" ${currentFormat === 'single' ? 'selected' : ''}>Single Line</option>
+                        <option value="multiline" ${currentFormat === 'multiline' ? 'selected' : ''}>Multi-line</option>
+                        <option value="dropdown" ${currentFormat === 'dropdown' ? 'selected' : ''}>Dropdown</option>
+                    </select>
+                    <label for="${idPrefix}-default">Default</label>
+                    <input type="text" id="${idPrefix}-default" placeholder="${inputDefault}" value="${inputDefault}" class="workflow-input workflow-input-default">
+                `;
                 break;
         }
 
