@@ -21,6 +21,18 @@ pageInput.addEventListener('keyup', (e) => {
 function updateNavigationButtons() {
     const paginationButtons = document.querySelectorAll('.pagination-button') as NodeListOf<HTMLAnchorElement>;
     
+    // Check if there are any images on the current page
+    const imageItems = document.querySelectorAll('.image-item');
+    const hasImages = imageItems.length > 0;
+    
+    // If there are no images, disable all navigation buttons
+    if (!hasImages) {
+        paginationButtons.forEach((button) => {
+            button.classList.add('disabled');
+        });
+        return;
+    }
+    
     paginationButtons.forEach((button) => {
         const href = button.getAttribute('href');
         if (!href) return;
