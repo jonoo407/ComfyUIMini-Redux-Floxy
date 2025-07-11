@@ -1,24 +1,42 @@
 import { InputOption, WorkflowWithMetadata } from '@shared/types/Workflow.js';
 import { BaseRenderConfig, renderNumberInput, renderSelectInput, renderTextInput, renderBooleanInput } from './inputRenderers.js';
 import { NormalisedComfyInputInfo, ProcessedObjectInfo } from '@shared/types/ComfyObjectInfo.js';
-import { getSavedInputValue } from './savedInputValues.js';
+import { getSavedInputs } from './savedInputValues.js';
 import { openPopupWindow, PopupWindowType } from '../common/popupWindow.js';
 
 const inputsContainer = document.querySelector('.inputs-container') as HTMLElement;
 
-const inputsInfoResponse = await fetch('/comfyui/inputsinfo');
+// Cache for inputs info to avoid repeated network requests
+let inputsInfoObject: ProcessedObjectInfo | null = null;
 
-if (!inputsInfoResponse.ok) {
-    openPopupWindow('Could not fetch inputs info', PopupWindowType.ERROR, inputsInfoResponse.statusText);
+async function getInputsInfo(): Promise<ProcessedObjectInfo> {
+    if (!inputsInfoObject) {
+        const inputsInfoResponse = await fetch('/comfyui/inputsinfo');
+        
+        if (!inputsInfoResponse.ok) {
+            openPopupWindow('Could not fetch inputs info', PopupWindowType.ERROR, inputsInfoResponse.statusText);
+            throw new Error(`Failed to fetch inputs info: ${inputsInfoResponse.statusText}`);
+        }
+        
+        inputsInfoObject = await inputsInfoResponse.json();
+    }
+    return inputsInfoObject!;
 }
 
-const inputsInfoObject: ProcessedObjectInfo = await inputsInfoResponse.json();
-
-export function renderInputs(workflowObject: WorkflowWithMetadata, workflowType: string, workflowIdentifier: string) {
+export async function renderInputs(workflowObject: WorkflowWithMetadata, workflowType: string, workflowIdentifier: string) {
     const workflowJson = workflowObject;
     const userInputsMetadata = workflowJson['_comfyuimini_meta'].input_options;
 
-    let renderedInputs = '';
+    // Get inputs info once
+    const inputsInfo = await getInputsInfo();
+    
+    // Batch localStorage access - get all saved values at once
+    const savedInputs = getSavedInputs();
+    const savedValues = savedInputs[workflowType]?.[workflowIdentifier] || {};
+
+    // Use array instead of string concatenation for better performance
+    const renderedInputsArray: string[] = [];
+    
     for (const userInputMetadata of userInputsMetadata) {
         if (userInputMetadata.disabled) {
             continue;
@@ -26,17 +44,12 @@ export function renderInputs(workflowObject: WorkflowWithMetadata, workflowType:
 
         const inputNode = workflowJson[userInputMetadata.node_id];
 
-        // Can be number or string, but not a list as we can only save editable inputs with the import page.
-        const savedDefaultValue = getSavedInputValue(
-            workflowType,
-            workflowIdentifier,
-            userInputMetadata.node_id,
-            userInputMetadata.input_name_in_node
-        );
+        // Use cached saved values instead of individual localStorage calls
+        const savedDefaultValue = savedValues[userInputMetadata.node_id]?.[userInputMetadata.input_name_in_node];
 
         const defaultValue = savedDefaultValue ?? inputNode.inputs[userInputMetadata.input_name_in_node].toString();
 
-        const comfyInputInfo = inputsInfoObject[inputNode.class_type][userInputMetadata.input_name_in_node];
+        const comfyInputInfo = inputsInfo[inputNode.class_type][userInputMetadata.input_name_in_node];
 
         if (!comfyInputInfo) {
             console.warn(`No input info found for ${userInputMetadata.input_name_in_node} in ${inputNode.class_type}`);
@@ -44,11 +57,22 @@ export function renderInputs(workflowObject: WorkflowWithMetadata, workflowType:
         }
 
         const renderedInput = renderInput(userInputMetadata, defaultValue, comfyInputInfo);
-
-        renderedInputs += renderedInput;
+        renderedInputsArray.push(renderedInput);
     }
 
-    inputsContainer.innerHTML = renderedInputs;
+    // Use DocumentFragment for efficient DOM manipulation
+    const fragment = document.createDocumentFragment();
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = renderedInputsArray.join('');
+    
+    // Move all child nodes to the fragment
+    while (tempDiv.firstChild) {
+        fragment.appendChild(tempDiv.firstChild);
+    }
+    
+    // Clear and append in one operation
+    inputsContainer.innerHTML = '';
+    inputsContainer.appendChild(fragment);
 }
 
 export function renderInput(

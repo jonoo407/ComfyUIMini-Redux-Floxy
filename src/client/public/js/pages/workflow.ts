@@ -69,11 +69,15 @@ const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
 ws.onopen = () => console.log('Connected to WebSocket client');
 
-function loadWorkflow() {
-    renderInputs(workflowObject, workflowType, workflowIdentifier);
-    loadPreviousOutputs();
-
-    startEventListeners();
+async function loadWorkflow() {
+    try {
+        await renderInputs(workflowObject, workflowType, workflowIdentifier);
+        loadPreviousOutputs();
+        startEventListeners();
+    } catch (error) {
+        console.error('Failed to load workflow:', error);
+        openPopupWindow('Failed to load workflow inputs', PopupWindowType.ERROR, error instanceof Error ? error.message : 'Unknown error');
+    }
 }
 
 /**
@@ -644,4 +648,6 @@ export function cancelRun() {
     elements.cancelRunButton.classList.add('disabled');
 }
 
-loadWorkflow();
+loadWorkflow().catch(error => {
+    console.error('Failed to initialize workflow:', error);
+});
