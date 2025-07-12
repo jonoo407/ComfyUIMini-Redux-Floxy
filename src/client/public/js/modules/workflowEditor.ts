@@ -497,8 +497,8 @@ export class WorkflowEditor {
                         <option value="slider" ${currentFormat === 'slider' ? 'selected' : ''}>Slider</option>
                     </select>
                 `;
-                let min = (userInputOptions as any)?.min ?? inputConfig.min ?? 0;
-                let max = (userInputOptions as any)?.max ?? inputConfig.max ?? 100;
+                const min = (userInputOptions as any)?.min ?? inputConfig.min ?? 0;
+                const max = (userInputOptions as any)?.max ?? inputConfig.max ?? 100;
                 const minMaxWrapperClass = currentFormat === 'slider' ? 'slider-minmax-wrapper' : 'slider-minmax-wrapper hidden';
                 inputHTML += `
                     <div class="${minMaxWrapperClass}">

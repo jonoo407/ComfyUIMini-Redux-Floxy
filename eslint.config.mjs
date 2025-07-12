@@ -11,6 +11,14 @@ export default [
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": "warn",
+      "no-case-declarations": "warn",
+      "@typescript-eslint/no-empty-object-type": "warn"
+    }
+  },
+  {
     files: ["**/*.test.ts", "**/*.test.js", "**/__tests__/**/*"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",

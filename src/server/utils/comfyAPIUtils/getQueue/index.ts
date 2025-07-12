@@ -3,7 +3,7 @@ import logger from "server/utils/logger";
 
 // Server-side storage for tracking completed queue items
 let previousQueueItems = new Map();
-let completedItems = new Map();
+const completedItems = new Map();
 
 async function getQueue() {
     const response = await comfyUIAxios.get('/queue');

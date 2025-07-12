@@ -204,11 +204,11 @@ describe('WorkflowEditor', () => {
 
     it('should remove min/max fields when switching from slider to type', async () => {
       let stepsInput = containerElem.querySelector('[data-node-input-name="steps"]');
-      let formatSelect = stepsInput?.querySelector('.workflow-input-format') as HTMLSelectElement;
+      const formatSelect = stepsInput?.querySelector('.workflow-input-format') as HTMLSelectElement;
 
       // Verify min/max fields exist initially (slider format)
-      let minInput = stepsInput?.querySelector('.workflow-input-min') as HTMLInputElement;
-      let maxInput = stepsInput?.querySelector('.workflow-input-max') as HTMLInputElement;
+      const minInput = stepsInput?.querySelector('.workflow-input-min') as HTMLInputElement;
+      const maxInput = stepsInput?.querySelector('.workflow-input-max') as HTMLInputElement;
       expect(minInput).toBeTruthy();
       expect(maxInput).toBeTruthy();
 
@@ -226,11 +226,11 @@ describe('WorkflowEditor', () => {
       expect(formatSelectAfter?.value).toBe('type');
       
       // Debug output
-      // eslint-disable-next-line no-console
+       
       console.log('After switch to type - Format value:', formatSelectAfter?.value);
-      // eslint-disable-next-line no-console
+       
       console.log('After switch to type - MinMaxWrapper HTML:', minMaxWrapper?.outerHTML);
-      // eslint-disable-next-line no-console
+       
       console.log('After switch to type - Hidden class present:', minMaxWrapper?.classList.contains('hidden'));
       expect(minMaxWrapper).toBeTruthy();
       expect(minMaxWrapper.classList.contains('hidden')).toBe(true);
@@ -261,7 +261,7 @@ describe('WorkflowEditor', () => {
       stepsInput = containerElem.querySelector('[data-node-input-name="steps"]');
       minMaxWrapper = stepsInput?.querySelector('.slider-minmax-wrapper') as HTMLDivElement;
       // Debug output
-      // eslint-disable-next-line no-console
+       
       console.log('After switch to slider:', minMaxWrapper?.outerHTML);
       expect(minMaxWrapper).toBeTruthy();
       expect(minMaxWrapper.classList.contains('hidden')).toBe(false);
