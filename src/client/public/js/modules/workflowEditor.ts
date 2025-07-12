@@ -427,11 +427,50 @@ export class WorkflowEditor {
 
         const idPrefix = `${nodeId}-${inputNameInNode}`;
 
-        const html = `
+        const html = WorkflowEditor.renderInputItemHTML(
+            nodeId,
+            inputNameInNode,
+            this.inputCount,
+            inputTypeText,
+            inputTitle,
+            idPrefix,
+            comfyInputTypeMetadata,
+            defaultValue,
+            userInputOptions
+        );
+
+        this.containerElem.innerHTML += html;
+
+        if (userInputOptions.disabled) {
+            const hideButtonElement = this.containerElem.querySelector(`#hide-button-${idPrefix}`) as HTMLElement;
+
+            if (!hideButtonElement) {
+                return;
+            }
+
+                this.hideInput(hideButtonElement);
+        }
+    }
+
+    /**
+     * Renders the main input item HTML structure.
+     */
+    private static renderInputItemHTML(
+        nodeId: string,
+        inputNameInNode: string,
+        inputCount: number,
+        inputTypeText: string,
+        inputTitle: string,
+        idPrefix: string,
+        comfyInputTypeMetadata: NormalisedComfyInputInfo,
+        defaultValue: string,
+        userInputOptions: InputOption
+    ): string {
+        return `
             <div class="input-item" data-node-id="${nodeId}" data-node-input-name="${inputNameInNode}">
                 <div class="options-container">
                     <div class="input-top-container">
-                        <span class="input-counter">${this.inputCount}.</span>
+                        <span class="input-counter">${inputCount}.</span>
                         <div class="icon eye hide-input-button" id="hide-button-${idPrefix}"></div>
                         <span class="input-type-text">${inputTypeText}</span>
                     </div>
@@ -445,18 +484,6 @@ export class WorkflowEditor {
                 </div>
             </div>
         `;
-
-        this.containerElem.innerHTML += html;
-
-        if (userInputOptions.disabled) {
-            const hideButtonElement = this.containerElem.querySelector(`#hide-button-${idPrefix}`) as HTMLElement;
-
-            if (!hideButtonElement) {
-                return;
-            }
-
-                this.hideInput(hideButtonElement);
-        }
     }
 
     /**
@@ -475,74 +502,102 @@ export class WorkflowEditor {
     ): string {
         const inputDefault = defaultValue ?? inputConfig.default ?? '';
 
-        let inputHTML = '';
-
         switch (inputConfig.type) {
             case 'ARRAY':
-                inputHTML += `<label for="${idPrefix}-default">Default</label>`;
-                inputHTML += `<select id="${idPrefix}-default" class="workflow-input workflow-input-default">`;
-                for (const option of inputConfig.list) {
-                    inputHTML += `<option value="${option}" ${inputDefault == option ? 'selected' : ''}>${option}</option>`;
-                }
-                inputHTML += '</select>';
-                break;
+                return WorkflowEditor.renderArrayInputHTML(idPrefix, inputConfig.list, inputDefault);
             case 'INT':
-            case 'FLOAT': {
-                // Add format selector for INT/FLOAT inputs
-                const currentFormat = userInputOptions?.numberfield_format || 'type';
-                inputHTML += `
-                    <label for="${idPrefix}-format">Form Field</label>
-                    <select id="${idPrefix}-format" class="workflow-input workflow-input-format" data-numberfield-format="true">
-                        <option value="type" ${currentFormat === 'type' ? 'selected' : ''}>Type</option>
-                        <option value="slider" ${currentFormat === 'slider' ? 'selected' : ''}>Slider</option>
-                    </select>
-                `;
-                const min = (userInputOptions as any)?.min ?? inputConfig.min ?? 0;
-                const max = (userInputOptions as any)?.max ?? inputConfig.max ?? 100;
-                const minMaxWrapperClass = currentFormat === 'slider' ? 'slider-minmax-wrapper' : 'slider-minmax-wrapper hidden';
-                inputHTML += `
-                    <div class="${minMaxWrapperClass}">
-                        <label for="${idPrefix}-min">Min</label>
-                        <input type="number" id="${idPrefix}-min" class="workflow-input workflow-input-min" value="${min}">
-                        <label for="${idPrefix}-default">Default</label>
-                        <input type="number" id="${idPrefix}-default" placeholder="${inputDefault}" value="${inputDefault}" class="workflow-input workflow-input-default">
-                        <label for="${idPrefix}-max">Max</label>
-                        <input type="number" id="${idPrefix}-max" class="workflow-input workflow-input-max" value="${max}">
-                    </div>
-                `;
-                if (currentFormat !== 'slider') {
-                    inputHTML += `
-                        <label for="${idPrefix}-default">Default</label>
-                        <input type="number" id="${idPrefix}-default" placeholder="${inputDefault}" value="${inputDefault}" class="workflow-input workflow-input-default">
-                    `;
-                }
-                break;
-            }
+            case 'FLOAT':
+                return WorkflowEditor.renderNumberInputHTML(idPrefix, inputDefault, userInputOptions, inputConfig);
             case 'BOOLEAN':
-                inputHTML += `<label for="${idPrefix}-default">Default</label>`;
-                const checked = ['true', '1'].includes(String(inputDefault).toLowerCase()) ? 'checked' : '';
-                inputHTML += `
-                    <input type="checkbox" id="${idPrefix}-default" class="workflow-input workflow-input-default" ${checked}>
-                `;
-                break;
-            case `STRING`:
+                return WorkflowEditor.renderBooleanInputHTML(idPrefix, inputDefault);
+            case 'STRING':
             default:
-                // Add format selector for STRING inputs
-                const currentFormat = userInputOptions?.textfield_format || 'multiline';
-                inputHTML += `
-                    <label for="${idPrefix}-format">Form Field</label>
-                    <select id="${idPrefix}-format" class="workflow-input workflow-input-format">
-                        <option value="single" ${currentFormat === 'single' ? 'selected' : ''}>Single Line</option>
-                        <option value="multiline" ${currentFormat === 'multiline' ? 'selected' : ''}>Multi-line</option>
-                        <option value="dropdown" ${currentFormat === 'dropdown' ? 'selected' : ''}>Dropdown</option>
-                    </select>
-                    <label for="${idPrefix}-default">Default</label>
-                    <input type="text" id="${idPrefix}-default" placeholder="${inputDefault}" value="${inputDefault}" class="workflow-input workflow-input-default">
-                `;
-                break;
+                return WorkflowEditor.renderStringInputHTML(idPrefix, inputDefault, userInputOptions);
+        }
+    }
+
+    /**
+     * Renders HTML for ARRAY type inputs.
+     */
+    private static renderArrayInputHTML(idPrefix: string, list: any[], inputDefault: string): string {
+        let html = `<label for="${idPrefix}-default">Default</label>`;
+        html += `<select id="${idPrefix}-default" class="workflow-input workflow-input-default">`;
+        for (const option of list) {
+            html += `<option value="${option}" ${inputDefault == option ? 'selected' : ''}>${option}</option>`;
+        }
+        html += '</select>';
+        return html;
+    }
+
+    /**
+     * Renders HTML for INT/FLOAT type inputs.
+     */
+    private static renderNumberInputHTML(
+        idPrefix: string, 
+        inputDefault: string, 
+        userInputOptions?: InputOption, 
+        inputConfig?: NormalisedComfyInputInfo
+    ): string {
+        const currentFormat = userInputOptions?.numberfield_format || 'type';
+        const min = (userInputOptions as any)?.min ?? inputConfig?.min ?? 0;
+        const max = (userInputOptions as any)?.max ?? inputConfig?.max ?? 100;
+        
+        let html = `
+            <label for="${idPrefix}-format">Form Field</label>
+            <select id="${idPrefix}-format" class="workflow-input workflow-input-format" data-numberfield-format="true">
+                <option value="type" ${currentFormat === 'type' ? 'selected' : ''}>Type</option>
+                <option value="slider" ${currentFormat === 'slider' ? 'selected' : ''}>Slider</option>
+            </select>
+        `;
+
+        const minMaxWrapperClass = currentFormat === 'slider' ? 'slider-minmax-wrapper' : 'slider-minmax-wrapper hidden';
+        html += `
+            <div class="${minMaxWrapperClass}">
+                <label for="${idPrefix}-min">Min</label>
+                <input type="number" id="${idPrefix}-min" class="workflow-input workflow-input-min" value="${min}">
+                <label for="${idPrefix}-default">Default</label>
+                <input type="number" id="${idPrefix}-default" placeholder="${inputDefault}" value="${inputDefault}" class="workflow-input workflow-input-default">
+                <label for="${idPrefix}-max">Max</label>
+                <input type="number" id="${idPrefix}-max" class="workflow-input workflow-input-max" value="${max}">
+            </div>
+        `;
+
+        if (currentFormat !== 'slider') {
+            html += `
+                <label for="${idPrefix}-default">Default</label>
+                <input type="number" id="${idPrefix}-default" placeholder="${inputDefault}" value="${inputDefault}" class="workflow-input workflow-input-default">
+            `;
         }
 
-        return inputHTML;
+        return html;
+    }
+
+    /**
+     * Renders HTML for BOOLEAN type inputs.
+     */
+    private static renderBooleanInputHTML(idPrefix: string, inputDefault: string): string {
+        const checked = ['true', '1'].includes(String(inputDefault).toLowerCase()) ? 'checked' : '';
+        return `
+            <label for="${idPrefix}-default">Default</label>
+            <input type="checkbox" id="${idPrefix}-default" class="workflow-input workflow-input-default" ${checked}>
+        `;
+    }
+
+    /**
+     * Renders HTML for STRING type inputs.
+     */
+    private static renderStringInputHTML(idPrefix: string, inputDefault: string, userInputOptions?: InputOption): string {
+        const currentFormat = userInputOptions?.textfield_format || 'multiline';
+        return `
+            <label for="${idPrefix}-format">Form Field</label>
+            <select id="${idPrefix}-format" class="workflow-input workflow-input-format">
+                <option value="single" ${currentFormat === 'single' ? 'selected' : ''}>Single Line</option>
+                <option value="multiline" ${currentFormat === 'multiline' ? 'selected' : ''}>Multi-line</option>
+                <option value="dropdown" ${currentFormat === 'dropdown' ? 'selected' : ''}>Dropdown</option>
+            </select>
+            <label for="${idPrefix}-default">Default</label>
+            <input type="text" id="${idPrefix}-default" placeholder="${inputDefault}" value="${inputDefault}" class="workflow-input workflow-input-default">
+        `;
     }
 
     /**
@@ -642,24 +697,17 @@ export class WorkflowEditor {
                 const isDisabled = inputItem.classList.contains('disabled');
                 const disabledClass = isDisabled ? ' disabled' : '';
                 
-                const html = `
-                    <div class="input-item" data-node-id="${nodeId}" data-node-input-name="${inputName}"${disabledClass}>
-                        <div class="options-container">
-                            <div class="input-top-container">
-                                <span class="input-counter">${counterText}</span>
-                                <div class="icon eye hide-input-button" id="hide-button-${idPrefix}"></div>
-                                <span class="input-type-text">${inputTypeText}</span>
-                            </div>
-                            <label for="${idPrefix}-title">Title</label>
-                            <input type="text" id="${idPrefix}-title" placeholder="${inputTitle}" value="${inputTitle}" class="workflow-input workflow-input-title">
-                            ${WorkflowEditor.renderDefaultValueInput(comfyInputsInfo, idPrefix, defaultValue, inputOption)}
-                        </div>
-                        <div class="move-arrows-container">
-                            <span class="move-arrow-up">&#x25B2;</span>
-                            <span class="move-arrow-down">&#x25BC;</span>
-                        </div>
-                    </div>
-                `;
+                const html = WorkflowEditor.renderInputItemHTML(
+                    nodeId,
+                    inputName,
+                    parseInt(counterText || '1'),
+                    inputTypeText,
+                    inputTitle,
+                    idPrefix,
+                    comfyInputsInfo,
+                    defaultValue,
+                    inputOption
+                ).replace('class="input-item"', `class="input-item"${disabledClass}`);
 
                 // Replace the old input item with the new one at the same position
                 const container = this.containerElem;
