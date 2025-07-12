@@ -10,6 +10,8 @@
         "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
         "dev:server": "tsx watch --tsconfig src/server/tsconfig.json src/server/index.ts",
         "dev:client": "tsc -w -p src/client/tsconfig.json",
+        "test": "jest",
+        "test:watch": "jest --watch",
         "lint": "eslint .",
         "format": "prettier --write ."
     },
@@ -44,10 +46,18 @@
     "description": "",
     "devDependencies": {
         "@eslint/js": "^9.16.0",
+        "@testing-library/dom": "^10.4.0",
+        "@testing-library/jest-dom": "^6.6.3",
+        "@types/jest": "^30.0.0",
+        "@types/jsdom": "^21.1.7",
         "concurrently": "^9.1.0",
         "eslint": "^9.16.0",
         "globals": "^15.13.0",
+        "jest": "^30.0.4",
+        "jest-environment-jsdom": "^30.0.4",
+        "jsdom": "^26.1.0",
         "prettier": "^3.3.3",
+        "ts-jest": "^29.4.0",
         "typescript-eslint": "^8.18.0"
     }
 }

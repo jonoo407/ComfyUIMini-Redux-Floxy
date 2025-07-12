@@ -79,6 +79,7 @@
 .inner-input-wrapper {
     display: flex;
     flex-direction: row;
+    align-items: center; /* Ensure vertical alignment of children */
 }
 
 .workflow-input.has-additional-button {
@@ -487,4 +488,82 @@
 .resolution-dimensions {
     font-size: 0.8rem;
     color: var(--text-secondary-color);
+}
+
+/* Slider input styling */
+.workflow-input-container .slider-input {
+    flex: 3 1 0;
+    max-width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 2.2rem; /* Container height for alignment */
+    background: transparent;
+    outline: none;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+}
+
+.workflow-input-container .slider-input::-webkit-slider-runnable-track {
+    height: 0.5rem;
+    background: var(--background-secondary-color);
+    border-radius: 0.25rem;
+}
+
+.workflow-input-container .slider-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-top: -0.5rem; /* Center thumb on slim track */
+    background: var(--accent-gradient);
+    border-radius: 50%;
+    border: 2px solid var(--background-primary-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+    cursor: pointer;
+}
+
+.workflow-input-container .slider-input::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.workflow-input-container .slider-input::-webkit-slider-thumb:active {
+    transform: scale(0.95);
+}
+
+/* Firefox slider thumb styling */
+.workflow-input-container .slider-input::-moz-range-thumb {
+    width: 1.5rem;
+    height: 1.5rem;
+    background: var(--accent-gradient);
+    border-radius: 50%;
+    border: 2px solid var(--background-primary-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+    cursor: pointer;
+}
+
+.workflow-input-container .slider-input::-moz-range-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.workflow-input-container .slider-input::-moz-range-thumb:active {
+    transform: scale(0.95);
+}
+
+/* Slider track styling for Firefox */
+.workflow-input-container .slider-input::-moz-range-track {
+    height: 0.5rem;
+    background: var(--background-secondary-color);
+    border-radius: 0.25rem;
+    border: none;
+}
+
+.workflow-input-container .slider-value-input {
+    max-width: 25%;
+    min-width: 4rem;
+    text-align: center;
+    margin-left: 0.5rem;
 }

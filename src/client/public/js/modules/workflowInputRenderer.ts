@@ -114,8 +114,9 @@ export function renderInput(
         case 'FLOAT': {
             const numberRenderOptions = {
                 step: comfyInputInfo.step,
-                min: comfyInputInfo.min,
-                max: comfyInputInfo.max,
+                min: userInputMetadata.min ?? comfyInputInfo.min,
+                max: userInputMetadata.max ?? comfyInputInfo.max,
+                numberfield_format: userInputMetadata.numberfield_format,
                 ...baseRenderOptions,
             };
 

@@ -6,6 +6,9 @@ export interface InputOption {
     title: string;
     disabled?: boolean;
     textfield_format?: 'single' | 'multiline' | 'dropdown';
+    numberfield_format?: 'type' | 'slider';
+    min?: number;
+    max?: number;
 }
 
 export interface WorkflowMetadata {

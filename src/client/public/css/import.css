@@ -288,3 +288,34 @@
 input[type="checkbox"] {
     height: 2rem;
 }
+
+/* Style for slider min/max fields in workflow editor */
+.slider-minmax-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+    flex-wrap: nowrap;
+}
+.slider-minmax-wrapper.hidden {
+    display: none;
+}
+.slider-minmax-wrapper label {
+    margin: 0;
+    padding: 0;
+    font-size: 0.95em;
+    color: var(--text-secondary-color);
+    white-space: nowrap;
+}
+.slider-minmax-wrapper input[type="number"] {
+    width: 5rem;
+    min-width: 0;
+    background-color: var(--background-tertiary-color);
+    color: var(--text-secondary-color);
+    border: 0;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    margin: 0;
+    box-sizing: border-box;
+}

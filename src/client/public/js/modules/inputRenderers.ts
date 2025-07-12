@@ -25,7 +25,7 @@ export interface SelectRenderConfig extends BaseRenderConfig {
 export interface BooleanRenderConfig extends BaseRenderConfig {}
 
 const createInputContainer = (id: string, title: string, inputHtml: string, additionalClass?: string): string => `
-    <div class="workflow-input-container ${additionalClass}">
+    <div class="workflow-input-container${additionalClass ? ' ' + additionalClass : ''}">
         <label for="${id}">${title}</label>
         <div class="inner-input-wrapper">
             ${inputHtml}
@@ -115,7 +115,7 @@ export function renderTextInput(inputOptions: TextRenderConfig): string {
  * @param {NumberRenderConfig} inputOptions Options for the number input.
  * @returns {string}
  */
-export function renderNumberInput(inputOptions: NumberRenderConfig): string {
+export function renderNumberInput(inputOptions: NumberRenderConfig & { numberfield_format?: 'type' | 'slider' }): string {
     const showRandomiseToggle = inputOptions.input_name_in_node === 'seed';
     const showResolutionSelector =
         inputOptions.input_name_in_node === 'width' || inputOptions.input_name_in_node === 'height';
@@ -123,7 +123,7 @@ export function renderNumberInput(inputOptions: NumberRenderConfig): string {
     const hasAdditionalButton = showRandomiseToggle || showResolutionSelector;
 
     const id = `input-${inputOptions.node_id}-${inputOptions.input_name_in_node}`;
-    const { default: defaultValue, step, min, max } = inputOptions;
+    const { default: defaultValue, step, min, max, numberfield_format } = inputOptions;
 
     const randomiseToggleHTML = `
     <div class="randomise-buttons-container additional-input-buttons-container" data-linked-input-id="${id}">
@@ -138,20 +138,54 @@ export function renderNumberInput(inputOptions: NumberRenderConfig): string {
         </span> 
     </div>`;
 
+    let inputHtml = '';
+    if (numberfield_format === 'slider') {
+        const sliderMin = min ?? 0;
+        const sliderMax = max ?? 100;
+        const sliderStep = step !== undefined ? step : 1;
+        const sliderValue = defaultValue !== undefined ? defaultValue : sliderMin;
+        inputHtml = `
+            <input 
+                id="${id}-slider" 
+                type="range" 
+                min="${sliderMin}" 
+                max="${sliderMax}" 
+                step="${sliderStep}" 
+                value="${sliderValue}" 
+                class="workflow-input slider-input"
+                oninput="document.getElementById('${id}-value').value = this.value"
+            >
+            <input 
+                id="${id}-value" 
+                type="number" 
+                min="${sliderMin}" 
+                max="${sliderMax}" 
+                step="${sliderStep}" 
+                value="${sliderValue}" 
+                class="workflow-input slider-value-input"
+                oninput="document.getElementById('${id}-slider').value = this.value"
+            >
+        `;
+    } else {
+        inputHtml = `
+            <input 
+                id="${id}" 
+                type="number" 
+                placeholder="${defaultValue}" 
+                class="workflow-input ${hasAdditionalButton ? 'has-additional-button' : ''}" 
+                value="${defaultValue}"
+                ${step !== undefined ? `step="${step}"` : ''}
+                ${min !== undefined ? `min="${min}"` : ''} 
+                ${max !== undefined ? `max="${max}"` : ''}
+            >
+        `;
+    }
+
     return createInputContainer(
         id,
         inputOptions.title,
         `
-        <input 
-            id="${id}" 
-            type="number" 
-            placeholder="${defaultValue}" 
-            class="workflow-input ${hasAdditionalButton ? 'has-additional-button' : ''}" 
-            value="${defaultValue}"
-            ${step !== undefined ? `step="${step}"` : ''}
-            ${min !== undefined ? `min="${min}"` : ''} 
-            ${max !== undefined ? `max="${max}"` : ''}
-        >
+        ${inputHtml}
         ${showRandomiseToggle ? randomiseToggleHTML : ''}
         ${showResolutionSelector ? resolutionSelectorHTML : ''}
     `

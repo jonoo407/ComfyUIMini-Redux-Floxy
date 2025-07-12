@@ -68,7 +68,22 @@ export class WorkflowEditor {
     public updateJsonWithUserInput(): Workflow {
         this.ensureWorkflowObject();
 
-        const inputOptionsList = [];
+        // Start with the existing metadata structure to avoid duplicates
+        const existingInputOptions = this.workflowObject.metadata.input_options;
+        const inputOptionsMap = new Map<string, InputOption>();
+        
+        // Create a map of existing options using node_id + input_name_in_node as key
+        // If there are duplicates, keep only the first one
+        for (const option of existingInputOptions) {
+            const key = `${option.node_id}-${option.input_name_in_node}`;
+            if (!inputOptionsMap.has(key)) {
+                inputOptionsMap.set(key, { ...option });
+            }
+        }
+
+        // Build the final array based on DOM order to preserve user's custom ordering
+        const inputOptionsList: InputOption[] = [];
+        const processedKeys = new Set<string>();
 
         const modifiedWorkflow = structuredClone(this.workflowObject.workflow);
 
@@ -84,7 +99,17 @@ export class WorkflowEditor {
                 continue;
             }
 
-            const inputOptions: InputOption = {} as InputOption;
+            const key = `${inputNodeId}-${inputNameInNode}`;
+            
+            // Skip if we've already processed this input (prevent duplicates)
+            if (processedKeys.has(key)) {
+                continue;
+            }
+            processedKeys.add(key);
+            
+            const inputOptions = inputOptionsMap.get(key) || {} as InputOption;
+            
+            // Update the input options with current values
             inputOptions['node_id'] = inputNodeId;
             inputOptions['input_name_in_node'] = inputNameInNode;
 
@@ -92,6 +117,9 @@ export class WorkflowEditor {
                 inputOptions['disabled'] = true;
                 inputOptionsList.push(inputOptions);
                 continue;
+            } else {
+                // Remove disabled flag if it exists
+                delete inputOptions['disabled'];
             }
 
             const inputTitleElement = inputContainer.querySelector('.workflow-input-title') as HTMLInputElement;
@@ -111,6 +139,24 @@ export class WorkflowEditor {
                 const formatSelectElement = inputContainer.querySelector('.workflow-input-format') as HTMLSelectElement;
                 if (formatSelectElement) {
                     inputOptions['textfield_format'] = formatSelectElement.value as 'single' | 'multiline' | 'dropdown';
+                }
+            } else if (comfyInputType === 'INT' || comfyInputType === 'FLOAT') {
+                const formatSelectElement = inputContainer.querySelector('.workflow-input-format') as HTMLSelectElement;
+                let numberfieldFormat: 'type' | 'slider' = 'type';
+                if (formatSelectElement) {
+                    numberfieldFormat = formatSelectElement.value as 'type' | 'slider';
+                    inputOptions['numberfield_format'] = numberfieldFormat;
+                }
+                if (numberfieldFormat === 'slider') {
+                    const minInput = inputContainer.querySelector('.workflow-input-min') as HTMLInputElement | null;
+                    const maxInput = inputContainer.querySelector('.workflow-input-max') as HTMLInputElement | null;
+                    if (minInput) inputOptions['min'] = parseFloat(minInput.value);
+                    if (maxInput) inputOptions['max'] = parseFloat(maxInput.value);
+                }
+                // Always remove min/max if not slider
+                if (numberfieldFormat !== 'slider') {
+                    if ('min' in inputOptions) delete inputOptions['min'];
+                    if ('max' in inputOptions) delete inputOptions['max'];
                 }
             }
 
@@ -134,6 +180,14 @@ export class WorkflowEditor {
         // Remove any existing metadata from the workflow
         delete (modifiedWorkflow as any)._comfyuimini_meta;
 
+        // Clean up min/max for all INT/FLOAT fields if not slider
+        for (const opt of inputOptionsList) {
+            if (opt.numberfield_format !== 'slider') {
+                if ('min' in opt) delete opt.min;
+                if ('max' in opt) delete opt.max;
+            }
+        }
+
         return modifiedWorkflow as Workflow;
     }
 
@@ -145,7 +199,22 @@ export class WorkflowEditor {
     public getMetadata(): WorkflowMetadata {
         this.ensureWorkflowObject();
 
-        const inputOptionsList = [];
+        // Start with the existing metadata structure to avoid duplicates
+        const existingInputOptions = this.workflowObject.metadata.input_options;
+        const inputOptionsMap = new Map<string, InputOption>();
+        
+        // Create a map of existing options using node_id + input_name_in_node as key
+        // If there are duplicates, keep only the first one
+        for (const option of existingInputOptions) {
+            const key = `${option.node_id}-${option.input_name_in_node}`;
+            if (!inputOptionsMap.has(key)) {
+                inputOptionsMap.set(key, { ...option });
+            }
+        }
+
+        // Build the final array based on DOM order to preserve user's custom ordering
+        const inputOptionsList: InputOption[] = [];
+        const processedKeys = new Set<string>();
 
         const allInputs = this.containerElem.querySelectorAll('.input-item');
         for (const inputContainer of allInputs) {
@@ -159,14 +228,25 @@ export class WorkflowEditor {
                 continue;
             }
 
-            const inputOptions: InputOption = {} as InputOption;
+            const key = `${inputNodeId}-${inputNameInNode}`;
+            
+            // Skip if we've already processed this input (prevent duplicates)
+            if (processedKeys.has(key)) {
+                continue;
+            }
+            processedKeys.add(key);
+            
+            const inputOptions = inputOptionsMap.get(key) || {} as InputOption;
+            
+            // Update the input options with current values
             inputOptions['node_id'] = inputNodeId;
             inputOptions['input_name_in_node'] = inputNameInNode;
 
             if (inputContainer.classList.contains('disabled')) {
                 inputOptions['disabled'] = true;
-                inputOptionsList.push(inputOptions);
-                continue;
+            } else {
+                // Remove disabled flag if it exists
+                delete inputOptions['disabled'];
             }
 
             const inputTitleElement = inputContainer.querySelector('.workflow-input-title') as HTMLInputElement;
@@ -187,6 +267,15 @@ export class WorkflowEditor {
                 if (formatSelectElement) {
                     inputOptions['textfield_format'] = formatSelectElement.value as 'single' | 'multiline' | 'dropdown';
                 }
+            } else if (comfyInputType === 'INT' || comfyInputType === 'FLOAT') {
+                const formatSelectElement = inputContainer.querySelector('.workflow-input-format') as HTMLSelectElement;
+                if (formatSelectElement) {
+                    inputOptions['numberfield_format'] = formatSelectElement.value as 'type' | 'slider';
+                }
+                const minInput = inputContainer.querySelector('.workflow-input-min') as HTMLInputElement | null;
+                const maxInput = inputContainer.querySelector('.workflow-input-max') as HTMLInputElement | null;
+                if (minInput) inputOptions['min'] = parseFloat(minInput.value);
+                if (maxInput) inputOptions['max'] = parseFloat(maxInput.value);
             }
 
             inputOptionsList.push(inputOptions);
@@ -198,6 +287,14 @@ export class WorkflowEditor {
             format_version: '3',
             input_options: inputOptionsList,
         };
+
+        // Clean up min/max for all INT/FLOAT fields if not slider
+        for (const opt of inputOptionsList) {
+            if (opt.numberfield_format !== 'slider') {
+                if ('min' in opt) delete opt.min;
+                if ('max' in opt) delete opt.max;
+            }
+        }
 
         return metadata;
     }
@@ -250,8 +347,8 @@ export class WorkflowEditor {
     private async renderAllInputs() {
         this.ensureWorkflowObject();
 
-        // TODO: Replace with function that gets all inputs not just ones in metadata
-        const allUserInputOptions = this.workflowObject.getInputOptionsList();
+        // Use saved metadata for input options
+        const allUserInputOptions = this.workflowObject.metadata.input_options;
 
         for (const userInputOptions of allUserInputOptions) {
             const comfyMetadataForInputType = await this.getComfyMetadataForInputType(
@@ -351,15 +448,15 @@ export class WorkflowEditor {
 
         this.containerElem.innerHTML += html;
 
-                    if (userInputOptions.disabled) {
-                const hideButtonElement = this.containerElem.querySelector(`#hide-button-${idPrefix}`) as HTMLElement;
+        if (userInputOptions.disabled) {
+            const hideButtonElement = this.containerElem.querySelector(`#hide-button-${idPrefix}`) as HTMLElement;
 
-                if (!hideButtonElement) {
-                    return;
-                }
+            if (!hideButtonElement) {
+                return;
+            }
 
                 this.hideInput(hideButtonElement);
-            }
+        }
     }
 
     /**
@@ -390,12 +487,37 @@ export class WorkflowEditor {
                 inputHTML += '</select>';
                 break;
             case 'INT':
-            case 'FLOAT':
-                inputHTML += `<label for="${idPrefix}-default">Default</label>`;
+            case 'FLOAT': {
+                // Add format selector for INT/FLOAT inputs
+                const currentFormat = userInputOptions?.numberfield_format || 'type';
                 inputHTML += `
-                    <input type="number" id="${idPrefix}-default" placeholder="${inputDefault}" value="${inputDefault}" class="workflow-input workflow-input-default">
+                    <label for="${idPrefix}-format">Form Field</label>
+                    <select id="${idPrefix}-format" class="workflow-input workflow-input-format" data-numberfield-format="true">
+                        <option value="type" ${currentFormat === 'type' ? 'selected' : ''}>Type</option>
+                        <option value="slider" ${currentFormat === 'slider' ? 'selected' : ''}>Slider</option>
+                    </select>
                 `;
+                let min = (userInputOptions as any)?.min ?? inputConfig.min ?? 0;
+                let max = (userInputOptions as any)?.max ?? inputConfig.max ?? 100;
+                const minMaxWrapperClass = currentFormat === 'slider' ? 'slider-minmax-wrapper' : 'slider-minmax-wrapper hidden';
+                inputHTML += `
+                    <div class="${minMaxWrapperClass}">
+                        <label for="${idPrefix}-min">Min</label>
+                        <input type="number" id="${idPrefix}-min" class="workflow-input workflow-input-min" value="${min}">
+                        <label for="${idPrefix}-default">Default</label>
+                        <input type="number" id="${idPrefix}-default" placeholder="${inputDefault}" value="${inputDefault}" class="workflow-input workflow-input-default">
+                        <label for="${idPrefix}-max">Max</label>
+                        <input type="number" id="${idPrefix}-max" class="workflow-input workflow-input-max" value="${max}">
+                    </div>
+                `;
+                if (currentFormat !== 'slider') {
+                    inputHTML += `
+                        <label for="${idPrefix}-default">Default</label>
+                        <input type="number" id="${idPrefix}-default" placeholder="${inputDefault}" value="${inputDefault}" class="workflow-input workflow-input-default">
+                    `;
+                }
                 break;
+            }
             case 'BOOLEAN':
                 inputHTML += `<label for="${idPrefix}-default">Default</label>`;
                 const checked = ['true', '1'].includes(String(inputDefault).toLowerCase()) ? 'checked' : '';
@@ -461,6 +583,97 @@ export class WorkflowEditor {
                     this.filterInputs(filter);
                 }
             });
+        });
+
+        // Add event listener for numberfield format change (type/slider)
+        this.containerElem.addEventListener('change', (e) => {
+            const target = e.target as HTMLElement;
+            if (target && target.classList.contains('workflow-input-format') && target.getAttribute('data-numberfield-format')) {
+                const select = target as HTMLSelectElement;
+                const inputItem = select.closest('.input-item');
+                if (!inputItem) return;
+                const nodeId = inputItem.getAttribute('data-node-id');
+                const inputName = inputItem.getAttribute('data-node-input-name');
+                if (!nodeId || !inputName) return;
+
+                // Ensure workflowObject is not null
+                if (!this.workflowObject) return;
+
+                // Find the InputOption in metadata
+                const inputOptionsList = this.workflowObject.metadata.input_options;
+                const inputOption = inputOptionsList.find(opt => opt.node_id === nodeId && opt.input_name_in_node === inputName);
+                if (!inputOption) return;
+
+                // Preserve current min, max, default values
+                const minInput = inputItem.querySelector('.workflow-input-min') as HTMLInputElement | null;
+                const maxInput = inputItem.querySelector('.workflow-input-max') as HTMLInputElement | null;
+                const defaultInput = inputItem.querySelector('.workflow-input-default') as HTMLInputElement | null;
+                if (minInput) (inputOption as any).min = parseFloat(minInput.value);
+                if (maxInput) (inputOption as any).max = parseFloat(maxInput.value);
+                if (defaultInput) {
+                    // Also update the workflowObject's value for this input
+                    const inputNode = this.workflowObject.getNode(nodeId);
+                    if (inputNode) inputNode.inputs[inputName] = defaultInput.value;
+                }
+
+                // Update the format
+                inputOption.numberfield_format = select.value as 'type' | 'slider';
+
+                // Clean up min/max if switching to type format
+                if (inputOption.numberfield_format !== 'slider') {
+                    if ('min' in inputOption) delete (inputOption as any).min;
+                    if ('max' in inputOption) delete (inputOption as any).max;
+                }
+
+                // Synchronously generate new HTML for this input
+                const inputNode = this.workflowObject.getNode(nodeId);
+                if (!inputNode) return;
+                const comfyInputsInfo = this.comfyInputsInfo?.[inputNode.class_type]?.[inputName];
+                if (!comfyInputsInfo) return;
+                const defaultValue = inputNode.inputs[inputName].toString();
+                const idPrefix = `${nodeId}-${inputName}`;
+                const inputTypeText = `[${nodeId}] ${inputNode.class_type}: ${inputName}`;
+                const inputTitle = inputOption.title || inputTypeText;
+                // Get the current input counter from the original element
+                const originalCounter = inputItem.querySelector('.input-counter');
+                const counterText = originalCounter ? originalCounter.textContent : '?';
+                
+                // Preserve disabled state
+                const isDisabled = inputItem.classList.contains('disabled');
+                const disabledClass = isDisabled ? ' disabled' : '';
+                
+                const html = `
+                    <div class="input-item" data-node-id="${nodeId}" data-node-input-name="${inputName}"${disabledClass}>
+                        <div class="options-container">
+                            <div class="input-top-container">
+                                <span class="input-counter">${counterText}</span>
+                                <div class="icon eye hide-input-button" id="hide-button-${idPrefix}"></div>
+                                <span class="input-type-text">${inputTypeText}</span>
+                            </div>
+                            <label for="${idPrefix}-title">Title</label>
+                            <input type="text" id="${idPrefix}-title" placeholder="${inputTitle}" value="${inputTitle}" class="workflow-input workflow-input-title">
+                            ${WorkflowEditor.renderDefaultValueInput(comfyInputsInfo, idPrefix, defaultValue, inputOption)}
+                        </div>
+                        <div class="move-arrows-container">
+                            <span class="move-arrow-up">&#x25B2;</span>
+                            <span class="move-arrow-down">&#x25BC;</span>
+                        </div>
+                    </div>
+                `;
+
+                // Replace the old input item with the new one at the same position
+                const container = this.containerElem;
+                if (!container) return;
+                const nextSibling = inputItem.nextElementSibling;
+                inputItem.remove();
+                if (nextSibling) {
+                    nextSibling.insertAdjacentHTML('beforebegin', html);
+                } else {
+                    container.insertAdjacentHTML('beforeend', html);
+                }
+                // No need to re-attach event listeners - they're already attached to the container
+                // and will work with the new DOM elements through event delegation
+            }
         });
     }
 
