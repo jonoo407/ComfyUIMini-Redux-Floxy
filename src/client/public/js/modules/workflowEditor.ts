@@ -531,7 +531,7 @@ export class WorkflowEditor {
                 return WorkflowEditor.renderBooleanInputHTML(idPrefix, inputDefault);
             case 'STRING':
             default:
-                return WorkflowEditor.renderStringInputHTML(idPrefix, inputDefault, userInputOptions);
+                return WorkflowEditor.renderStringInputHTML(idPrefix, inputDefault, userInputOptions, inputConfig);
         }
     }
 
@@ -605,8 +605,15 @@ export class WorkflowEditor {
     /**
      * Renders HTML for STRING type inputs.
      */
-    private static renderStringInputHTML(idPrefix: string, inputDefault: string, userInputOptions?: InputOption): string {
-        const currentFormat = userInputOptions?.textfield_format || 'multiline';
+    private static renderStringInputHTML(
+        idPrefix: string, 
+        inputDefault: string, 
+        userInputOptions?: InputOption, 
+        inputConfig?: NormalisedComfyInputInfo
+    ): string {
+        const defaultFormat = inputConfig?.multiline === false ? 'single' : 'multiline';
+        const currentFormat = userInputOptions?.textfield_format || defaultFormat;
+        
         return `
             <label for="${idPrefix}-format">Form Field</label>
             <select id="${idPrefix}-format" class="workflow-input workflow-input-format">

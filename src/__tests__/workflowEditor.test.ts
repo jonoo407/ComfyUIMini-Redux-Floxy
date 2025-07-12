@@ -560,6 +560,77 @@ describe('WorkflowEditor', () => {
       const finalFormatSelect = finalPromptInput?.querySelector('.workflow-input-format') as HTMLSelectElement;
       expect(finalFormatSelect.value).toBe('dropdown');
     });
+
+    it('should use multiline property from object info to determine default format', async () => {
+      // Test case 1: multiline = true should default to 'multiline'
+      mockWorkflowObject.metadata.input_options.push({
+        node_id: '1',
+        input_name_in_node: 'multiline_prompt',
+        title: 'Multiline Prompt'
+        // No textfield_format specified
+      });
+      
+      mockWorkflowObject.workflow['1'].inputs.multiline_prompt = 'test prompt';
+      mockComfyInputsInfo['KSampler'].multiline_prompt = {
+        type: 'STRING',
+        userAccessible: true,
+        list: [],
+        default: 'test prompt',
+        multiline: true
+      };
+
+      await workflowEditor.renderWorkflow();
+
+      const multilineInput = containerElem.querySelector('[data-node-input-name="multiline_prompt"]');
+      const multilineFormatSelect = multilineInput?.querySelector('.workflow-input-format') as HTMLSelectElement;
+      expect(multilineFormatSelect.value).toBe('multiline');
+
+      // Test case 2: multiline = false should default to 'single'
+      mockWorkflowObject.metadata.input_options.push({
+        node_id: '1',
+        input_name_in_node: 'single_line_prompt',
+        title: 'Single Line Prompt'
+        // No textfield_format specified
+      });
+      
+      mockWorkflowObject.workflow['1'].inputs.single_line_prompt = 'test prompt';
+      mockComfyInputsInfo['KSampler'].single_line_prompt = {
+        type: 'STRING',
+        userAccessible: true,
+        list: [],
+        default: 'test prompt',
+        multiline: false
+      };
+
+      await workflowEditor.renderWorkflow();
+
+      const singleLineInput = containerElem.querySelector('[data-node-input-name="single_line_prompt"]');
+      const singleLineFormatSelect = singleLineInput?.querySelector('.workflow-input-format') as HTMLSelectElement;
+      expect(singleLineFormatSelect.value).toBe('single');
+
+      // Test case 3: multiline = null/undefined should default to 'multiline'
+      mockWorkflowObject.metadata.input_options.push({
+        node_id: '1',
+        input_name_in_node: 'default_prompt',
+        title: 'Default Prompt'
+        // No textfield_format specified
+      });
+      
+      mockWorkflowObject.workflow['1'].inputs.default_prompt = 'test prompt';
+      mockComfyInputsInfo['KSampler'].default_prompt = {
+        type: 'STRING',
+        userAccessible: true,
+        list: [],
+        default: 'test prompt'
+        // No multiline property
+      };
+
+      await workflowEditor.renderWorkflow();
+
+      const defaultInput = containerElem.querySelector('[data-node-input-name="default_prompt"]');
+      const defaultFormatSelect = defaultInput?.querySelector('.workflow-input-format') as HTMLSelectElement;
+      expect(defaultFormatSelect.value).toBe('multiline');
+    });
   });
 
   describe('BOOLEAN input handling', () => {
