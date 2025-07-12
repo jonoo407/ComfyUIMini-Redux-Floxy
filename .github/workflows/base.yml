@@ -8,8 +8,7 @@ on:
         required: false
         default: false
         type: boolean
-    secrets:
-      # Add any secrets if needed in the future
+    secrets: {}
 
 jobs:
   test:
