@@ -56,7 +56,8 @@ export async function renderInputs(workflowObject: WorkflowWithMetadata, workflo
             continue;
         }
 
-        const renderedInput = renderInput(userInputMetadata, defaultValue, comfyInputInfo);
+        const originalDefaultValue = inputNode.inputs[userInputMetadata.input_name_in_node].toString();
+        const renderedInput = renderInput(userInputMetadata, defaultValue, comfyInputInfo, originalDefaultValue);
         renderedInputsArray.push(renderedInput);
     }
 
@@ -78,7 +79,8 @@ export async function renderInputs(workflowObject: WorkflowWithMetadata, workflo
 export function renderInput(
     userInputMetadata: InputOption,
     defaultValue: string,
-    comfyInputInfo: NormalisedComfyInputInfo
+    comfyInputInfo: NormalisedComfyInputInfo,
+    originalDefaultValue?: string
 ) {
     const inputType = comfyInputInfo.type;
 
@@ -97,13 +99,18 @@ export function renderInput(
                 ...baseRenderOptions,
             };
 
-            // If format is dropdown, parse the default value as comma-delimited options
-            if (textRenderOptions.format === 'dropdown' && defaultValue) {
-                const dropdownOptions = defaultValue.split(',').map(option => option.trim()).filter(option => option.length > 0);
+            // If format is dropdown, get the original dropdown options from the workflow's default value
+            if (textRenderOptions.format === 'dropdown' && originalDefaultValue) {
+                const dropdownOptions = originalDefaultValue.split(',').map((option: string) => option.trim()).filter((option: string) => option.length > 0);
                 if (dropdownOptions.length > 0) {
                     textRenderOptions.dropdownOptions = dropdownOptions;
-                    // Use the first option as the default value for the dropdown
-                    textRenderOptions.default = dropdownOptions[0];
+                    // Use the current defaultValue (from saved values or last prompt) as the selected option
+                    // If the current value is not in the original options, fall back to the first option
+                    if (dropdownOptions.includes(defaultValue)) {
+                        textRenderOptions.default = defaultValue;
+                    } else {
+                        textRenderOptions.default = dropdownOptions[0];
+                    }
                 }
             }
 
