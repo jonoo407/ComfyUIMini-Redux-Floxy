@@ -6,3 +6,8 @@ workflows/*
 
 /config/default.json
 dist/
+
+# Jest cache and coverage
+.jest-cache/
+coverage/
+*.tsbuildinfo

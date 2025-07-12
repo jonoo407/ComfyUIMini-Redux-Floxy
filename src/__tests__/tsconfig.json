@@ -7,8 +7,16 @@
     "checkJs": false,
     "rootDir": "../",
     "outDir": "../../dist",
-    "sourceMap": true,
-    "types": ["jest", "node"]
+    "sourceMap": false, // Disable source maps for faster compilation
+    "types": ["jest", "node"],
+    // Performance optimizations
+    "incremental": true,
+    "tsBuildInfoFile": "../../dist/.tsbuildinfo",
+    "skipLibCheck": true, // Skip type checking of declaration files
+    "noEmit": true, // Don't emit files during tests
+    "isolatedModules": true, // Faster compilation
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "./**/*",
