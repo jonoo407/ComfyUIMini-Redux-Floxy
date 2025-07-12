@@ -1,5 +1,6 @@
 import { openImageModal } from '../common/imageModal.js';
 import { openOverlay } from '../common/overlay.js';
+import { updateNavigationButtons } from '../common/galleryUtils.js';
 
 const pageInput = document.getElementById('page-input') as HTMLInputElement;
 
@@ -11,54 +12,15 @@ if (document.body.hasAttribute('data-error')) {
     alert(document.body.getAttribute('data-error'));
 }
 
-pageInput.addEventListener('keyup', (e) => {
-    if (e.key === 'Enter') {
-        window.location.href = `?page=${pageInput.value}`;
-    }
-});
-
-// Function to disable/enable navigation buttons based on current page
-function updateNavigationButtons() {
-    const paginationButtons = document.querySelectorAll('.pagination-button') as NodeListOf<HTMLAnchorElement>;
-    
-    // Check if there are any images on the current page
-    const imageItems = document.querySelectorAll('.image-item');
-    const hasImages = imageItems.length > 0;
-    
-    // If there are no images, disable all navigation buttons
-    if (!hasImages) {
-        paginationButtons.forEach((button) => {
-            button.classList.add('disabled');
-        });
-        return;
-    }
-    
-    paginationButtons.forEach((button) => {
-        const href = button.getAttribute('href');
-        if (!href) return;
-        
-        // Check if this is a navigation button (not the page input)
-        if (href.includes('page=')) {
-            const pageMatch = href.match(/page=(\d+)/);
-            if (pageMatch) {
-                const targetPage = parseInt(pageMatch[1], 10);
-                
-                // Disable first page buttons (double-left and left) if on first page
-                if ((targetPage === 0 || targetPage === currentPage - 1) && currentPage === 0) {
-                    button.classList.add('disabled');
-                }
-                // Disable last page buttons (double-right and right) if on last page
-                else if ((targetPage === totalPages || targetPage === currentPage + 1) && currentPage === totalPages) {
-                    button.classList.add('disabled');
-                }
-                // Enable all other buttons
-                else {
-                    button.classList.remove('disabled');
-                }
-            }
+if (pageInput) {
+    pageInput.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') {
+            window.location.href = `?page=${pageInput.value}`;
         }
     });
 }
+
+
 
 // Add click handlers to all images in the gallery (videos don't need modal)
 document.addEventListener('DOMContentLoaded', () => {
@@ -244,3 +206,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+
