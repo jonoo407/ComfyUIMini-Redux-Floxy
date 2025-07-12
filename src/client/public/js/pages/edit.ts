@@ -18,6 +18,20 @@ const saveButton = document.getElementById('save') as HTMLButtonElement;
 
 const workflowEditor = new WorkflowEditor(inputsContainer, null, titleInput, descriptionInput);
 
+// Listen for validation changes to update save button state
+inputsContainer.addEventListener('validationChange', (e: Event) => {
+    const customEvent = e as CustomEvent<{ hasErrors: boolean }>;
+    const hasErrors = customEvent.detail.hasErrors;
+    saveButton.disabled = hasErrors;
+    if (hasErrors) {
+        saveButton.style.opacity = '0.5';
+        saveButton.style.cursor = 'not-allowed';
+    } else {
+        saveButton.style.opacity = '1';
+        saveButton.style.cursor = 'pointer';
+    }
+});
+
 function loadWorkflow() {
     let workflowInstance;
 

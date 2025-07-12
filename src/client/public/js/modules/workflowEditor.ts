@@ -10,6 +10,7 @@ export class WorkflowEditor {
     private inputCount: number;
     private comfyInputsInfo: ProcessedObjectInfo | null;
     private currentFilter: 'all' | 'visible' | 'hidden' = 'all';
+    private hasValidationErrors: boolean = false;
 
     /**
      *
@@ -32,6 +33,24 @@ export class WorkflowEditor {
         this.comfyInputsInfo = null;
 
         this.workflowObject = workflowObject;
+    }
+
+    /**
+     * Checks if the form has any validation errors.
+     * @returns True if there are validation errors, false otherwise.
+     */
+    public hasErrors(): boolean {
+        return this.hasValidationErrors;
+    }
+
+    /**
+     * Emits a custom event when validation state changes.
+     */
+    private emitValidationChange() {
+        const event = new CustomEvent('validationChange', {
+            detail: { hasErrors: this.hasValidationErrors }
+        });
+        this.containerElem.dispatchEvent(event);
     }
 
     /**
@@ -723,6 +742,31 @@ export class WorkflowEditor {
                 // and will work with the new DOM elements through event delegation
             }
         });
+
+        // Add validation for INT/FLOAT min/max/default fields
+        this.containerElem.addEventListener('input', (e) => {
+            const target = e.target as HTMLElement;
+            if (!target) return;
+            // Only validate for number inputs
+            if (
+                target.classList.contains('workflow-input-min') ||
+                target.classList.contains('workflow-input-max') ||
+                target.classList.contains('workflow-input-default')
+            ) {
+                const inputItem = target.closest('.input-item');
+                if (!inputItem) return;
+                const nodeId = inputItem.getAttribute('data-node-id');
+                const inputName = inputItem.getAttribute('data-node-input-name');
+                if (!nodeId || !inputName) return;
+                if (!this.workflowObject) return;
+                const inputNode = this.workflowObject.getNode(nodeId);
+                if (!inputNode) return;
+                const comfyInputInfo = this.comfyInputsInfo?.[inputNode.class_type]?.[inputName];
+                if (!comfyInputInfo) return;
+                if (comfyInputInfo.type !== 'INT' && comfyInputInfo.type !== 'FLOAT') return;
+                this.validateNumberInputFields(inputItem, comfyInputInfo);
+            }
+        });
     }
 
     /**
@@ -835,5 +879,112 @@ export class WorkflowEditor {
         
         // Apply current filter after hiding/showing an input
         this.filterInputs(this.currentFilter);
+    }
+
+    /**
+     * Validates min, max, and default fields for INT/FLOAT inputs and shows inline warnings.
+     */
+    private validateNumberInputFields(
+        inputItem: Element,
+        comfyInputInfo: NormalisedComfyInputInfo
+    ) {
+        // Remove previous warnings
+        const prevWarnings = inputItem.querySelectorAll('.input-warning');
+        prevWarnings.forEach(w => w.remove());
+
+        const minInput = inputItem.querySelector('.workflow-input-min') as HTMLInputElement | null;
+        const maxInput = inputItem.querySelector('.workflow-input-max') as HTMLInputElement | null;
+        const defaultInput = inputItem.querySelector('.workflow-input-default') as HTMLInputElement | null;
+        const formatSelect = inputItem.querySelector('.workflow-input-format[data-numberfield-format]') as HTMLSelectElement | null;
+
+        if (!minInput || !maxInput || !defaultInput) return;
+
+        const min = parseFloat(minInput.value);
+        const max = parseFloat(maxInput.value);
+        const def = parseFloat(defaultInput.value);
+        const comfyMin = typeof comfyInputInfo.min === 'number' ? comfyInputInfo.min : null;
+        const comfyMax = typeof comfyInputInfo.max === 'number' ? comfyInputInfo.max : null;
+
+        let warnings: string[] = [];
+
+        // Only for slider format, check for empty fields
+        const isSlider = formatSelect && formatSelect.value === 'slider';
+        if (isSlider) {
+            if (!minInput.value) {
+                warnings.push('Min is required for slider.');
+            }
+            if (!maxInput.value) {
+                warnings.push('Max is required for slider.');
+            }
+            if (!defaultInput.value) {
+                warnings.push('Default is required for slider.');
+            }
+        }
+
+        if (!isNaN(min) && !isNaN(max) && min > max) {
+            warnings.push('Min cannot be greater than Max.');
+        }
+        if (!isNaN(def) && !isNaN(min) && def < min) {
+            warnings.push('Default must be greater than or equal to Min.');
+        }
+        if (!isNaN(def) && !isNaN(max) && def > max) {
+            warnings.push('Default must be less than or equal to Max.');
+        }
+        if (comfyMin !== null && !isNaN(min) && min < comfyMin) {
+            warnings.push(`Min cannot be less than ${comfyMin}.`);
+        }
+        if (comfyMax !== null && !isNaN(max) && max > comfyMax) {
+            warnings.push(`Max cannot be greater than ${comfyMax}.`);
+        }
+
+        if (warnings.length > 0) {
+            // Show warnings below the relevant fields
+            const warningDiv = document.createElement('div');
+            warningDiv.className = 'input-warning';
+            warningDiv.style.color = 'red';
+            warningDiv.style.fontSize = '0.9em';
+            warningDiv.style.marginTop = '4px';
+            warningDiv.innerHTML = warnings.map(w => `<div>${w}</div>`).join('');
+            // Insert after the last number input (max)
+            if (maxInput.parentElement) {
+                maxInput.parentElement.appendChild(warningDiv);
+            } else {
+                inputItem.appendChild(warningDiv);
+            }
+        }
+
+        // Update validation state
+        this.updateValidationState();
+    }
+
+    /**
+     * Updates the overall validation state by checking all number inputs.
+     */
+    private updateValidationState() {
+        const allInputItems = this.containerElem.querySelectorAll('.input-item');
+        let hasErrors = false;
+
+        for (const inputItem of allInputItems) {
+            const nodeId = inputItem.getAttribute('data-node-id');
+            const inputName = inputItem.getAttribute('data-node-input-name');
+            if (!nodeId || !inputName || !this.workflowObject) continue;
+
+            const inputNode = this.workflowObject.getNode(nodeId);
+            if (!inputNode) continue;
+
+            const comfyInputInfo = this.comfyInputsInfo?.[inputNode.class_type]?.[inputName];
+            if (!comfyInputInfo || (comfyInputInfo.type !== 'INT' && comfyInputInfo.type !== 'FLOAT')) continue;
+
+            const hasWarnings = inputItem.querySelector('.input-warning') !== null;
+            if (hasWarnings) {
+                hasErrors = true;
+                break;
+            }
+        }
+
+        if (this.hasValidationErrors !== hasErrors) {
+            this.hasValidationErrors = hasErrors;
+            this.emitValidationChange();
+        }
     }
 }
