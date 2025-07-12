@@ -1,6 +1,6 @@
 import { openImageModal } from '../common/imageModal.js';
 import { openOverlay } from '../common/overlay.js';
-import { updateNavigationButtons } from '../common/galleryUtils.js';
+import { updateNavigationButtons } from '../common/galleryNavigation.js';
 
 const pageInput = document.getElementById('page-input') as HTMLInputElement;
 
