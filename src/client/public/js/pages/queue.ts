@@ -5,6 +5,16 @@ import { QueueItem, HistoryData, HistoryOutput, MediaItem } from '../../../../sh
 // Import PullToRefresh module
 import { PullToRefresh } from '../common/pullToRefresh.js';
 
+function getEmptyQueueHtml(): string {
+    return `
+        <div class="empty-queue">
+            <div class="icon clock"></div>
+            <h3>Queue is Empty</h3>
+            <p>No items are currently in the queue.</p>
+        </div>
+    `;
+}
+
 async function loadQueue() {
     const queueContainer = document.getElementById('queue-container');
     if (!queueContainer) return;
@@ -33,13 +43,7 @@ async function displayQueue(queueData: any) {
     if (!queueContainer) return;
     
     if (!queueData || (Array.isArray(queueData) && queueData.length === 0)) {
-        queueContainer.innerHTML = `
-            <div class="empty-queue">
-                <div class="icon clock"></div>
-                <h3>Queue is Empty</h3>
-                <p>No items are currently in the queue.</p>
-            </div>
-        `;
+        queueContainer.innerHTML = getEmptyQueueHtml();
         return;
     }
     
@@ -51,10 +55,20 @@ async function displayQueue(queueData: any) {
         const pendingItems = Array.isArray(queueData.queue_pending) ? queueData.queue_pending : [queueData.queue_pending];
         const completedItems = Array.isArray(queueData.queue_completed) ? queueData.queue_completed : [queueData.queue_completed];
 
+        // Check if all queue sections are empty
+        const hasRunningItems = runningItems.length > 0 && runningItems[0] !== null;
+        const hasPendingItems = pendingItems.length > 0 && pendingItems[0] !== null;
+        const hasCompletedItems = completedItems.length > 0 && completedItems[0] !== null;
+
+        if (!hasRunningItems && !hasPendingItems && !hasCompletedItems) {
+            queueContainer.innerHTML = getEmptyQueueHtml();
+            return;
+        }
+
         // Handle all items concurrently for better performance
-        const pendingPromises = pendingItems.map((item: QueueItem) => createQueueItemHtml(item, 'Pending'));
-        const runningPromises = runningItems.map((item: QueueItem) => createQueueItemHtml(item, 'Running'));
-        const completedPromises = completedItems.reverse().map((item: QueueItem) => createQueueItemHtml(item, 'Completed'));
+        const pendingPromises = hasPendingItems ? pendingItems.map((item: QueueItem) => createQueueItemHtml(item, 'Pending')) : [];
+        const runningPromises = hasRunningItems ? runningItems.map((item: QueueItem) => createQueueItemHtml(item, 'Running')) : [];
+        const completedPromises = hasCompletedItems ? completedItems.reverse().map((item: QueueItem) => createQueueItemHtml(item, 'Completed')) : [];
         
         // Wait for all promises to resolve
         const [pendingResults, runningResults, completedResults] = await Promise.all([
