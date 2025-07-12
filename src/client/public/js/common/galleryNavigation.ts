@@ -1,15 +1,10 @@
 /**
  * Updates navigation buttons based on current page and image availability
  */
-export function updateNavigationButtons(): void {
+export function updateNavigationButtons(currentPage: number, totalPages: number, imageItems: NodeListOf<Element>): void {
     const paginationButtons = document.querySelectorAll('.pagination-button') as NodeListOf<HTMLAnchorElement>;
     
-    // Get page information from DOM data attributes
-    const currentPage = parseInt(document.body.getAttribute('data-current-page') || '0', 10);
-    const totalPages = parseInt(document.body.getAttribute('data-total-pages') || '0', 10);
-    
     // Check if there are any images on the current page
-    const imageItems = document.querySelectorAll('.image-item');
     const hasImages = imageItems.length > 0;
     
     // If there are no images, disable all navigation buttons

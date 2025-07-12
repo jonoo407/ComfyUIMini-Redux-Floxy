@@ -72,7 +72,7 @@ describe('Gallery Page Navigation Buttons', () => {
       expect(imageItems.length).toBe(0);
       
       // Call updateNavigationButtons directly
-      updateNavigationButtons();
+      updateNavigationButtons(1, 5, imageItems);
       
       // Check that all pagination buttons are disabled
       paginationButtons.forEach(button => {
@@ -90,7 +90,7 @@ describe('Gallery Page Navigation Buttons', () => {
       expect(imageItems.length).toBe(1);
       
       // Call updateNavigationButtons directly
-      updateNavigationButtons();
+      updateNavigationButtons(1, 5, imageItems);
       
       // Check that pagination buttons are not disabled (except for edge cases)
       // On page 1, first and previous buttons should be enabled, next and last should be enabled
@@ -112,7 +112,7 @@ describe('Gallery Page Navigation Buttons', () => {
       expect(imageItems.length).toBe(2);
       
       // Call updateNavigationButtons directly
-      updateNavigationButtons();
+      updateNavigationButtons(1, 5, imageItems);
       
       // Check that pagination buttons are not disabled (except for edge cases)
       expect(paginationButtons[0].classList.contains('disabled')).toBe(false); // First
@@ -130,7 +130,8 @@ describe('Gallery Page Navigation Buttons', () => {
       document.body.appendChild(imageItem);
       
       // Call updateNavigationButtons directly
-      updateNavigationButtons();
+      const imageItems = document.querySelectorAll('.image-item');
+      updateNavigationButtons(0, 5, imageItems);
       
       // On first page, first and previous buttons should be disabled, next and last should be enabled
       expect(paginationButtons[0].classList.contains('disabled')).toBe(true); // First
@@ -152,7 +153,8 @@ describe('Gallery Page Navigation Buttons', () => {
       document.body.appendChild(imageItem);
       
       // Call updateNavigationButtons directly
-      updateNavigationButtons();
+      const imageItems = document.querySelectorAll('.image-item');
+      updateNavigationButtons(5, 5, imageItems);
       
       // On last page with images, first and previous buttons should be enabled, next should be disabled, last should be disabled
       expect(paginationButtons[0].classList.contains('disabled')).toBe(false); // First

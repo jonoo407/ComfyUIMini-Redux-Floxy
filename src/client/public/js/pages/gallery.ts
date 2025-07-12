@@ -25,7 +25,8 @@ if (pageInput) {
 // Add click handlers to all images in the gallery (videos don't need modal)
 document.addEventListener('DOMContentLoaded', () => {
     // Update navigation buttons based on current page
-    updateNavigationButtons();
+    const imageItems = document.querySelectorAll('.image-item');
+    updateNavigationButtons(currentPage, totalPages, imageItems);
     
     const images = document.querySelectorAll('.image-item img');
     
@@ -50,7 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const useAsInputButton = button as HTMLButtonElement;
             const filename = useAsInputButton.dataset.filename;
-            const subfolder = useAsInputButton.dataset.subfolder;
             
             if (!filename) {
                 console.error('No filename found for use as input button');
