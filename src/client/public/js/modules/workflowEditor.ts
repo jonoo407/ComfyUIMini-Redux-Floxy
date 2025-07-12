@@ -559,9 +559,9 @@ export class WorkflowEditor {
             const targetHasClass = (className: string) => target.classList.contains(className);
 
             if (targetHasClass('move-arrow-up')) {
-                WorkflowEditor.moveUp(target.closest('.input-item'));
+                this.moveUp(target.closest('.input-item'));
             } else if (targetHasClass('move-arrow-down')) {
-                WorkflowEditor.moveDown(target.closest('.input-item'));
+                this.moveDown(target.closest('.input-item'));
             } else if (targetHasClass('hide-input-button')) {
                 this.hideInput(target);
             }
@@ -678,11 +678,11 @@ export class WorkflowEditor {
     }
 
     /**
-     * Move an input up.
+     * Move an input up, skipping hidden items based on current filter.
      *
      * @param item The input container.
      */
-    private static moveUp(item: HTMLElement | null) {
+    private moveUp(item: HTMLElement | null) {
         if (!item) {
             return;
         }
@@ -691,7 +691,13 @@ export class WorkflowEditor {
             return;
         }
 
-        const previousItem = item.previousElementSibling;
+        // Find the previous visible item
+        let previousItem = item.previousElementSibling as HTMLElement | null;
+        
+        // Skip hidden items when moving up
+        while (previousItem && this.isItemHidden(previousItem)) {
+            previousItem = previousItem.previousElementSibling as HTMLElement | null;
+        }
 
         if (previousItem) {
             item.parentNode.insertBefore(item, previousItem);
@@ -699,11 +705,11 @@ export class WorkflowEditor {
     }
 
     /**
-     * Move an input down.
+     * Move an input down, skipping hidden items based on current filter.
      *
      * @param item The input container.
      */
-    private static moveDown(item: HTMLElement | null) {
+    private moveDown(item: HTMLElement | null) {
         if (!item) {
             return;
         }
@@ -712,11 +718,31 @@ export class WorkflowEditor {
             return;
         }
 
-        const nextItem = item.nextElementSibling;
+        // Find the next visible item
+        let nextItem = item.nextElementSibling as HTMLElement | null;
+        
+        // Skip hidden items when moving down
+        while (nextItem && this.isItemHidden(nextItem)) {
+            nextItem = nextItem.nextElementSibling as HTMLElement | null;
+        }
 
         if (nextItem) {
             item.parentNode.insertBefore(nextItem, item);
         }
+    }
+
+    /**
+     * Check if an item is hidden based on the current filter.
+     *
+     * @param item The input item to check.
+     * @returns True if the item is hidden, false otherwise.
+     */
+    private isItemHidden(item: HTMLElement): boolean {
+        const isDisabled = item.classList.contains('disabled');
+        const isFilteredOut = item.classList.contains('filtered-out');
+        
+        // Item is hidden if it's filtered out OR if it's disabled and we're filtering for visible items
+        return isFilteredOut || (isDisabled && this.currentFilter === 'visible');
     }
 
     /**
