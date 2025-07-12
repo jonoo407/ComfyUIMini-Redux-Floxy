@@ -872,4 +872,322 @@ describe('WorkflowEditor', () => {
       expect(cfgInput?.classList.contains('filtered-out')).toBe(false);
     });
   });
+
+  describe('validation functionality', () => {
+    beforeEach(async () => {
+      // Add a slider input for testing validation
+      mockWorkflowObject.metadata.input_options.push({
+        node_id: '1',
+        input_name_in_node: 'cfg',
+        title: 'CFG Scale',
+        numberfield_format: 'slider',
+        min: 1,
+        max: 20
+      });
+      
+      mockWorkflowObject.workflow['1'].inputs.cfg = 7.0;
+      mockComfyInputsInfo['KSampler'].cfg = {
+        type: 'FLOAT',
+        userAccessible: true,
+        list: [],
+        default: '7.0',
+        min: 0.1,
+        max: 20.0
+      };
+      
+      await workflowEditor.renderWorkflow();
+    });
+
+    it('should show validation error when min is greater than max', () => {
+      const cfgInput = containerElem.querySelector('[data-node-input-name="cfg"]');
+      const minInput = cfgInput?.querySelector('.workflow-input-min') as HTMLInputElement;
+      const maxInput = cfgInput?.querySelector('.workflow-input-max') as HTMLInputElement;
+
+      // Set min > max
+      minInput.value = '25';
+      maxInput.value = '10';
+      minInput.dispatchEvent(new Event('input', { bubbles: true }));
+      maxInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const warning = cfgInput?.querySelector('.input-warning');
+      expect(warning).toBeTruthy();
+      expect(warning?.textContent).toContain('Min cannot be greater than Max');
+      expect(workflowEditor.hasErrors()).toBe(true);
+    });
+
+    it('should show validation error when default is less than min', () => {
+      const cfgInput = containerElem.querySelector('[data-node-input-name="cfg"]');
+      const minInput = cfgInput?.querySelector('.workflow-input-min') as HTMLInputElement;
+      const defaultInput = cfgInput?.querySelector('.workflow-input-default') as HTMLInputElement;
+
+      // Set default < min
+      minInput.value = '10';
+      defaultInput.value = '5';
+      minInput.dispatchEvent(new Event('input', { bubbles: true }));
+      defaultInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const warning = cfgInput?.querySelector('.input-warning');
+      expect(warning).toBeTruthy();
+      expect(warning?.textContent).toContain('Default must be greater than or equal to Min');
+      expect(workflowEditor.hasErrors()).toBe(true);
+    });
+
+    it('should show validation error when default is greater than max', () => {
+      const cfgInput = containerElem.querySelector('[data-node-input-name="cfg"]');
+      const maxInput = cfgInput?.querySelector('.workflow-input-max') as HTMLInputElement;
+      const defaultInput = cfgInput?.querySelector('.workflow-input-default') as HTMLInputElement;
+
+      // Set default > max
+      maxInput.value = '10';
+      defaultInput.value = '15';
+      maxInput.dispatchEvent(new Event('input', { bubbles: true }));
+      defaultInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const warning = cfgInput?.querySelector('.input-warning');
+      expect(warning).toBeTruthy();
+      expect(warning?.textContent).toContain('Default must be less than or equal to Max');
+      expect(workflowEditor.hasErrors()).toBe(true);
+    });
+
+    it('should show validation error when min is less than comfy min', () => {
+      const cfgInput = containerElem.querySelector('[data-node-input-name="cfg"]');
+      const minInput = cfgInput?.querySelector('.workflow-input-min') as HTMLInputElement;
+
+      // Set min < comfy min (0.1)
+      minInput.value = '0.05';
+      minInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const warning = cfgInput?.querySelector('.input-warning');
+      expect(warning).toBeTruthy();
+      expect(warning?.textContent).toContain('Min cannot be less than 0.1');
+      expect(workflowEditor.hasErrors()).toBe(true);
+    });
+
+    it('should show validation error when max is greater than comfy max', () => {
+      const cfgInput = containerElem.querySelector('[data-node-input-name="cfg"]');
+      const maxInput = cfgInput?.querySelector('.workflow-input-max') as HTMLInputElement;
+
+      // Set max > comfy max (20.0)
+      maxInput.value = '25';
+      maxInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const warning = cfgInput?.querySelector('.input-warning');
+      expect(warning).toBeTruthy();
+      expect(warning?.textContent).toContain('Max cannot be greater than 20');
+      expect(workflowEditor.hasErrors()).toBe(true);
+    });
+
+    it('should show validation error for empty min field in slider format', () => {
+      const cfgInput = containerElem.querySelector('[data-node-input-name="cfg"]');
+      const minInput = cfgInput?.querySelector('.workflow-input-min') as HTMLInputElement;
+
+      // Clear min field
+      minInput.value = '';
+      minInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const warning = cfgInput?.querySelector('.input-warning');
+      expect(warning).toBeTruthy();
+      expect(warning?.textContent).toContain('Min is required for slider');
+      expect(workflowEditor.hasErrors()).toBe(true);
+    });
+
+    it('should show validation error for empty max field in slider format', () => {
+      const cfgInput = containerElem.querySelector('[data-node-input-name="cfg"]');
+      const maxInput = cfgInput?.querySelector('.workflow-input-max') as HTMLInputElement;
+
+      // Clear max field
+      maxInput.value = '';
+      maxInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const warning = cfgInput?.querySelector('.input-warning');
+      expect(warning).toBeTruthy();
+      expect(warning?.textContent).toContain('Max is required for slider');
+      expect(workflowEditor.hasErrors()).toBe(true);
+    });
+
+    it('should show validation error for empty default field in slider format', () => {
+      const cfgInput = containerElem.querySelector('[data-node-input-name="cfg"]');
+      const defaultInput = cfgInput?.querySelector('.workflow-input-default') as HTMLInputElement;
+
+      // Clear default field
+      defaultInput.value = '';
+      defaultInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const warning = cfgInput?.querySelector('.input-warning');
+      expect(warning).toBeTruthy();
+      expect(warning?.textContent).toContain('Default is required for slider');
+      expect(workflowEditor.hasErrors()).toBe(true);
+    });
+
+    it('should not show validation errors for empty fields in type format', () => {
+      const cfgInput = containerElem.querySelector('[data-node-input-name="cfg"]');
+      const formatSelect = cfgInput?.querySelector('.workflow-input-format') as HTMLSelectElement;
+      const minInput = cfgInput?.querySelector('.workflow-input-min') as HTMLInputElement;
+      const maxInput = cfgInput?.querySelector('.workflow-input-max') as HTMLInputElement;
+      const defaultInput = cfgInput?.querySelector('.workflow-input-default') as HTMLInputElement;
+
+      // Switch to type format
+      formatSelect.value = 'type';
+      formatSelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+      // Clear all fields
+      minInput.value = '';
+      maxInput.value = '';
+      defaultInput.value = '';
+      minInput.dispatchEvent(new Event('input', { bubbles: true }));
+      maxInput.dispatchEvent(new Event('input', { bubbles: true }));
+      defaultInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const warning = cfgInput?.querySelector('.input-warning');
+      expect(warning).toBeFalsy();
+      expect(workflowEditor.hasErrors()).toBe(false);
+    });
+
+    it('should clear validation errors when values become valid', () => {
+      const cfgInput = containerElem.querySelector('[data-node-input-name="cfg"]');
+      const minInput = cfgInput?.querySelector('.workflow-input-min') as HTMLInputElement;
+      const maxInput = cfgInput?.querySelector('.workflow-input-max') as HTMLInputElement;
+      const defaultInput = cfgInput?.querySelector('.workflow-input-default') as HTMLInputElement;
+
+      // Set invalid values
+      minInput.value = '25';
+      maxInput.value = '10';
+      minInput.dispatchEvent(new Event('input', { bubbles: true }));
+      maxInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      // Should have error
+      expect(workflowEditor.hasErrors()).toBe(true);
+
+      // Fix the values
+      minInput.value = '5';
+      maxInput.value = '15';
+      defaultInput.value = '10';
+      minInput.dispatchEvent(new Event('input', { bubbles: true }));
+      maxInput.dispatchEvent(new Event('input', { bubbles: true }));
+      defaultInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      // Should not have error
+      const warning = cfgInput?.querySelector('.input-warning');
+      expect(warning).toBeFalsy();
+      expect(workflowEditor.hasErrors()).toBe(false);
+    });
+
+    it('should handle multiple validation errors simultaneously', () => {
+      const cfgInput = containerElem.querySelector('[data-node-input-name="cfg"]');
+      const minInput = cfgInput?.querySelector('.workflow-input-min') as HTMLInputElement;
+      const maxInput = cfgInput?.querySelector('.workflow-input-max') as HTMLInputElement;
+      const defaultInput = cfgInput?.querySelector('.workflow-input-default') as HTMLInputElement;
+
+      // Set multiple invalid values
+      minInput.value = '25'; // > max
+      maxInput.value = '10';
+      defaultInput.value = '5'; // < min
+      minInput.dispatchEvent(new Event('input', { bubbles: true }));
+      maxInput.dispatchEvent(new Event('input', { bubbles: true }));
+      defaultInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const warning = cfgInput?.querySelector('.input-warning');
+      expect(warning).toBeTruthy();
+      expect(warning?.textContent).toContain('Min cannot be greater than Max');
+      expect(warning?.textContent).toContain('Default must be greater than or equal to Min');
+      expect(workflowEditor.hasErrors()).toBe(true);
+    });
+
+    it('should emit validation change event when validation state changes', () => {
+      const validationChangeSpy = jest.fn();
+      containerElem.addEventListener('validationChange', validationChangeSpy);
+
+      const cfgInput = containerElem.querySelector('[data-node-input-name="cfg"]');
+      const minInput = cfgInput?.querySelector('.workflow-input-min') as HTMLInputElement;
+
+      // Trigger validation error
+      minInput.value = '25';
+      minInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      expect(validationChangeSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          detail: { hasErrors: true }
+        })
+      );
+
+      // Fix the error
+      minInput.value = '5';
+      minInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      expect(validationChangeSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          detail: { hasErrors: false }
+        })
+      );
+
+      containerElem.removeEventListener('validationChange', validationChangeSpy);
+    });
+
+    it('should not validate non-number inputs', async () => {
+      // Add a STRING input
+      mockWorkflowObject.metadata.input_options.push({
+        node_id: '1',
+        input_name_in_node: 'prompt',
+        title: 'Prompt',
+        textfield_format: 'multiline'
+      });
+      
+      mockWorkflowObject.workflow['1'].inputs.prompt = 'test prompt';
+      mockComfyInputsInfo['KSampler'].prompt = {
+        type: 'STRING',
+        userAccessible: true,
+        list: [],
+        default: 'test prompt'
+      };
+
+      // Re-render to include the new input
+      await workflowEditor.renderWorkflow();
+
+      const promptInput = containerElem.querySelector('[data-node-input-name="prompt"]');
+      const defaultInput = promptInput?.querySelector('.workflow-input-default') as HTMLInputElement;
+
+      // Clear the string input (should not trigger validation)
+      defaultInput.value = '';
+      defaultInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      expect(workflowEditor.hasErrors()).toBe(false);
+    });
+
+    it('should handle validation for inputs without comfy min/max bounds', async () => {
+      // Create a number input without min/max bounds
+      mockWorkflowObject.metadata.input_options.push({
+        node_id: '1',
+        input_name_in_node: 'custom_value',
+        title: 'Custom Value',
+        numberfield_format: 'slider'
+      });
+      
+      mockWorkflowObject.workflow['1'].inputs.custom_value = 50;
+      mockComfyInputsInfo['KSampler'].custom_value = {
+        type: 'INT',
+        userAccessible: true,
+        list: [],
+        default: '50'
+        // No min/max defined
+      };
+
+      // Re-render to include the new input
+      await workflowEditor.renderWorkflow();
+
+      const customInput = containerElem.querySelector('[data-node-input-name="custom_value"]');
+      const minInput = customInput?.querySelector('.workflow-input-min') as HTMLInputElement;
+      const maxInput = customInput?.querySelector('.workflow-input-max') as HTMLInputElement;
+
+      // Set min > max (should still validate)
+      minInput.value = '100';
+      maxInput.value = '50';
+      minInput.dispatchEvent(new Event('input', { bubbles: true }));
+      maxInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const warning = customInput?.querySelector('.input-warning');
+      expect(warning).toBeTruthy();
+      expect(warning?.textContent).toContain('Min cannot be greater than Max');
+      expect(workflowEditor.hasErrors()).toBe(true);
+    });
+  });
 }); 

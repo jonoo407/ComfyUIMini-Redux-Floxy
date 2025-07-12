@@ -38,17 +38,6 @@ inputsContainer.addEventListener('validationChange', (e: Event) => {
     const hasErrors = customEvent.detail.hasErrors;
     saveToBrowserButton.disabled = hasErrors;
     downloadWorkflowButton.disabled = hasErrors;
-    if (hasErrors) {
-        saveToBrowserButton.style.opacity = '0.5';
-        saveToBrowserButton.style.cursor = 'not-allowed';
-        downloadWorkflowButton.style.opacity = '0.5';
-        downloadWorkflowButton.style.cursor = 'not-allowed';
-    } else {
-        saveToBrowserButton.style.opacity = '1';
-        saveToBrowserButton.style.cursor = 'pointer';
-        downloadWorkflowButton.style.opacity = '1';
-        downloadWorkflowButton.style.cursor = 'pointer';
-    }
 });
 
 workflowFileInput.addEventListener('change', () => {

@@ -319,3 +319,25 @@ input[type="checkbox"] {
     margin: 0;
     box-sizing: border-box;
 }
+
+/* Input validation warning styles */
+.input-warning {
+    color: #ff4444;
+    font-size: 0.9em;
+    margin-top: 4px;
+}
+
+.input-warning div {
+    margin-bottom: 2px;
+}
+
+/* Disabled save button styles */
+.export-buttons input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#save:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

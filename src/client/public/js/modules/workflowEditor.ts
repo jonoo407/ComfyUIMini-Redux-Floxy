@@ -941,9 +941,6 @@ export class WorkflowEditor {
             // Show warnings below the relevant fields
             const warningDiv = document.createElement('div');
             warningDiv.className = 'input-warning';
-            warningDiv.style.color = 'red';
-            warningDiv.style.fontSize = '0.9em';
-            warningDiv.style.marginTop = '4px';
             warningDiv.innerHTML = warnings.map(w => `<div>${w}</div>`).join('');
             // Insert after the last number input (max)
             if (maxInput.parentElement) {
