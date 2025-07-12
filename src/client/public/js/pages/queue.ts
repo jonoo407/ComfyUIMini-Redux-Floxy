@@ -2,6 +2,8 @@
 import { openImageModal } from '../common/imageModal.js';
 // Import types from shared types
 import { QueueItem, HistoryData, HistoryOutput, MediaItem } from '../../../../shared/types/History.js';
+// Import PullToRefresh module
+import { PullToRefresh } from '../common/pullToRefresh.js';
 
 async function loadQueue() {
     const queueContainer = document.getElementById('queue-container');
@@ -191,117 +193,10 @@ function addMediaClickHandlers(): void {
 // Load queue when page loads
 document.addEventListener('DOMContentLoaded', loadQueue);
 
-// Set up pull-to-refresh functionality for PWA
-let startY = 0;
-let currentY = 0;
-let isPulling = false;
-const pullThreshold = 100; // pixels to pull down before triggering refresh
-
-// Get the pull indicator from the DOM
-let pullIndicator: HTMLElement | null = null;
-
-// Function to get or initialize pull indicator
-function getPullIndicator(): HTMLElement | null {
-    if (!pullIndicator) {
-        pullIndicator = document.getElementById('pull-indicator');
-        if (pullIndicator) {
-            // Initially hide the pull indicator
-            pullIndicator.style.transform = 'translateY(-60px)';
-        }
-    }
-    return pullIndicator;
-}
-
-// Function to update pull indicator visibility and position
-function updatePullIndicator(pullDistance: number): void {
-    const indicator = getPullIndicator();
-    if (!indicator) return;
-    
-    if (pullDistance > 0) {
-        // Limit the maximum pull distance to prevent going too far
-        const maxPullDistance = pullThreshold + 20;
-        const limitedPullDistance = Math.min(pullDistance, maxPullDistance);
-        const pullPercentage = limitedPullDistance / pullThreshold;
-        const indicatorOffset = -60 + (pullPercentage * 60);
-        
-        // Ensure the indicator doesn't go beyond the maximum
-        const finalOffset = Math.min(indicatorOffset, 20);
-        
-        indicator.style.transform = `translateY(${finalOffset}px)`;
-        
-        const pullText = indicator.querySelector('.pull-text') as HTMLElement;
-        const pullIcon = indicator.querySelector('.pull-icon') as HTMLElement;
-        
-        if (pullDistance >= pullThreshold) {
-            pullText.textContent = 'Release to refresh';
-            pullIcon.textContent = '↑';
-        } else {
-            pullText.textContent = 'Pull down to refresh';
-            pullIcon.textContent = '↓';
-        }
-    } else {
-        indicator.style.transform = 'translateY(-60px)';
-    }
-}
-
-// PWA-compatible touch handling
-function handleTouchStart(e: TouchEvent): void {
-    // Only allow pull-to-refresh when at the top of the page
-    if (window.scrollY <= 0) {
-        startY = e.touches[0].clientY;
-        isPulling = true;
-    } else {
-        isPulling = false;
-    }
-}
-
-function handleTouchMove(e: TouchEvent): void {
-    if (!isPulling) return;
-    
-    currentY = e.touches[0].clientY;
-    const pullDistance = currentY - startY;
-    
-    if (pullDistance > 0) {
-        // Update pull indicator
-        updatePullIndicator(pullDistance);
-        
-        // Prevent the page from scrolling past the top
-        e.preventDefault();
-        e.stopPropagation();
-    }
-}
-
-function handleTouchEnd(e: TouchEvent): void {
-    if (!isPulling) return;
-    
-    const pullDistance = currentY - startY;
-    const indicator = getPullIndicator();
-    
-    if (pullDistance > pullThreshold) {
-        // Show loading state
-        const pullText = indicator?.querySelector('.pull-text') as HTMLElement;
-        const pullIcon = indicator?.querySelector('.pull-icon') as HTMLElement;
-        if (pullText && pullIcon) {
-            pullText.textContent = 'Refreshing...';
-            pullIcon.textContent = '⟳';
-        }
-        
-        // Trigger refresh
-        loadQueue().then(() => {
-            // Hide indicator after refresh completes
-            setTimeout(() => {
-                updatePullIndicator(0);
-            }, 500);
-        });
-    } else {
-        // Hide pull indicator if not enough pull
-        updatePullIndicator(0);
-    }
-    
-    isPulling = false;
-}
-
-// Add event listeners with proper options for PWA
-document.addEventListener('touchstart', handleTouchStart, { passive: true });
-document.addEventListener('touchmove', handleTouchMove, { passive: false });
-document.addEventListener('touchend', handleTouchEnd, { passive: true });
+// Initialize pull-to-refresh functionality
+const pullToRefresh = new PullToRefresh({
+    threshold: 100,
+    onRefresh: loadQueue,
+    indicatorId: 'pull-indicator'
+});
+pullToRefresh.init();
