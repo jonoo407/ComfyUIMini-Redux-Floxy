@@ -905,37 +905,24 @@ export class WorkflowEditor {
         const comfyMin = typeof comfyInputInfo.min === 'number' ? comfyInputInfo.min : null;
         const comfyMax = typeof comfyInputInfo.max === 'number' ? comfyInputInfo.max : null;
 
-        let warnings: string[] = [];
-
         // Only for slider format, check for empty fields
         const isSlider = formatSelect && formatSelect.value === 'slider';
-        if (isSlider) {
-            if (!minInput.value) {
-                warnings.push('Min is required for slider.');
-            }
-            if (!maxInput.value) {
-                warnings.push('Max is required for slider.');
-            }
-            if (!defaultInput.value) {
-                warnings.push('Default is required for slider.');
-            }
-        }
-
-        if (!isNaN(min) && !isNaN(max) && min > max) {
-            warnings.push('Min cannot be greater than Max.');
-        }
-        if (!isNaN(def) && !isNaN(min) && def < min) {
-            warnings.push('Default must be greater than or equal to Min.');
-        }
-        if (!isNaN(def) && !isNaN(max) && def > max) {
-            warnings.push('Default must be less than or equal to Max.');
-        }
-        if (comfyMin !== null && !isNaN(min) && min < comfyMin) {
-            warnings.push(`Min cannot be less than ${comfyMin}.`);
-        }
-        if (comfyMax !== null && !isNaN(max) && max > comfyMax) {
-            warnings.push(`Max cannot be greater than ${comfyMax}.`);
-        }
+        
+        const warnings: string[] = [
+            // Slider format validation
+            ...(isSlider && !minInput.value ? ['Min is required for slider.'] : []),
+            ...(isSlider && !maxInput.value ? ['Max is required for slider.'] : []),
+            ...(isSlider && !defaultInput.value ? ['Default is required for slider.'] : []),
+            
+            // Range validation
+            ...(!isNaN(min) && !isNaN(max) && min > max ? ['Min cannot be greater than Max.'] : []),
+            ...(!isNaN(def) && !isNaN(min) && def < min ? ['Default must be greater than or equal to Min.'] : []),
+            ...(!isNaN(def) && !isNaN(max) && def > max ? ['Default must be less than or equal to Max.'] : []),
+            
+            // ComfyUI bounds validation
+            ...(comfyMin !== null && !isNaN(min) && min < comfyMin ? [`Min cannot be less than ${comfyMin}.`] : []),
+            ...(comfyMax !== null && !isNaN(max) && max > comfyMax ? [`Max cannot be greater than ${comfyMax}.`] : [])
+        ];
 
         if (warnings.length > 0) {
             // Show warnings below the relevant fields

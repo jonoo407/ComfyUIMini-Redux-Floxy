@@ -273,36 +273,6 @@ function generateWorkflowMetadataAndSaveToFile(workflowObjectWithoutMetadata: Wo
 }
 
 /**
- * Saves a converted workflow to a new file with a [CONVERTED] prefix while keeping a backup of the original file.
- *
- * @param {object} workflowObject The new workflow object with metadata.
- * @param {string} originalWorkflowFilename The original filename of the workflow.
- */
-function writeConvertedWorkflowToFile(workflowObject: object, originalWorkflowFilename: string) {
-    // Extract metadata from the workflow object
-    const workflowWithMetadata = workflowObject as WorkflowWithMetadata;
-    const metadata = workflowWithMetadata._comfyuimini_meta;
-    
-    // Remove metadata from the workflow object
-    const { _comfyuimini_meta, ...workflowWithoutMetadata } = workflowWithMetadata;
-    
-    // Save the clean workflow
-    fs.writeFileSync(
-        path.join(paths.workflows, `[CONVERTED] ${originalWorkflowFilename}`),
-        JSON.stringify(workflowWithoutMetadata, null, 2),
-        'utf8'
-    );
-
-    // Save the metadata to a .meta file
-    writeWorkflowMetadata(`[CONVERTED] ${originalWorkflowFilename}`, metadata);
-
-    fs.renameSync(
-        path.join(paths.workflows, originalWorkflowFilename),
-        path.join(paths.workflows, `${originalWorkflowFilename}.bak`)
-    );
-}
-
-/**
  *
  * @param {string} filename The server workflow filename.
  * @returns {Record<string, object>|WorkflowFileReadError} The workflow object, or an object with an error type if there was an error.
