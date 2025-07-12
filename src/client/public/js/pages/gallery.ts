@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         {
                             label: 'Delete',
                             className: 'overlay-confirm',
-                            onClick: async (close) => {
+                            onClick: async (_close) => {
                                 try {
                                     const response = await fetch('/gallery/delete', {
                                         method: 'DELETE',
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                             parent: imageItem
                                         });
                                     }
-                                } catch (error) {
+                                } catch (_error) {
                                     openOverlay({
                                         content: `<div class='overlay-error'>Failed to delete file. Please try again.</div>`,
                                         buttons: [

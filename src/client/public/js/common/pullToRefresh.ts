@@ -112,7 +112,7 @@ export class PullToRefresh {
         }
     }
 
-    private handleTouchEnd(e: TouchEvent): void {
+    private handleTouchEnd(_e: TouchEvent): void {
         if (!this.isPulling) return;
         
         const pullDistance = this.currentY - this.startY;
