@@ -1,7 +1,5 @@
-
-
-// Import the actual function from galleryUtils
-import { updateNavigationButtons } from '../client/public/js/common/galleryUtils';
+// Import the actual function from galleryNavigation
+import { updateNavigationButtons } from '../client/public/js/common/galleryNavigation';
 
 describe('Gallery Page Navigation Buttons', () => {
   let pageInput: HTMLInputElement;
