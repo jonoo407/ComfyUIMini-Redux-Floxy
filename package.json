@@ -14,6 +14,8 @@
         "test:fast": "jest --maxWorkers=2 --no-cache",
         "test:watch": "jest --watch",
         "lint": "eslint .",
+        "lint:ci": "eslint . --max-warnings 0",
+        "lint:check": "eslint . --quiet",
         "format": "prettier --write ."
     },
     "keywords": [],

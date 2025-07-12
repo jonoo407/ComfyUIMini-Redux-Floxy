@@ -10,4 +10,11 @@ export default [
   {languageOptions: { globals: {...globals.browser, ...globals.node} }},
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
+  {
+    files: ["**/*.test.ts", "**/*.test.js", "**/__tests__/**/*"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off"
+    }
+  }
 ];
