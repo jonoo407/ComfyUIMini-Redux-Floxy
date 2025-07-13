@@ -665,7 +665,6 @@ function finishGeneration(messageData: FinishGenerationMessage) {
     elements.cancelRunButton.classList.add('disabled');
 
     const allImageUrls = Object.values(messageData).map((item) => item[0]);
-    console.log(allImageUrls);
 
     elements.outputImagesContainer.innerHTML = allImageUrls.map(urlToImageElem).join('');
     
