@@ -21,14 +21,46 @@ async function handleOpenComfyWsConnection(clientWs: WebSocket, promptId: string
 
             const runningItem = queueJson['queue_running'][0] as QueueItem;
             const outputNodeIds = runningItem[4] || [];
-            
-            // Send workflow structure for better progress tracking
             const workflowStructure = runningItem[2] || {};
+            
+            // Enhanced workflow structure analysis for optimized progress tracking
+            const workflowEntries = Object.entries(workflowStructure);
+            const nodeCount = workflowEntries.length;
+            const nodeTypes: Record<string, number> = {};
+            
+            // Pre-compute node IDs for O(1) dependency lookup
+            const nodeIds = new Set(Object.keys(workflowStructure));
+            let hasDependencies = false;
+            
+            // Optimized workflow analysis with early exit for dependencies
+            for (const [, nodeData] of workflowEntries) {
+                const nodeInfo = nodeData as any;
+                const nodeType = nodeInfo.class_type || 'unknown';
+                
+                // Count node types efficiently
+                nodeTypes[nodeType] = (nodeTypes[nodeType] || 0) + 1;
+                
+                // Fast dependency detection with early exit
+                if (!hasDependencies && nodeInfo.inputs) {
+                    for (const inputValue of Object.values(nodeInfo.inputs)) {
+                        if (Array.isArray(inputValue) && inputValue.length >= 2 && 
+                            typeof inputValue[0] === 'string' && nodeIds.has(inputValue[0])) {
+                            hasDependencies = true;
+                            break; // Early exit once dependency found
+                        }
+                    }
+                }
+            }
+            
+            // Send enhanced workflow structure for optimized progress tracking
             clientWs.send(JSON.stringify({ 
                 type: 'workflow_structure', 
                 data: {
-                    totalNodes: Object.keys(workflowStructure).length,
-                    outputNodeCount: outputNodeIds.length
+                    totalNodes: nodeCount,
+                    outputNodeCount: outputNodeIds.length,
+                    hasDependencies: hasDependencies,
+                    nodeTypes: nodeTypes,
+                    promptId: promptId
                 }
             }));
             
