@@ -22,6 +22,16 @@ async function handleOpenComfyWsConnection(clientWs: WebSocket, promptId: string
             const runningItem = queueJson['queue_running'][0] as QueueItem;
             const outputNodeIds = runningItem[4] || [];
             
+            // Send workflow structure for better progress tracking
+            const workflowStructure = runningItem[2] || {};
+            clientWs.send(JSON.stringify({ 
+                type: 'workflow_structure', 
+                data: {
+                    totalNodes: Object.keys(workflowStructure).length,
+                    outputNodeCount: outputNodeIds.length
+                }
+            }));
+            
             clientWs.send(JSON.stringify({ type: 'total_images', data: outputNodeIds.length }));
         }
     } catch (error) {

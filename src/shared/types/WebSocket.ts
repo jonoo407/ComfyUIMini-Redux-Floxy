@@ -3,6 +3,11 @@ export interface ProgressMessage {
     max: number;
 }
 
+export interface WorkflowStructureMessage {
+    totalNodes: number;
+    outputNodeCount: number;
+}
+
 export interface PreviewMessage {
     mimetype: string;
     image: string;

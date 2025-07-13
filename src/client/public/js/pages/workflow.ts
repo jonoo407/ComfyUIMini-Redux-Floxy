@@ -5,6 +5,7 @@ import {
     PreviewMessage,
     ProgressMessage,
     TotalImagesMessage,
+    WorkflowStructureMessage,
 } from '@shared/types/WebSocket.js';
 import { WorkflowWithMetadata } from '@shared/types/Workflow.js';
 import { NodeInputValues } from '@shared/types/SavedInputs.js';
@@ -16,21 +17,12 @@ import { renderInputs } from '../modules/workflowInputRenderer.js';
 import { SaveInputValues } from '../modules/savedInputValues.js';
 import { openPopupWindow, PopupWindowType } from '../common/popupWindow.js';
 import { showResolutionSelector } from '../modules/resolutionSelector.js';
+import { ProgressBarManager } from '../modules/progressBar.js';
 
 // --- DOM Elements ---
 const elements = {
     inputsContainer: document.querySelector('.inputs-container') as HTMLElement,
     outputImagesContainer: document.querySelector('.output-images-container') as HTMLElement,
-    progressBar: {
-        current: {
-            innerElem: document.querySelector('.current-image-progress .progress-bar-inner') as HTMLElement,
-            textElem: document.querySelector('.current-image-progress .progress-bar-text') as HTMLElement,
-        },
-        total: {
-            innerElem: document.querySelector('.total-images-progress .progress-bar-inner') as HTMLElement,
-            textElem: document.querySelector('.total-images-progress .progress-bar-text') as HTMLElement,
-        },
-    },
     runButton: document.querySelector('.run-workflow') as HTMLButtonElement,
     cancelRunButton: document.querySelector('.cancel-run-button') as HTMLButtonElement,
     get allFileInputs() {
@@ -50,9 +42,10 @@ const elements = {
     },
 };
 
+// --- Progress Bar Manager ---
+const progressBarManager = new ProgressBarManager();
+
 // --- Variables ---
-let totalImageCount = 0;
-let completedImageCount = 0;
 let previousOutputsLoaded = false;
 
 // @ts-expect-error - passedWorkflowIdentifier is fetched via the inline script supplied by EJS
@@ -399,20 +392,7 @@ function generateSeed() {
         .padStart(16, '0');
 }
 
-/**
- * Updates a progress bar with a new percentage.
- * Percentage should include the % symbol.
- *
- * @param type Which progress bar to change.
- * @param percentage What percentage to set the progress bar to.
- */
-function setProgressBar(type: 'total' | 'current', percentage: string) {
-    const textElem = type === 'total' ? elements.progressBar.total.textElem : elements.progressBar.current.textElem;
-    const barElem = type === 'total' ? elements.progressBar.total.innerElem : elements.progressBar.current.innerElem;
 
-    textElem.textContent = percentage;
-    barElem.style.width = percentage;
-}
 
 function generateNodeInputValues(): NodeInputValues {
     const collectingInputValues: NodeInputValues = {};
@@ -494,16 +474,15 @@ function handleInputRandomise(randomiseButtonContainer: Element) {
 }
 
 export async function runWorkflow() {
-    setProgressBar('current', '0%');
-    setProgressBar('total', '0%');
-
-    totalImageCount = 0;
-    completedImageCount = 0;
+    progressBarManager.reset();
 
     const filledNodeInputValues = generateNodeInputValues();
     SaveInputValues.fromNodeInputValues(workflowType, workflowIdentifier, filledNodeInputValues);
 
     const filledWorkflow = new WorkflowInstance(workflowObject).fillWorkflowWithUserInputs(filledNodeInputValues);
+    
+    // Initialize progress manager with the workflow
+    progressBarManager.initializeWithWorkflow(filledWorkflow);
     
     // Send both workflow and workflow name
     const message = {
@@ -523,6 +502,10 @@ function handleWebSocketMessage(event: MessageEvent<any>) {
     const message = JSON.parse(event.data);
 
     switch (message.type) {
+        case 'workflow_structure':
+            handleWorkflowStructure(message.data);
+            break;
+
         case 'progress':
             updateProgressBars(message.data);
             break;
@@ -551,25 +534,19 @@ function handleWebSocketMessage(event: MessageEvent<any>) {
     }
 }
 
+function handleWorkflowStructure(messageData: WorkflowStructureMessage) {
+    // Update progress manager with actual workflow structure from server
+    // This provides more accurate progress tracking based on the actual queue
+    console.log('Received workflow structure:', messageData);
+}
+
 function updateProgressBars(messageData: ProgressMessage) {
-    const currentImageProgress = `${Math.round((messageData.value / messageData.max) * 100)}%`;
-    setProgressBar('current', currentImageProgress);
-
-    if (messageData.value === messageData.max) {
-        completedImageCount += 1;
-
-        completedImageCount = Math.min(completedImageCount, totalImageCount);
-
-        const allImagesProgress = `${Math.round((completedImageCount / totalImageCount) * 100)}%`;
-        setProgressBar('total', allImagesProgress);
-    }
+    progressBarManager.updateProgressBars(messageData);
 }
 
 function updateImagePreview(messageData: PreviewMessage) {
     const currentSkeletonLoaderElem =
-        elements.outputImagesContainer.querySelectorAll('.image-placeholder-skeleton')[
-            totalImageCount - completedImageCount - 1
-        ];
+        elements.outputImagesContainer.querySelectorAll('.image-placeholder-skeleton')[0];
 
     if (!currentSkeletonLoaderElem) {
         return;
@@ -589,9 +566,8 @@ function updateImagePreview(messageData: PreviewMessage) {
 }
 
 function setupImagePlaceholders(messageData: TotalImagesMessage) {
-    totalImageCount = messageData;
-
-    elements.outputImagesContainer.innerHTML = `<div class="image-placeholder-skeleton"></div>`.repeat(totalImageCount);
+    // Create placeholders for the expected number of output images
+    elements.outputImagesContainer.innerHTML = `<div class="image-placeholder-skeleton"></div>`.repeat(messageData);
 }
 
 async function loadPreviousOutputsFromAPI() {
@@ -659,8 +635,7 @@ function addItemToPreviousOutputsListElem(imageUrl: string) {
 
 function finishGeneration(messageData: FinishGenerationMessage) {
     // --- If using cached image and progress isnt set throughout generation
-    setProgressBar('current', '100%');
-    setProgressBar('total', '100%');
+    progressBarManager.complete();
     // ---
     elements.cancelRunButton.classList.add('disabled');
 
