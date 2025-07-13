@@ -5,6 +5,7 @@ export interface ProgressBarElements {
     current: {
         innerElem: HTMLElement;
         textElem: HTMLElement;
+        labelElem: HTMLElement;
     };
     total: {
         innerElem: HTMLElement;
@@ -56,6 +57,7 @@ export class ProgressBarManager {
             current: {
                 innerElem: document.querySelector('.current-image-progress .progress-bar-inner') as HTMLElement,
                 textElem: document.querySelector('.current-image-progress .progress-bar-text') as HTMLElement,
+                labelElem: document.querySelector('.current-image-progress-label') as HTMLElement,
             },
             total: {
                 innerElem: document.querySelector('.total-images-progress .progress-bar-inner') as HTMLElement,
@@ -341,6 +343,9 @@ export class ProgressBarManager {
         
         this.setProgressBarOptimized('current', '0%');
         this.setProgressBarOptimized('total', '0%');
+        if (this.elements.current.labelElem) {
+            this.elements.current.labelElem.textContent = 'Current node progress';
+        }
         this.workflow = null;
         this.totalNodes = 0;
         this.completedNodes = 0;
@@ -380,7 +385,8 @@ export class ProgressBarManager {
         this.currentNodeMax = messageData.max;
         this.currentNodeId = messageData.node || null;
 
-
+        // Update current node label
+        this.updateCurrentNodeLabel();
 
         // Update current node progress
         const currentProgress = this.currentNodeMax > 0 ? 
@@ -435,6 +441,38 @@ export class ProgressBarManager {
      */
     getCurrentNodeMax(): number {
         return this.currentNodeMax;
+    }
+
+    /**
+     * Gets the display name for a node
+     * @param nodeId The node ID
+     * @returns The display name (title or class_type)
+     */
+    private getNodeDisplayName(nodeId: string): string {
+        if (!this.workflow || !this.workflow[nodeId]) {
+            return nodeId;
+        }
+        
+        const node = this.workflow[nodeId];
+        // Use title if available, otherwise use class_type
+        return node._meta?.title || node.class_type || nodeId;
+    }
+
+    /**
+     * Updates the current node progress label
+     */
+    private updateCurrentNodeLabel(): void {
+        if (!this.elements.current.labelElem) {
+            return; // Element doesn't exist (e.g., in test environment)
+        }
+        
+        if (!this.currentNodeId) {
+            this.elements.current.labelElem.textContent = 'Current node progress';
+            return;
+        }
+        
+        const nodeName = this.getNodeDisplayName(this.currentNodeId);
+        this.elements.current.labelElem.textContent = `${nodeName} progress`;
     }
 
     /**
