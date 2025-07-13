@@ -53,6 +53,7 @@ const elements = {
 // --- Variables ---
 let totalImageCount = 0;
 let completedImageCount = 0;
+let previousOutputsLoaded = false;
 
 // @ts-expect-error - passedWorkflowIdentifier is fetched via the inline script supplied by EJS
 const workflowIdentifier = passedWorkflowIdentifier;
@@ -72,7 +73,6 @@ ws.onopen = () => console.log('Connected to WebSocket client');
 async function loadWorkflow() {
     try {
         await renderInputs(workflowObject, workflowType, workflowIdentifier);
-        loadPreviousOutputs();
         startEventListeners();
     } catch (error) {
         console.error('Failed to load workflow:', error);
@@ -148,6 +148,11 @@ function togglePreviousOutputs() {
     if (previousOutputsList.classList.contains('hidden')) {
         elements.previousOutputsTogglerIcon.forEach((icon) => icon.classList.add('open'));
         expandElement(previousOutputsList);
+        
+        // Load previous outputs from API if not already loaded
+        if (!previousOutputsLoaded) {
+            loadPreviousOutputsFromAPI();
+        }
     } else {
         elements.previousOutputsTogglerIcon.forEach((icon) => icon.classList.remove('open'));
         collapseElement(previousOutputsList);
@@ -584,42 +589,61 @@ function updateImagePreview(messageData: PreviewMessage) {
 function setupImagePlaceholders(messageData: TotalImagesMessage) {
     totalImageCount = messageData;
 
-    addCurrentImageToPreviousOutputs();
-
     elements.outputImagesContainer.innerHTML = `<div class="image-placeholder-skeleton"></div>`.repeat(totalImageCount);
 }
 
-function loadPreviousOutputs() {
-    const savedPreviousOutputs = sessionStorage.getItem('previousOutputs');
-
-    if (!savedPreviousOutputs) {
-        return;
+async function loadPreviousOutputsFromAPI() {
+    try {
+        const workflowName = workflowObject._comfyuimini_meta?.title || workflowIdentifier;
+        const encodedWorkflowName = encodeURIComponent(workflowName);
+        
+        const response = await fetch(`/api/queue/completed/${encodedWorkflowName}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch previous outputs');
+        }
+        
+        const completedItems = await response.json();
+        
+        // Clear existing content
+        elements.previousOutputsList.innerHTML = '';
+        
+        // Load images for each completed item
+        for (const item of completedItems) {
+            await loadImagesForCompletedItem(item);
+        }
+        
+        previousOutputsLoaded = true;
+    } catch (error) {
+        console.error('Error loading previous outputs:', error);
+        elements.previousOutputsList.innerHTML = '<div class="error-message">Failed to load previous outputs</div>';
     }
-
-    const parsedPreviousOutputs = JSON.parse(savedPreviousOutputs).reverse();
-
-    parsedPreviousOutputs.forEach((url: string) => addItemToPreviousOutputsListElem(url));
 }
 
-function addCurrentImageToPreviousOutputs() {
-    const allCurrentOutputs = elements.outputImagesContainer.querySelectorAll('.output-image');
-
-    if (allCurrentOutputs.length === 0) {
-        return;
+async function loadImagesForCompletedItem(item: any) {
+    try {
+        const promptId = item[1];
+        if (!promptId) return;
+        
+        // Fetch history for the completed item to get the generated images
+        const response = await fetch(`/comfyui/history/${promptId}`);
+        if (!response.ok) return;
+        
+        const historyData = await response.json();
+        
+        if (historyData[promptId] && historyData[promptId].outputs) {
+            // Extract image URLs from the history response
+            Object.values(historyData[promptId].outputs).forEach((output: any) => {
+                if (output.images) {
+                    output.images.forEach((image: any) => {
+                        const imageUrl = `/comfyui/image?filename=${image.filename}&subfolder=${image.subfolder}&type=output`;
+                        addItemToPreviousOutputsListElem(imageUrl);
+                    });
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error loading images for completed item:', error);
     }
-
-    const allCurrentOutputsArray = Array.from(allCurrentOutputs) as HTMLImageElement[];
-
-    allCurrentOutputsArray.reverse().map((outputImage) => addItemToPreviousOutputsListElem(outputImage.src));
-}
-
-function addItemToPreviousOutputsList(imageUrl: string) {
-    const savedPreviousOutputs = sessionStorage.getItem('previousOutputs') || '[]';
-    const parsedPreviousOutputs = JSON.parse(savedPreviousOutputs);
-
-    parsedPreviousOutputs.unshift(imageUrl);
-
-    sessionStorage.setItem('previousOutputs', JSON.stringify(parsedPreviousOutputs));
 }
 
 function addItemToPreviousOutputsListElem(imageUrl: string) {
@@ -640,9 +664,14 @@ function finishGeneration(messageData: FinishGenerationMessage) {
 
     const allImageUrls = Object.values(messageData).map((item) => item[0]);
 
-    allImageUrls.forEach((url) => addItemToPreviousOutputsList(url));
-
     elements.outputImagesContainer.innerHTML = allImageUrls.map(urlToImageElem).join('');
+    
+    // Refresh previous outputs if they are currently loaded/visible
+    if (previousOutputsLoaded && !elements.previousOutputsList.classList.contains('hidden')) {
+        // Reset the loaded flag so it will reload fresh data
+        previousOutputsLoaded = false;
+        loadPreviousOutputsFromAPI();
+    }
 }
 
 function urlToImageElem(imageUrl: string) {

@@ -270,6 +270,18 @@ router.get('/api/queue', async (req, res) => {
     }
 });
 
+router.get('/api/queue/completed/:workflowName', async (req, res) => {
+    try {
+        const { getCompletedItemsByWorkflowName } = await import('../utils/comfyAPIUtils/getQueue');
+        const workflowName = decodeURIComponent(req.params.workflowName);
+        const completedItems = await getCompletedItemsByWorkflowName(workflowName);
+        res.json(completedItems);
+    } catch (error) {
+        console.error('Error fetching completed items for workflow:', error);
+        res.status(500).json({ error: 'Failed to fetch completed items' });
+    }
+});
+
 router.get('/allserverworkflows', async (req, res) => {
     const infoList = Object.entries(serverWorkflowMetadata).map((workflowMetadata) => {
         return {

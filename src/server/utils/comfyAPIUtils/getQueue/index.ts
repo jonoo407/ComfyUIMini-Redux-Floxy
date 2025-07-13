@@ -160,4 +160,20 @@ async function getQueue(): Promise<EnhancedQueueResponse> {
     };
 }
 
+/**
+ * Gets completed queue items filtered by workflow name
+ * @param workflowName The workflow name to filter by
+ * @returns Array of completed queue items matching the workflow name
+ */
+export async function getCompletedItemsByWorkflowName(workflowName: string): Promise<QueueItem[]> {
+    const queueData = await getQueue();
+    const completedItems = queueData.queue_completed || [];
+    
+    return completedItems.filter((item: QueueItem) => {
+        if (!item || !item[1]) return false;
+        const itemWorkflowName = getWorkflowName(item[1]);
+        return itemWorkflowName === workflowName;
+    });
+}
+
 export default getQueue;

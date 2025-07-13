@@ -302,6 +302,13 @@
     border-radius: 0.5rem;
 }
 
+.error-message {
+    color: var(--text-error-color, #ff6b6b);
+    text-align: center;
+    padding: 1rem;
+    font-size: 1rem;
+}
+
 .progress-bar-label {
     margin: 0.5rem 0;
     user-select: none;
