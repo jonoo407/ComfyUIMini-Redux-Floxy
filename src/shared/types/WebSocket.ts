@@ -10,4 +10,4 @@ export interface PreviewMessage {
 
 export type TotalImagesMessage = number;
 
-export type FinishGenerationMessage = string[];
+export type FinishGenerationMessage = Record<string, string[]>;

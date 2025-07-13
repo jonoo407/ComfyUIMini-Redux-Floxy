@@ -664,7 +664,14 @@ function finishGeneration(messageData: FinishGenerationMessage) {
     // ---
     elements.cancelRunButton.classList.add('disabled');
 
-    const allImageUrls = Object.values(messageData).map((item) => item[0]);
+    // Extract all image URLs from the message data
+    // messageData is Record<string, string[]> where keys are node IDs and values are arrays of image URLs
+    const allImageUrls: string[] = [];
+    Object.values(messageData).forEach((imageUrlArray) => {
+        if (Array.isArray(imageUrlArray)) {
+            allImageUrls.push(...imageUrlArray);
+        }
+    });
 
     elements.outputImagesContainer.innerHTML = allImageUrls.map(urlToImageElem).join('');
     
