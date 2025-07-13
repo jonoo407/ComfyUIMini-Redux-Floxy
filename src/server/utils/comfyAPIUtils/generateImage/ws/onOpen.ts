@@ -3,6 +3,7 @@ import handleComfyWsError from "./onError";
 import WebSocket from 'ws';
 import getQueue from "../../getQueue";
 import sendCachedImages from "../sendCachedImages";
+import { QueueItem } from "@shared/types/History";
 
 async function handleOpenComfyWsConnection(clientWs: WebSocket, promptId: string) {
     try {
@@ -18,8 +19,10 @@ async function handleOpenComfyWsConnection(clientWs: WebSocket, promptId: string
         } else {
             // Otherwise, we have queued generating the image.
 
-            const queuedImagesAmount = queueJson['queue_running'][0][4].length;
-            clientWs.send(JSON.stringify({ type: 'total_images', data: queuedImagesAmount }));
+            const runningItem = queueJson['queue_running'][0] as QueueItem;
+            const outputNodeIds = runningItem[4] || [];
+            
+            clientWs.send(JSON.stringify({ type: 'total_images', data: outputNodeIds.length }));
         }
     } catch (error) {
         handleComfyWsError(clientWs, error);

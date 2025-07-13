@@ -26,9 +26,21 @@ export interface VideoInfo {
 
 // Queue-related types
 export interface QueueItem {
-    [0]: any;
+    [0]: number; // Queue position/priority
     [1]: string; // promptId
-    [2]: any;
+    [2]: {
+        [nodeId: string]: {
+            inputs: Record<string, any>;
+            class_type: string;
+            _meta?: {
+                title?: string;
+            };
+        };
+    }; // Workflow nodes configuration
+    [3]: {
+        client_id: string;
+    }; // Client information
+    [4]: string[]; // Output node IDs
     workflowName?: string; // Optional workflow name
 }
 

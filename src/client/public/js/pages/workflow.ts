@@ -558,6 +558,8 @@ function updateProgressBars(messageData: ProgressMessage) {
     if (messageData.value === messageData.max) {
         completedImageCount += 1;
 
+        completedImageCount = Math.min(completedImageCount, totalImageCount);
+
         const allImagesProgress = `${Math.round((completedImageCount / totalImageCount) * 100)}%`;
         setProgressBar('total', allImagesProgress);
     }
@@ -663,6 +665,7 @@ function finishGeneration(messageData: FinishGenerationMessage) {
     elements.cancelRunButton.classList.add('disabled');
 
     const allImageUrls = Object.values(messageData).map((item) => item[0]);
+    console.log(allImageUrls);
 
     elements.outputImagesContainer.innerHTML = allImageUrls.map(urlToImageElem).join('');
     
