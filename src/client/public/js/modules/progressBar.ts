@@ -34,6 +34,7 @@ export class ProgressBarManager {
     private currentNodeMax: number = 1;
     private nodeDepthMap: Map<string, NodeDependencyInfo> = new Map();
     private maxDepth: number = 0;
+    private currentNodeId: string | null = null;
     
     // Cached values for performance optimization
     private cachedAverageDepth: number | null = null;
@@ -46,7 +47,8 @@ export class ProgressBarManager {
     // DOM update optimization
     private lastTotalPercentage: string = '';
     private lastCurrentPercentage: string = '';
-    private pendingUpdate: number | null = null;
+    private pendingCurrentUpdate: number | null = null;
+    private pendingTotalUpdate: number | null = null;
     private synchronousMode: boolean = false; // For testing
 
     constructor() {
@@ -172,16 +174,18 @@ export class ProgressBarManager {
             this.cachedAverageDepth = 0;
         }
         
-        // Cache dependency detection
-        this.cachedHasDependencies = this.nodeDepthMap.size > 0;
-        if (this.cachedHasDependencies) {
-            // Check if any node has dependencies without creating new arrays
+        // Cache dependency detection - properly check if any node has dependencies
+        this.cachedHasDependencies = false;
+        if (this.nodeDepthMap.size > 0) {
             for (const nodeInfo of this.nodeDepthMap.values()) {
                 if (nodeInfo.dependencies.length > 0) {
+                    this.cachedHasDependencies = true;
                     break;
                 }
             }
         }
+        
+
         
         // Cache complexity metrics
         if (this.cachedAverageDepth !== null && this.maxDepth > 0) {
@@ -219,6 +223,8 @@ export class ProgressBarManager {
         // Use cached dependency detection (much faster than checking every time)
         const hasAnyDependencies = this.cachedHasDependencies ?? false;
 
+
+
         if (hasAnyDependencies) {
             // Use structure-aware progress calculation for complex workflows
             const completedProgress = this.completedNodes / this.totalNodes;
@@ -226,40 +232,74 @@ export class ProgressBarManager {
                 (this.currentNodeProgress / this.currentNodeMax) / this.totalNodes : 0;
             
             // Calculate base progress
-            const baseProgress = completedProgress + currentNodeProgress;
+            let baseProgress = completedProgress + currentNodeProgress;
+            
+                        // If we're processing a node, add its completed dependencies to the progress
+            if (this.currentNodeId) {
+                const completedDependencies = this.getCompletedDependenciesForNode(this.currentNodeId);
+                baseProgress += completedDependencies / this.totalNodes;
+            }
             
             // Apply a multiplier for workflows with dependencies
-            // If we're processing a node, its dependencies must be complete
             const dependencyMultiplier = this.calculateDependencyMultiplierOptimized();
             totalProgress = Math.min(baseProgress * dependencyMultiplier, 1);
+            
+
+            
+
         } else {
             // Fallback to simple calculation for workflows without dependencies
             const completedProgress = this.completedNodes / this.totalNodes;
             const currentNodeProgress = this.currentNodeMax > 0 ? 
                 (this.currentNodeProgress / this.currentNodeMax) / this.totalNodes : 0;
             totalProgress = Math.min(completedProgress + currentNodeProgress, 1);
+            
+
         }
         
         const totalPercentage = `${Math.round(totalProgress * 100)}%`;
+
         this.setProgressBarOptimized('total', totalPercentage);
+    }
+
+        /**
+     * Gets the number of completed dependencies for a given node
+     * @param nodeId The ID of the node to check dependencies for
+     * @returns The number of completed dependencies
+     */
+    private getCompletedDependenciesForNode(nodeId: string): number {
+        const nodeInfo = this.nodeDepthMap.get(nodeId);
+        if (!nodeInfo) {
+            return 0;
+        }
+        
+        // Count dependencies that are at a lower depth (already processed)
+        let completedDependencies = 0;
+        for (const depId of nodeInfo.dependencies) {
+            const depInfo = this.nodeDepthMap.get(depId);
+            if (depInfo && depInfo.depth < nodeInfo.depth) {
+                completedDependencies++;
+            }
+        }
+        return completedDependencies;
     }
 
     /**
      * Optimized multiplier calculation using cached values
      */
     private calculateDependencyMultiplierOptimized(): number {
-        // Only apply multiplier if we have current progress (indicating we're processing a node)
+        // Only apply multiplier if we have a current node (indicating we're processing a node)
+        if (!this.currentNodeId) {
+            return 1.0; // No multiplier if no current node
+        }
+        
         const currentProgressRatio = this.currentNodeMax > 0 ? 
             (this.currentNodeProgress / this.currentNodeMax) : 0;
-        
-        if (currentProgressRatio === 0) {
-            return 1.0; // No multiplier if no current progress
-        }
         
         // Use cached complexity metrics (much faster than recalculating)
         const metrics = this.cachedComplexityMetrics!;
         
-        // Calculate progress multiplier
+        // Calculate progress multiplier - use a minimum multiplier even when progress is 0
         const progressMultiplier = 1.0 + (currentProgressRatio * 0.6);
         
         return Math.min(metrics.baseMultiplier * progressMultiplier * metrics.complexityBoost, 2.0);
@@ -275,9 +315,12 @@ export class ProgressBarManager {
         this.completedNodes = 0;
         this.currentNodeProgress = 0;
         this.currentNodeMax = 1;
+        this.currentNodeId = null;
         
         // Analyze workflow structure for better progress tracking
         this.analyzeWorkflowStructure(workflow);
+
+
         
         this.updateTotalProgress();
     }
@@ -287,9 +330,13 @@ export class ProgressBarManager {
      */
     reset(): void {
         // Cancel any pending DOM updates
-        if (this.pendingUpdate !== null) {
-            cancelAnimationFrame(this.pendingUpdate);
-            this.pendingUpdate = null;
+        if (this.pendingCurrentUpdate !== null) {
+            cancelAnimationFrame(this.pendingCurrentUpdate);
+            this.pendingCurrentUpdate = null;
+        }
+        if (this.pendingTotalUpdate !== null) {
+            cancelAnimationFrame(this.pendingTotalUpdate);
+            this.pendingTotalUpdate = null;
         }
         
         this.setProgressBarOptimized('current', '0%');
@@ -299,6 +346,7 @@ export class ProgressBarManager {
         this.completedNodes = 0;
         this.currentNodeProgress = 0;
         this.currentNodeMax = 1;
+        this.currentNodeId = null;
         this.nodeDepthMap.clear();
         this.maxDepth = 0;
         
@@ -330,6 +378,9 @@ export class ProgressBarManager {
     updateProgressBars(messageData: ProgressMessage): void {
         this.currentNodeProgress = messageData.value;
         this.currentNodeMax = messageData.max;
+        this.currentNodeId = messageData.node || null;
+
+
 
         // Update current node progress
         const currentProgress = this.currentNodeMax > 0 ? 
@@ -392,9 +443,13 @@ export class ProgressBarManager {
      */
     cleanup(): void {
         // Cancel any pending updates
-        if (this.pendingUpdate !== null) {
-            cancelAnimationFrame(this.pendingUpdate);
-            this.pendingUpdate = null;
+        if (this.pendingCurrentUpdate !== null) {
+            cancelAnimationFrame(this.pendingCurrentUpdate);
+            this.pendingCurrentUpdate = null;
+        }
+        if (this.pendingTotalUpdate !== null) {
+            cancelAnimationFrame(this.pendingTotalUpdate);
+            this.pendingTotalUpdate = null;
         }
         
         // Clear all data structures
@@ -409,6 +464,7 @@ export class ProgressBarManager {
         this.completedNodes = 0;
         this.currentNodeProgress = 0;
         this.currentNodeMax = 1;
+        this.currentNodeId = null;
         this.maxDepth = 0;
         this.lastTotalPercentage = '';
         this.lastCurrentPercentage = '';
@@ -436,14 +492,25 @@ export class ProgressBarManager {
         }
         
         // Throttle DOM updates using requestAnimationFrame
-        if (this.pendingUpdate !== null) {
+        const pendingUpdate = type === 'total' ? this.pendingTotalUpdate : this.pendingCurrentUpdate;
+        if (pendingUpdate !== null) {
             return; // Update already scheduled
         }
         
-        this.pendingUpdate = requestAnimationFrame(() => {
+        const animationFrame = requestAnimationFrame(() => {
             this.setProgressBar(type, percentage);
-            this.pendingUpdate = null;
+            if (type === 'total') {
+                this.pendingTotalUpdate = null;
+            } else {
+                this.pendingCurrentUpdate = null;
+            }
         });
+        
+        if (type === 'total') {
+            this.pendingTotalUpdate = animationFrame;
+        } else {
+            this.pendingCurrentUpdate = animationFrame;
+        }
     }
 
     /**
@@ -452,10 +519,16 @@ export class ProgressBarManager {
     setSynchronousMode(enabled: boolean): void {
         this.synchronousMode = enabled;
         
-        // If disabling sync mode and there's a pending update, execute it now
-        if (!enabled && this.pendingUpdate !== null) {
-            cancelAnimationFrame(this.pendingUpdate);
-            this.pendingUpdate = null;
+        // If disabling sync mode and there are pending updates, execute them now
+        if (!enabled) {
+            if (this.pendingCurrentUpdate !== null) {
+                cancelAnimationFrame(this.pendingCurrentUpdate);
+                this.pendingCurrentUpdate = null;
+            }
+            if (this.pendingTotalUpdate !== null) {
+                cancelAnimationFrame(this.pendingTotalUpdate);
+                this.pendingTotalUpdate = null;
+            }
         }
     }
 } 

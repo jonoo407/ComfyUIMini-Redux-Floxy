@@ -1,6 +1,8 @@
 export interface ProgressMessage {
     value: number;
     max: number;
+    prompt_id?: string;
+    node?: string;
 }
 
 export interface WorkflowStructureMessage {
