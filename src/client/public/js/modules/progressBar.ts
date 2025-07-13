@@ -13,16 +13,9 @@ export interface ProgressBarElements {
     };
 }
 
-export interface WorkflowNode {
-    id: string;
-    class_type: string;
-    inputs: Record<string, any>;
-}
-
 interface NodeInfo {
     id: string;
     dependencies: string[];
-    dependents: string[];
 }
 
 export class ProgressBarManager {
@@ -81,7 +74,6 @@ export class ProgressBarManager {
             this.nodeInfoMap.set(nodeId, {
                 id: nodeId,
                 dependencies,
-                dependents: []
             });
         }
 
@@ -90,7 +82,8 @@ export class ProgressBarManager {
             for (const depId of nodeInfo.dependencies) {
                 const depNode = this.nodeInfoMap.get(depId);
                 if (depNode) {
-                    depNode.dependents.push(nodeInfo.id);
+                    // The dependents array is no longer used, so we don't add it here.
+                    // The getAllDependencies method will handle transitive dependencies.
                 }
             }
         }
@@ -233,6 +226,8 @@ export class ProgressBarManager {
         this.setProgressBarOptimized('current', '100%');
         this.setProgressBarOptimized('total', '100%');
     }
+
+
 
     /**
      * Gets the current total node count
