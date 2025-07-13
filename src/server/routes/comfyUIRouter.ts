@@ -53,7 +53,7 @@ router.get('/image', async (req, res): Promise<void> => {
 });
 
 router.get('/queue', async (req, res) => {
-    const queue = getQueue();
+    const queue = await getQueue();
 
     res.json(queue);
 });

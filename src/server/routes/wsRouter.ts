@@ -8,8 +8,23 @@ const wss = new WebSocket.Server({ noServer: true });
 
 wss.on('connection', (ws) => {
     ws.on('message', async (message) => {
-        const prompt = JSON.parse(message.toString());
-        await generateImage(prompt, ws);
+        const data = JSON.parse(message.toString());
+        
+        // Handle both old format (just workflow) and new format (workflow + name)
+        let workflow;
+        let workflowName;
+        
+        if (data.workflow && data.workflowName) {
+            // New format: separate workflow and name
+            workflow = data.workflow;
+            workflowName = data.workflowName;
+        } else {
+            // Old format: just workflow (for backward compatibility)
+            workflow = data;
+            workflowName = 'Unknown Workflow';
+        }
+        
+        await generateImage(workflow, ws, workflowName);
     });
 });
 

@@ -29,6 +29,7 @@ export interface QueueItem {
     [0]: any;
     [1]: string; // promptId
     [2]: any;
+    workflowName?: string; // Optional workflow name
 }
 
 export interface HistoryOutput {

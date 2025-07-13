@@ -104,7 +104,10 @@ async function displayQueue(queueData: any) {
 
 async function createQueueItemHtml(item: QueueItem, status: string = 'pending'): Promise<string> {
     const promptId = item[1];
-    const title = `Item ${promptId}`;
+    
+    // Use workflow name directly from the queue data
+    const title = item.workflowName || `Item ${promptId}`;
+    
     let imagesHtml = '';
     
     if (status === 'Completed') {

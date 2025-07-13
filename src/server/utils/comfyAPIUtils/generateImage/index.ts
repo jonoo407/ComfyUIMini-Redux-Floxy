@@ -8,6 +8,7 @@ import handleComfyWsMessage from './ws/onMessage';
 import handleComfyWsClose from './ws/onClose';
 import handleComfyWsError from './ws/onError';
 import handleOpenComfyWsConnection from './ws/onOpen';
+import { storeWorkflowName } from '../getQueue';
 
 function initialiseComfyWs() {
     const comfyWsUrl: string = config.get('comfyui_ws_url');
@@ -26,12 +27,17 @@ function initialiseComfyWs() {
     return new WebSocket(`${comfyWsUrl}/ws?clientId=${clientId}`, comfyWsOptions);
 }
 
-async function generateImage(workflowPrompt: Workflow, clientWs: WebSocket) {
+async function generateImage(workflowPrompt: Workflow, clientWs: WebSocket, workflowName?: string) {
     const comfyWsConnection = initialiseComfyWs();
 
     comfyWsConnection.on('open', async () => {
         const promptData = await queuePrompt(workflowPrompt);
         const promptId = promptData.prompt_id;
+
+        // Store the workflow name if provided
+        if (workflowName) {
+            storeWorkflowName(promptId, workflowName);
+        }
 
         await handleOpenComfyWsConnection(clientWs, promptId);
 

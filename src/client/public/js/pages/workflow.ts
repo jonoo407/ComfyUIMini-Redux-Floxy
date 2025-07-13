@@ -499,7 +499,14 @@ export async function runWorkflow() {
     SaveInputValues.fromNodeInputValues(workflowType, workflowIdentifier, filledNodeInputValues);
 
     const filledWorkflow = new WorkflowInstance(workflowObject).fillWorkflowWithUserInputs(filledNodeInputValues);
-    ws.send(JSON.stringify(filledWorkflow));
+    
+    // Send both workflow and workflow name
+    const message = {
+        workflow: filledWorkflow,
+        workflowName: workflowObject._comfyuimini_meta?.title || workflowIdentifier
+    };
+    
+    ws.send(JSON.stringify(message));
 
     elements.cancelRunButton.classList.remove('disabled');
 
