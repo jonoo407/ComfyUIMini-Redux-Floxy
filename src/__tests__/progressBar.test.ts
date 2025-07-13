@@ -230,8 +230,9 @@ describe('ProgressBarManager', () => {
       };
       progressBarManager.initializeWithWorkflow(mockWorkflow);
 
-      // Set completed nodes to 2 out of 3
-      progressBarManager['completedNodes'] = 2;
+      // Add nodes 1 and 2 to completed set
+      progressBarManager['completedNodeSet'].add('1');
+      progressBarManager['completedNodeSet'].add('2');
       progressBarManager['currentNodeProgress'] = 0;
       progressBarManager['currentNodeMax'] = 1;
 
@@ -249,18 +250,17 @@ describe('ProgressBarManager', () => {
       };
       progressBarManager.initializeWithWorkflow(mockWorkflow);
 
-      // Set completed nodes to 1 out of 2, and current node at 50%
-      progressBarManager['completedNodes'] = 1;
+      // Add node 1 to completed set, and current node at 50%
+      progressBarManager['completedNodeSet'].add('1');
       progressBarManager['currentNodeProgress'] = 50;
       progressBarManager['currentNodeMax'] = 100;
+      progressBarManager['currentNodeId'] = '2'; // Set current node ID
 
       progressBarManager['updateTotalProgress']();
 
       // Should be 1/2 + (50/100)/2 = 0.5 + 0.25 = 0.75 = 75%
-      // With optimizations, this might be slightly higher due to the multiplier
       const actualProgress = parseInt(mockTotalTextElem.textContent!.replace('%', ''));
-      expect(actualProgress).toBeGreaterThanOrEqual(75);
-      expect(actualProgress).toBeLessThanOrEqual(100);
+      expect(actualProgress).toBe(75);
     });
 
     it('should handle zero total nodes', () => {
@@ -279,8 +279,8 @@ describe('ProgressBarManager', () => {
       };
       progressBarManager.initializeWithWorkflow(mockWorkflow);
 
-      // Set completed nodes to 1 and current node at 200% (should be capped)
-      progressBarManager['completedNodes'] = 1;
+      // Add node 1 to completed set and current node at 200% (should be capped)
+      progressBarManager['completedNodeSet'].add('1');
       progressBarManager['currentNodeProgress'] = 200;
       progressBarManager['currentNodeMax'] = 100;
 
@@ -298,7 +298,7 @@ describe('ProgressBarManager', () => {
       };
       progressBarManager.initializeWithWorkflow(mockWorkflow);
 
-      progressBarManager['completedNodes'] = 1;
+      progressBarManager['completedNodeSet'].add('1');
       progressBarManager['currentNodeProgress'] = 50;
       progressBarManager['currentNodeMax'] = 0;
 
@@ -547,8 +547,8 @@ describe('ProgressBarManager', () => {
       
       progressBarManager.initializeWithWorkflow(mockWorkflow);
       
-      // Set completed nodes to 1 out of 2
-      progressBarManager['completedNodes'] = 1;
+      // Add node 1 to completed set
+      progressBarManager['completedNodeSet'].add('1');
       progressBarManager['currentNodeProgress'] = 0;
       progressBarManager['currentNodeMax'] = 1;
       
@@ -558,7 +558,7 @@ describe('ProgressBarManager', () => {
       expect(mockTotalTextElem.textContent).toBe('50%');
     });
 
-    it('should use structure-aware calculation for workflows with dependencies', () => {
+    it('should use simple calculation for all workflows (monotonic progress)', () => {
       const mockWorkflow: Workflow = {
         '1': { class_type: 'CheckpointLoaderSimple', inputs: {}, _meta: { title: 'CheckpointLoaderSimple' } },
         '2': { class_type: 'CLIPTextEncode', inputs: { clip: ['1', 1] }, _meta: { title: 'CLIPTextEncode' } },
@@ -567,24 +567,18 @@ describe('ProgressBarManager', () => {
       
       progressBarManager.initializeWithWorkflow(mockWorkflow);
       
-      // Simulate being at node 3 (deepest) with 50% progress
+      // Simulate being at node 3 with 50% progress
       progressBarManager['completedNodes'] = 0;
       progressBarManager['currentNodeProgress'] = 50;
       progressBarManager['currentNodeMax'] = 100;
-      progressBarManager['currentNodeId'] = '3' as string; // Set current node to trigger dependency logic
+      progressBarManager['currentNodeId'] = '3';
       
       progressBarManager['updateTotalProgress']();
       
-      // Should estimate more progress than simple calculation would suggest
-      // Because if we're at node 3, nodes 1 and 2 should be considered complete
-      const progressText = mockTotalTextElem.textContent;
-      expect(progressText).not.toBe('17%'); // Simple calc would be (0 + 0.5/3) * 100 = 17%
-      
-      // With structure-aware calculation, should be higher due to dependency multiplier
-      const actualProgress = parseInt(progressText!.replace('%', ''));
-      expect(actualProgress).toBeGreaterThan(17);
-      // The new logic can result in 100% due to dependency multiplier, which is acceptable
-      expect(actualProgress).toBeLessThanOrEqual(100);
+      // Should include completed dependencies (nodes 1 and 2) plus current progress
+      // (2 + 0.5) / 3 * 100 = 83%
+      const actualProgress = parseInt(mockTotalTextElem.textContent!.replace('%', ''));
+      expect(actualProgress).toBe(83);
     });
 
     it('should handle progress estimation for complex dependency chains', () => {
@@ -599,16 +593,18 @@ describe('ProgressBarManager', () => {
       
       // Test progress at different stages
       const testCases = [
-        { completedNodes: 0, currentProgress: 0, currentMax: 1, expectedMin: 0 },
-        { completedNodes: 1, currentProgress: 0, currentMax: 1, expectedMin: 25 },
-        { completedNodes: 2, currentProgress: 50, currentMax: 100, expectedMin: 50 },
-        { completedNodes: 3, currentProgress: 100, currentMax: 100, expectedMin: 75 }
+        { completedNodeIds: [], currentProgress: 0, currentMax: 1, currentNodeId: null, expectedMin: 0 },
+        { completedNodeIds: ['1'], currentProgress: 0, currentMax: 1, currentNodeId: null, expectedMin: 25 },
+        { completedNodeIds: ['1', '2'], currentProgress: 50, currentMax: 100, currentNodeId: '3', expectedMin: 50 },
+        { completedNodeIds: ['1', '2', '3'], currentProgress: 100, currentMax: 100, currentNodeId: null, expectedMin: 75 }
       ];
       
-      testCases.forEach(({ completedNodes, currentProgress, currentMax, expectedMin }) => {
-        progressBarManager['completedNodes'] = completedNodes;
+      testCases.forEach(({ completedNodeIds, currentProgress, currentMax, currentNodeId, expectedMin }) => {
+        progressBarManager['completedNodeSet'].clear();
+        completedNodeIds.forEach(id => progressBarManager['completedNodeSet'].add(id));
         progressBarManager['currentNodeProgress'] = currentProgress;
         progressBarManager['currentNodeMax'] = currentMax;
+        progressBarManager['currentNodeId'] = currentNodeId;
         
         progressBarManager['updateTotalProgress']();
         
@@ -617,7 +613,7 @@ describe('ProgressBarManager', () => {
       });
     });
 
-    it('should fall back to simple calculation when structure analysis fails', () => {
+    it('should use simple calculation when structure analysis fails', () => {
       const mockWorkflow: Workflow = {
         '1': { class_type: 'KSampler', inputs: {}, _meta: { title: 'KSampler' } }
       };
@@ -630,14 +626,13 @@ describe('ProgressBarManager', () => {
       progressBarManager['completedNodes'] = 0;
       progressBarManager['currentNodeProgress'] = 50;
       progressBarManager['currentNodeMax'] = 100;
+      progressBarManager['currentNodeId'] = '1';
       
       progressBarManager['updateTotalProgress']();
       
       // Should use simple calculation: (0 + 0.5) / 1 = 50%
-      // With optimizations and caching, might be slightly different
       const actualProgress = parseInt(mockTotalTextElem.textContent!.replace('%', ''));
-      expect(actualProgress).toBeGreaterThanOrEqual(50);
-      expect(actualProgress).toBeLessThanOrEqual(100);
+      expect(actualProgress).toBe(50);
     });
   });
 
@@ -779,13 +774,14 @@ describe('ProgressBarManager', () => {
       
       // Test different stages of the diamond pattern
       const testCases = [
-        { stage: 'Node 1 complete', completedNodes: 1, currentProgress: 0, currentNodeId: null, expectedMin: 25 },
-        { stage: 'Node 2 in progress', completedNodes: 1, currentProgress: 50, currentNodeId: '2', expectedMin: 30 },
-        { stage: 'Node 4 in progress', completedNodes: 0, currentProgress: 25, currentNodeId: '4', expectedMin: 6 } // More realistic expectation
+        { stage: 'Node 1 complete', completedNodeIds: ['1'], currentProgress: 0, currentNodeId: null, expectedMin: 25 },
+        { stage: 'Node 2 in progress', completedNodeIds: ['1'], currentProgress: 50, currentNodeId: '2', expectedMin: 30 },
+        { stage: 'Node 4 in progress', completedNodeIds: [], currentProgress: 25, currentNodeId: '4', expectedMin: 6 } // More realistic expectation
       ];
       
-      testCases.forEach(({ stage, completedNodes, currentProgress, currentNodeId, expectedMin }) => {
-        progressBarManager['completedNodes'] = completedNodes;
+      testCases.forEach(({ stage, completedNodeIds, currentProgress, currentNodeId, expectedMin }) => {
+        progressBarManager['completedNodeSet'].clear();
+        completedNodeIds.forEach(id => progressBarManager['completedNodeSet'].add(id));
         progressBarManager['currentNodeProgress'] = currentProgress;
         progressBarManager['currentNodeMax'] = 100;
         progressBarManager['currentNodeId'] = currentNodeId;
@@ -797,7 +793,7 @@ describe('ProgressBarManager', () => {
         expect(actualProgress).toBeLessThanOrEqual(100);
         
         // Most importantly, should be higher than simple calculation
-        const simpleCalculation = Math.round(((completedNodes + (currentProgress / 100)) / 4) * 100);
+        const simpleCalculation = Math.round(((completedNodeIds.length + (currentProgress / 100)) / 4) * 100);
         expect(actualProgress).toBeGreaterThanOrEqual(simpleCalculation);
       });
     });
@@ -820,7 +816,8 @@ describe('ProgressBarManager', () => {
       expect(progressBarManager['nodeDepthMap'].get('4')?.depth).toBe(1);
       
       // Test progress estimation for independent branches
-      progressBarManager['completedNodes'] = 2; // Two nodes complete
+      progressBarManager['completedNodeSet'].add('1');
+      progressBarManager['completedNodeSet'].add('2');
       progressBarManager['currentNodeProgress'] = 0;
       progressBarManager['currentNodeMax'] = 1;
       
@@ -858,7 +855,7 @@ describe('ProgressBarManager', () => {
       expect(progressBarManager['currentNodeId']).toBe('2');
     });
 
-    it('should include completed dependencies in progress calculation', () => {
+    it('should calculate progress correctly with current node progress', () => {
       const mockWorkflow: Workflow = {
         '1': { class_type: 'CheckpointLoaderSimple', inputs: {}, _meta: { title: 'CheckpointLoaderSimple' } },
         '2': { class_type: 'CLIPTextEncode', inputs: { clip: ['1', 1] }, _meta: { title: 'CLIPTextEncode' } },
@@ -867,20 +864,18 @@ describe('ProgressBarManager', () => {
       
       progressBarManager.initializeWithWorkflow(mockWorkflow);
       
-      // Set current node to 3 (which has dependencies on 1 and 2)
-      progressBarManager['currentNodeId'] = '3' as string;
+      // Set current node to 3 with 25% progress
+      progressBarManager['currentNodeId'] = '3';
       progressBarManager['completedNodes'] = 0;
       progressBarManager['currentNodeProgress'] = 25;
       progressBarManager['currentNodeMax'] = 100;
       
       progressBarManager['updateTotalProgress']();
       
-      // Should include completed dependencies (nodes 1 and 2) in the calculation
-      const progressText = mockTotalTextElem.textContent;
-      const actualProgress = parseInt(progressText!.replace('%', ''));
-      
-      // Should be higher than simple calculation due to completed dependencies
-      expect(actualProgress).toBeGreaterThan(8); // Simple: (0 + 0.25/3) * 100 = 8.33%
+      // Should include completed dependencies (nodes 1 and 2) plus current progress
+      // (2 + 0.25) / 3 * 100 = 75%
+      const actualProgress = parseInt(mockTotalTextElem.textContent!.replace('%', ''));
+      expect(actualProgress).toBe(75);
     });
 
     it('should maintain stable progress when current progress becomes 0', () => {
@@ -1027,9 +1022,10 @@ describe('ProgressBarManager', () => {
       expect(progressBarManager['cachedHasDependencies']).toBe(false);
       
       // Should use simple calculation
-      progressBarManager['completedNodes'] = 1;
+      progressBarManager['completedNodeSet'].add('1');
       progressBarManager['currentNodeProgress'] = 50;
       progressBarManager['currentNodeMax'] = 100;
+      progressBarManager['currentNodeId'] = '2';
       
       progressBarManager['updateTotalProgress']();
       
