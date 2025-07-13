@@ -13,6 +13,15 @@ export class WorkflowEditor {
     private hasValidationErrors: boolean = false;
 
     /**
+     * Sanitizes a node ID for use in CSS selectors by replacing invalid characters.
+     * @param nodeId The node ID to sanitize
+     * @returns A sanitized version safe for use in CSS selectors
+     */
+    private static sanitizeNodeId(nodeId: string): string {
+        return nodeId.replace(/[:]/g, '_');
+    }
+
+    /**
      *
      * @param containerElem The container element in which all of the inputs will be renderered.
      * @param workflowObject The workflow object to render.
@@ -444,7 +453,7 @@ export class WorkflowEditor {
 
         const inputTitle = userInputOptions.title || inputTypeText;
 
-        const idPrefix = `${nodeId}-${inputNameInNode}`;
+        const idPrefix = `${WorkflowEditor.sanitizeNodeId(nodeId)}-${inputNameInNode}`;
 
         const html = WorkflowEditor.renderInputItemHTML(
             nodeId,
@@ -712,7 +721,7 @@ export class WorkflowEditor {
                 const comfyInputsInfo = this.comfyInputsInfo?.[inputNode.class_type]?.[inputName];
                 if (!comfyInputsInfo) return;
                 const defaultValue = inputNode.inputs[inputName].toString();
-                const idPrefix = `${nodeId}-${inputName}`;
+                const idPrefix = `${WorkflowEditor.sanitizeNodeId(nodeId)}-${inputName}`;
                 const inputTypeText = `[${nodeId}] ${inputNode.class_type}: ${inputName}`;
                 const inputTitle = inputOption.title || inputTypeText;
                 // Get the current input counter from the original element

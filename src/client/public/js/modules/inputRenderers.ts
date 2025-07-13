@@ -24,6 +24,15 @@ export interface SelectRenderConfig extends BaseRenderConfig {
 
 export interface BooleanRenderConfig extends BaseRenderConfig {}
 
+/**
+ * Sanitizes a node ID for use in CSS selectors by replacing invalid characters.
+ * @param nodeId The node ID to sanitize
+ * @returns A sanitized version safe for use in CSS selectors
+ */
+function sanitizeNodeId(nodeId: string): string {
+    return nodeId.replace(/[:]/g, '_');
+}
+
 const createInputContainer = (id: string, title: string, inputHtml: string, additionalClass?: string): string => `
     <div class="workflow-input-container${additionalClass ? ' ' + additionalClass : ''}">
         <label for="${id}">${title}</label>
@@ -47,7 +56,7 @@ export function renderSelectInput(inputOptions: SelectRenderConfig): string {
         <img src="/comfyui/image?filename=${inputOptions.default}&subfolder=&type=input" class="input-image-preview">`;
     }
 
-    const id = `input-${inputOptions.node_id}-${inputOptions.input_name_in_node}`;
+    const id = `input-${sanitizeNodeId(inputOptions.node_id)}-${inputOptions.input_name_in_node}`;
 
     const createSelectOptions = (options: string[]) => {
         let optionsHtml = '';
@@ -80,7 +89,7 @@ export function renderSelectInput(inputOptions: SelectRenderConfig): string {
  * @returns {string}
  */
 export function renderTextInput(inputOptions: TextRenderConfig): string {
-    const id = `input-${inputOptions.node_id}-${inputOptions.input_name_in_node}`;
+    const id = `input-${sanitizeNodeId(inputOptions.node_id)}-${inputOptions.input_name_in_node}`;
     const format = inputOptions.format || 'multiline';
     
     let inputHtml = '';
@@ -122,7 +131,7 @@ export function renderNumberInput(inputOptions: NumberRenderConfig & { numberfie
 
     const hasAdditionalButton = showRandomiseToggle || showResolutionSelector;
 
-    const id = `input-${inputOptions.node_id}-${inputOptions.input_name_in_node}`;
+    const id = `input-${sanitizeNodeId(inputOptions.node_id)}-${inputOptions.input_name_in_node}`;
     const { default: defaultValue, step, min, max, numberfield_format } = inputOptions;
 
     const randomiseToggleHTML = `
@@ -193,7 +202,7 @@ export function renderNumberInput(inputOptions: NumberRenderConfig & { numberfie
 }
 
 export function renderBooleanInput(inputOptions: BooleanRenderConfig): string {
-    const id = `input-${inputOptions.node_id}-${inputOptions.input_name_in_node}`;
+    const id = `input-${sanitizeNodeId(inputOptions.node_id)}-${inputOptions.input_name_in_node}`;
     const checked = ['true', '1'].includes(String(inputOptions.default).toLowerCase()) ? 'checked' : '';
     return createInputContainer(
         id,

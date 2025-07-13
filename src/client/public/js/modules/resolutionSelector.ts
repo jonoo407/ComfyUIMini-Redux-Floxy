@@ -9,6 +9,15 @@ const elements = {
     },
 };
 
+/**
+ * Sanitizes a node ID for use in CSS selectors by replacing invalid characters.
+ * @param nodeId The node ID to sanitize
+ * @returns A sanitized version safe for use in CSS selectors
+ */
+function sanitizeNodeId(nodeId: string): string {
+    return nodeId.replace(/[:]/g, '_');
+}
+
 elements.allResolutionScaleButtons.forEach((scaleButton) => {
     scaleButton.addEventListener('change', updateResolutionTexts);
 });
@@ -34,8 +43,8 @@ function updateResolutionTexts() {
             const widthFromButton = parseInt(resolutionDimensionsElem.getAttribute('data-width') as string);
             const heightFromButton = parseInt(resolutionDimensionsElem.getAttribute('data-height') as string);
 
-            const widthInput = document.querySelector(`#input-${nodeId}-width`) as HTMLInputElement;
-            const heightInput = document.querySelector(`#input-${nodeId}-height`) as HTMLInputElement;
+            const widthInput = document.querySelector(`#input-${sanitizeNodeId(nodeId)}-width`) as HTMLInputElement;
+            const heightInput = document.querySelector(`#input-${sanitizeNodeId(nodeId)}-height`) as HTMLInputElement;
 
             widthInput.value = widthFromButton.toString();
             heightInput.value = heightFromButton.toString();
