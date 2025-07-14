@@ -667,7 +667,8 @@ async function loadImagesForCompletedItem(item: any) {
             Object.values(historyData[promptId].outputs).forEach((output: any) => {
                 if (output.images) {
                     output.images.forEach((image: any) => {
-                        const imageUrl = `/comfyui/image?filename=${image.filename}&subfolder=${image.subfolder}&type=output`;
+                        // Use the type directly from the history data
+                        const imageUrl = `/comfyui/image?filename=${image.filename}&subfolder=${image.subfolder}&type=${image.type}`;
                         addItemToPreviousOutputsListElem(imageUrl);
                     });
                 }
