@@ -63,8 +63,6 @@ async function handleOpenComfyWsConnection(clientWs: WebSocket, promptId: string
                     promptId: promptId
                 }
             }));
-            
-            clientWs.send(JSON.stringify({ type: 'total_images', data: outputNodeIds.length }));
         }
     } catch (error) {
         handleComfyWsError(clientWs, error);

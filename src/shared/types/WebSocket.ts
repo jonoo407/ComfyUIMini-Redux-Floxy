@@ -18,6 +18,4 @@ export interface PreviewMessage {
     image: string;
 }
 
-export type TotalImagesMessage = number;
-
 export type FinishGenerationMessage = Record<string, string[]>;

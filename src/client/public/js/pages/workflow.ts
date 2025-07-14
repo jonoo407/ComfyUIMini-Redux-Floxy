@@ -4,7 +4,6 @@ import {
     FinishGenerationMessage,
     PreviewMessage,
     ProgressMessage,
-    TotalImagesMessage,
     WorkflowStructureMessage,
 } from '@shared/types/WebSocket.js';
 import { WorkflowWithMetadata } from '@shared/types/Workflow.js';
@@ -553,10 +552,6 @@ function handleWebSocketMessage(event: MessageEvent<any>) {
                 updateImagePreview(message.data);
                 break;
 
-            case 'total_images':
-                setupImagePlaceholders(message.data);
-                break;
-
             case 'completed':
                 finishGeneration(message.data);
                 break;
@@ -619,10 +614,7 @@ function updateImagePreview(messageData: PreviewMessage) {
     previewImageElem.src = `data:${messageData.mimetype};base64,${messageData.image}`;
 }
 
-function setupImagePlaceholders(messageData: TotalImagesMessage) {
-    // Create placeholders for the expected number of output images
-    elements.outputImagesContainer.innerHTML = `<div class="image-placeholder-skeleton"></div>`.repeat(messageData);
-}
+
 
 async function loadPreviousOutputsFromAPI() {
     try {
