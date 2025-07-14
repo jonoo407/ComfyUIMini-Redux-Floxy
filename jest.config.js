@@ -30,4 +30,7 @@ module.exports = {
   bail: false, // Don't stop on first failure
   // Reduce memory usage
   maxConcurrency: 5,
+  // Change detection optimizations
+  changedSince: process.env.CHANGED_SINCE || undefined,
+  lastCommit: process.env.LAST_COMMIT === 'true',
 }; 
