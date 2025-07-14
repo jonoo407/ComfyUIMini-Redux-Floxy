@@ -3,7 +3,7 @@ import fs from 'fs';
 import config from 'config';
 import logger from './logger';
 import paths from './paths';
-import { Workflow, WorkflowFileReadError, WorkflowWithMetadata, WorkflowMetadata } from '@shared/types/Workflow';
+import { Workflow, WorkflowFileReadError, WorkflowWithMetadata, WorkflowMetadata, InputOption } from '@shared/types/Workflow';
 import { WorkflowInstance } from '@shared/classes/Workflow';
 
 export interface ServerWorkflowMetadata {
@@ -157,6 +157,96 @@ function deleteWorkflowMetadata(workflowFilename: string): boolean {
 }
 
 /**
+ * Checks if a workflow's metadata matches its current structure and updates it if needed.
+ *
+ * @param {Workflow} workflowObject The current workflow object.
+ * @param {WorkflowMetadata} existingMetadata The existing metadata to check against.
+ * @param {string} workflowFilename The filename of the workflow.
+ * @returns {boolean} True if metadata was updated, false if it was already up to date.
+ */
+function checkAndUpdateWorkflowMetadata(
+    workflowObject: Workflow,
+    existingMetadata: WorkflowMetadata,
+    workflowFilename: string
+): boolean {
+    // Create a set of current node-input combinations
+    const currentInputs = new Set<string>();
+    for (const [nodeId, node] of Object.entries(workflowObject)) {
+        if (nodeId.startsWith('_')) {
+            continue;
+        }
+
+        for (const [inputName, inputValue] of Object.entries(node.inputs)) {
+            if (Array.isArray(inputValue)) {
+                // Inputs that come from other nodes come as an array
+                continue;
+            }
+            currentInputs.add(`${nodeId}-${inputName}`);
+        }
+    }
+
+    // Create a set of existing metadata node-input combinations
+    const existingInputs = new Set<string>();
+    for (const inputOption of existingMetadata.input_options) {
+        existingInputs.add(`${inputOption.node_id}-${inputOption.input_name_in_node}`);
+    }
+
+    // Check if there are any differences
+    const hasNewInputs = [...currentInputs].some(input => !existingInputs.has(input));
+    const hasRemovedInputs = [...existingInputs].some(input => !currentInputs.has(input));
+
+    if (!hasNewInputs && !hasRemovedInputs) {
+        // No changes detected
+        return false;
+    }
+
+    logger.info(`Metadata mismatch detected for ${workflowFilename}. Updating metadata...`);
+
+    // Generate new metadata while preserving existing settings
+    const newMetadata = WorkflowInstance.generateMetadataForWorkflow(
+        workflowObject,
+        workflowFilename,
+        config.get('hide_all_input_on_auto_covert')
+    )._comfyuimini_meta;
+
+    // Preserve existing metadata settings where possible
+    const existingOptionsMap = new Map<string, InputOption>();
+    for (const option of existingMetadata.input_options) {
+        const key = `${option.node_id}-${option.input_name_in_node}`;
+        existingOptionsMap.set(key, option);
+    }
+
+    // Update new metadata with existing settings
+    for (const newOption of newMetadata.input_options) {
+        const key = `${newOption.node_id}-${newOption.input_name_in_node}`;
+        const existingOption = existingOptionsMap.get(key);
+        
+        if (existingOption) {
+            // Preserve existing settings
+            newOption.disabled = existingOption.disabled;
+            newOption.title = existingOption.title;
+            newOption.textfield_format = existingOption.textfield_format;
+            newOption.numberfield_format = existingOption.numberfield_format;
+            newOption.min = existingOption.min;
+            newOption.max = existingOption.max;
+        }
+    }
+
+    // Preserve title and description
+    newMetadata.title = existingMetadata.title;
+    newMetadata.description = existingMetadata.description;
+
+    // Write the updated metadata
+    if (writeWorkflowMetadata(workflowFilename, newMetadata)) {
+        logger.info(`Successfully updated metadata for ${workflowFilename}`);
+        return true;
+    } else {
+        logger.error(`Failed to update metadata for ${workflowFilename}`);
+        return false;
+    }
+}
+
+/**
  * Attempts to get text metadata for all workflows in the server workflows folder.
  *
  * @param {string[]} jsonFileList List of JSON files in the workflows folder.
@@ -225,6 +315,9 @@ function getServerWorkflowMetadata(jsonFileList: string[]): ServerWorkflowMetada
 
             continue;
         }
+
+        // Check if metadata needs to be updated due to workflow structure changes
+        checkAndUpdateWorkflowMetadata(parsedJsonContents, metadata, jsonFilename);
 
         accumulatedWorkflowMetadata[jsonFilename] = {
             title: metadata.title,
@@ -364,6 +457,62 @@ function deleteServerWorkflow(filename: string): boolean {
  */
 function refreshWorkflowMetadataCache(): void {
     serverWorkflowsCheck();
+}
+
+/**
+ * Manually updates metadata for all workflows in the workflows folder.
+ * This function checks each workflow's JSON file against its .meta file and updates
+ * the metadata if there are structural changes (new nodes, removed nodes, etc.).
+ * 
+ * @returns {Promise<{updated: string[], errors: string[]}>} Object containing lists of updated and error files.
+ */
+export async function updateAllWorkflowMetadata(): Promise<{updated: string[], errors: string[]}> {
+    const updated: string[] = [];
+    const errors: string[] = [];
+
+    try {
+        checkForWorkflowsFolder();
+        const jsonFileList = getWorkflowFolderJsonFiles();
+
+        for (const jsonFilename of jsonFileList) {
+            try {
+                const jsonFileContents = fs.readFileSync(path.join(paths.workflows, jsonFilename), 'utf8');
+                const parsedJsonContents = JSON.parse(jsonFileContents);
+
+                if (!checkIfObjectIsValidWorkflow(parsedJsonContents)) {
+                    errors.push(`${jsonFilename}: Invalid workflow format`);
+                    continue;
+                }
+
+                const metadata = readWorkflowMetadata(jsonFilename);
+                
+                if (!metadata) {
+                    // No metadata file exists, generate new one
+                    try {
+                        generateWorkflowMetadataAndSaveToFile(parsedJsonContents, jsonFilename);
+                        updated.push(`${jsonFilename}: Created new metadata`);
+                    } catch (error) {
+                        errors.push(`${jsonFilename}: Failed to create metadata - ${error}`);
+                    }
+                } else {
+                    // Check if metadata needs updating
+                    const wasUpdated = checkAndUpdateWorkflowMetadata(parsedJsonContents, metadata, jsonFilename);
+                    if (wasUpdated) {
+                        updated.push(`${jsonFilename}: Updated metadata`);
+                    }
+                }
+            } catch (error) {
+                errors.push(`${jsonFilename}: ${error}`);
+            }
+        }
+
+        logger.info(`Metadata update completed. Updated: ${updated.length}, Errors: ${errors.length}`);
+    } catch (error) {
+        logger.error(`Error during metadata update: ${error}`);
+        errors.push(`General error: ${error}`);
+    }
+
+    return { updated, errors };
 }
 
 export {

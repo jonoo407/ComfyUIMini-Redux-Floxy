@@ -8,6 +8,7 @@ import {
     deleteServerWorkflow,
     writeWorkflowMetadata,
     refreshWorkflowMetadataCache,
+    updateAllWorkflowMetadata,
 } from '../utils/workflowUtils';
 import { getGalleryPageData } from '../utils/galleryUtils';
 import { RequestWithTheme } from '@shared/types/Requests';
@@ -304,6 +305,30 @@ router.get('/allserverworkflows', async (req, res) => {
     });
 
     res.json(infoList);
+});
+
+// Route to manually update metadata for all workflows
+router.post('/api/workflows/update-metadata', async (req, res) => {
+    try {
+        const result = await updateAllWorkflowMetadata();
+        
+        // Refresh the metadata cache after updating
+        refreshWorkflowMetadataCache();
+        
+        res.json({
+            success: true,
+            message: `Metadata update completed. Updated: ${result.updated.length}, Errors: ${result.errors.length}`,
+            updated: result.updated,
+            errors: result.errors
+        });
+    } catch (error) {
+        console.error('Error updating workflow metadata:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to update workflow metadata',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
 });
 
 export default router;
