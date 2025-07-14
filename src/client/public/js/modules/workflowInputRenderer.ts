@@ -46,8 +46,9 @@ export async function renderInputs(workflowObject: WorkflowWithMetadata, workflo
 
         // Use cached saved values instead of individual localStorage calls
         const savedDefaultValue = savedValues[userInputMetadata.node_id]?.[userInputMetadata.input_name_in_node];
+        const originalDefaultValue = inputNode.inputs[userInputMetadata.input_name_in_node].toString();
 
-        const defaultValue = savedDefaultValue ?? inputNode.inputs[userInputMetadata.input_name_in_node].toString();
+        const defaultValue = savedDefaultValue ?? originalDefaultValue;
 
         const comfyInputInfo = inputsInfo[inputNode.class_type][userInputMetadata.input_name_in_node];
 
@@ -55,8 +56,6 @@ export async function renderInputs(workflowObject: WorkflowWithMetadata, workflo
             console.warn(`No input info found for ${userInputMetadata.input_name_in_node} in ${inputNode.class_type}`);
             continue;
         }
-
-        const originalDefaultValue = inputNode.inputs[userInputMetadata.input_name_in_node].toString();
         const renderedInput = renderInput(userInputMetadata, defaultValue, comfyInputInfo, originalDefaultValue);
         renderedInputsArray.push(renderedInput);
     }

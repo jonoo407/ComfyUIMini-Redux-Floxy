@@ -435,15 +435,20 @@ function generateNodeInputValues(): NodeInputValues {
 
         const [, nodeId, nodeInputName] = inputElem.id.split('-');
 
-        // Replace user input with date if it's for a string
-        // TODO: make this work even if the input was hidden
-        const inputValue = (inputElem instanceof HTMLTextAreaElement) ? formatDate(inputElem.value) : inputElem.value;
+        // For textarea elements, save the original template string but use formatted date for execution
+        const originalValue = inputElem.value;
+        const inputValue = (inputElem instanceof HTMLTextAreaElement) ? formatDate(originalValue) : originalValue;
 
         if (!collectingInputValues[nodeId]) {
             collectingInputValues[nodeId] = {};
         }
 
         collectingInputValues[nodeId][nodeInputName] = inputValue;
+        
+        // Save the original template string to localStorage
+        SaveInputValues.fromNodeInputValues(workflowType, workflowIdentifier, {
+            [nodeId]: { [nodeInputName]: originalValue }
+        });
     });
 
     return collectingInputValues;
@@ -508,7 +513,6 @@ export async function runWorkflow() {
     progressBarManager.reset();
 
     const filledNodeInputValues = generateNodeInputValues();
-    SaveInputValues.fromNodeInputValues(workflowType, workflowIdentifier, filledNodeInputValues);
 
     const filledWorkflow = new WorkflowInstance(workflowObject).fillWorkflowWithUserInputs(filledNodeInputValues);
     
