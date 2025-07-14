@@ -50,7 +50,7 @@ A mobile-friendly WebUI to run ComfyUI workflows.
 
 ## Installation
 
-You can find a guide to installing and running the app on the **[getting started](https://github.com/ImDarkTom/ComfyUIMini/wiki/Getting-Started)** page.
+You can find a guide to installing and running the app on the **[getting started](https://github.com/a1lazydog/ComfyUIMini/wiki/Getting-Started)** page.
 
 ## Usage
 
