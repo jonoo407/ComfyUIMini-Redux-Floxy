@@ -5,9 +5,7 @@ import { PullToRefresh } from '../common/pullToRefresh.js';
 // Import shared media utilities
 import { fetchMediaForCompletedItem, createMediaItemsHtml, addMediaClickHandlers } from '../common/mediaDisplay.js';
 
-// Module-level state for debouncing clear completed operations
-let isClearCompletedProcessing = false;
-let clearCompletedTimeoutId: number | null = null;
+
 
 function getEmptyQueueHtml(): string {
     return `
@@ -30,7 +28,18 @@ function updateClearCompletedButton(hasCompletedItems: boolean): void {
         clearBtn.id = 'clear-completed-btn';
         clearBtn.className = 'clear-completed-btn';
         clearBtn.textContent = 'Clear Completed';
-        clearBtn.onclick = showClearCompletedConfirmation;
+        
+        // Add event listeners for both click and touch events (mobile-friendly)
+        const handleClearClick = (e: Event) => {
+            e.preventDefault();
+            
+            showClearCompletedConfirmation();
+        };
+        
+        // Add both click and touchstart listeners for mobile compatibility
+        clearBtn.addEventListener('click', handleClearClick);
+        clearBtn.addEventListener('touchstart', handleClearClick, { passive: false });
+        
         btnContainer.appendChild(clearBtn);
     } else {
         btnContainer.innerHTML = '';
@@ -39,14 +48,8 @@ function updateClearCompletedButton(hasCompletedItems: boolean): void {
 
 // Function to show inline confirmation for clearing completed items
 function showClearCompletedConfirmation() {
-    // Prevent multiple calls while processing
-    if (isClearCompletedProcessing) return;
-    
     const clearBtn = document.getElementById('clear-completed-btn');
     if (!clearBtn) return;
-
-    // Set processing flag to prevent rapid clicks
-    isClearCompletedProcessing = true;
 
     // Create confirm and cancel buttons
     const confirmBtn = document.createElement('button');
@@ -56,45 +59,6 @@ function showClearCompletedConfirmation() {
     cancelBtn.textContent = 'Cancel';
     cancelBtn.className = 'clear-completed-btn cancel';
 
-    confirmBtn.onclick = async () => {
-        if (isClearCompletedProcessing === false) return; // Double-check processing state
-        
-        confirmBtn.disabled = true;
-        cancelBtn.disabled = true;
-        confirmBtn.textContent = 'Clearing...';
-        
-        try {
-            const response = await fetch('/api/queue/completed', { method: 'DELETE' });
-            if (!response.ok) throw new Error('Failed to clear completed items');
-            await loadQueue();
-        } catch (error) {
-            console.error('Error clearing completed items:', error);
-            confirmBtn.textContent = 'Error';
-            // Restore button after error with delay
-            setTimeout(() => {
-                isClearCompletedProcessing = false;
-                updateClearCompletedButton(true); // Re-show button since there was an error
-            }, 2000);
-        } finally {
-            // Reset processing flag after operation completes
-            isClearCompletedProcessing = false;
-        }
-    };
-    
-    cancelBtn.onclick = () => {
-        if (isClearCompletedProcessing === false) return; // Double-check processing state
-        
-        // Clear any pending timeouts
-        if (clearCompletedTimeoutId) {
-            clearTimeout(clearCompletedTimeoutId);
-            clearCompletedTimeoutId = null;
-        }
-        
-        // Reset processing flag and restore button
-        isClearCompletedProcessing = false;
-        updateClearCompletedButton(true); // Re-show the original button
-    };
-
     // Use the button container for placement
     const btnContainer = document.querySelector('.queue-header-buttons');
     if (btnContainer) {
@@ -102,6 +66,40 @@ function showClearCompletedConfirmation() {
         btnContainer.appendChild(cancelBtn);
         btnContainer.appendChild(confirmBtn);
     }
+
+    // Add click handlers after 300ms delay to prevent rapid flipping
+    setTimeout(() => {
+        const handleConfirmClick = async (e: Event) => {
+            e.preventDefault();
+            confirmBtn.disabled = true;
+            cancelBtn.disabled = true;
+            confirmBtn.textContent = 'Clearing...';
+            
+            try {
+                const response = await fetch('/api/queue/completed', { method: 'DELETE' });
+                if (!response.ok) throw new Error('Failed to clear completed items');
+                await loadQueue();
+            } catch (error) {
+                console.error('Error clearing completed items:', error);
+                confirmBtn.textContent = 'Error';
+                
+                updateClearCompletedButton(true); // Re-show the original button
+            }
+        };
+        
+        const handleCancelClick = (e: Event) => {
+            e.preventDefault();
+            
+            updateClearCompletedButton(true); // Re-show the original button
+        };
+        
+        // Add both click and touchstart listeners for mobile compatibility
+        confirmBtn.addEventListener('click', handleConfirmClick);
+        confirmBtn.addEventListener('touchstart', handleConfirmClick, { passive: false });
+        
+        cancelBtn.addEventListener('click', handleCancelClick);
+        cancelBtn.addEventListener('touchstart', handleCancelClick, { passive: false });
+    }, 300);
 }
 
 
@@ -242,22 +240,6 @@ async function createQueueItemHtml(item: QueueItem, status: string = 'pending'):
 // Load queue when page loads
 document.addEventListener('DOMContentLoaded', () => {
     loadQueue();
-    
-    // Add event listener for clear completed button with debouncing
-    const clearBtn = document.getElementById('clear-completed-btn');
-    if (clearBtn) {
-        clearBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            // Add a small delay to prevent rapid clicking
-            if (clearCompletedTimeoutId) {
-                clearTimeout(clearCompletedTimeoutId);
-            }
-            clearCompletedTimeoutId = window.setTimeout(() => {
-                showClearCompletedConfirmation();
-                clearCompletedTimeoutId = null;
-            }, 100);
-        });
-    }
 });
 
 // Initialize pull-to-refresh functionality
