@@ -6,7 +6,8 @@ module.exports = {
   moduleNameMapper: {
     '^@shared/(.*)$': '<rootDir>/src/shared/$1',
     '^(\\.\\./)*client/public/js/(.*)$': '<rootDir>/src/client/public/js/$2',
-    '^(\\.\\./)*common/imageModal\\.js$': '<rootDir>/src/client/public/js/common/imageModal.ts',
+    '^(\\.\\./)*common/(.*)\\.js$': '<rootDir>/src/client/public/js/common/$2.ts',
+    '^(\\.\\./)*modules/(.*)\\.js$': '<rootDir>/src/client/public/js/modules/$2.ts',
   },
   transform: {
     '^.+\\.ts$': ['ts-jest', {

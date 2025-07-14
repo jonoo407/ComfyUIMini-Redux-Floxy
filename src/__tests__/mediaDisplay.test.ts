@@ -4,13 +4,18 @@ import {
   createMediaItemsHtml,
   createSingleMediaItemHtml,
   addMediaClickHandlers
-} from '../client/public/js/modules/mediaDisplay';
-import { HistoryData, MediaItem } from '../../shared/types/History';
+} from '../client/public/js/common/mediaDisplay';
+import { HistoryData, MediaItem } from '@shared/types/History';
 import { openImageModal } from '../client/public/js/common/imageModal';
 
 // Mock the imageModal module
 jest.mock('../client/public/js/common/imageModal', () => ({
   openImageModal: jest.fn()
+}));
+
+// Mock the overlay module
+jest.mock('../client/public/js/common/overlay', () => ({
+  openOverlay: jest.fn()
 }));
 
 describe('Media Display Module', () => {
@@ -357,7 +362,10 @@ describe('Media Display Module', () => {
         }
       ];
 
-      const result = createMediaItemsHtml(mediaItems, 'custom-container', 'custom-item');
+      const result = createMediaItemsHtml(mediaItems, {
+        containerClass: 'custom-container',
+        itemClass: 'custom-item'
+      });
 
       expect(result).toContain('custom-container');
       expect(result).toContain('custom-item');
@@ -376,7 +384,7 @@ describe('Media Display Module', () => {
 
       const result = createSingleMediaItemHtml(mediaItem);
 
-      expect(result).toContain('previous-output-item');
+      expect(result).toContain('image-item');
       expect(result).toContain('previous-output-img');
       expect(result).toContain('image1.png');
       expect(result).toContain('Previously generated image');
@@ -394,7 +402,7 @@ describe('Media Display Module', () => {
 
       const result = createSingleMediaItemHtml(mediaItem);
 
-      expect(result).toContain('previous-output-item');
+      expect(result).toContain('image-item');
       expect(result).toContain('previous-output-img');
       expect(result).toContain('video1.mp4');
       expect(result).toContain('Previously generated video');
@@ -411,11 +419,14 @@ describe('Media Display Module', () => {
         filename: 'image1.png'
       };
 
-      const result = createSingleMediaItemHtml(mediaItem, 'custom-item', 'custom-img');
+      const result = createSingleMediaItemHtml(mediaItem, {
+        itemClass: 'custom-item',
+        imgClass: 'custom-img'
+      });
 
       expect(result).toContain('custom-item');
       expect(result).toContain('custom-img');
-      expect(result).not.toContain('previous-output-item');
+      expect(result).not.toContain('image-item');
       expect(result).not.toContain('previous-output-img');
     });
   });
@@ -453,7 +464,9 @@ describe('Media Display Module', () => {
 
       // This test would need to be modified if we want to test custom selectors
       // For now, we'll test the default behavior
-      addMediaClickHandlers('#test-container', '.custom-image');
+      addMediaClickHandlers('#test-container', {
+        imageSelector: '.custom-image'
+      });
 
       const customImages = document.querySelectorAll('#test-container .custom-image');
       expect(customImages).toHaveLength(2);

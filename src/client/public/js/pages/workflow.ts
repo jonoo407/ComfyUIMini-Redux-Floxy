@@ -17,7 +17,7 @@ import { SaveInputValues } from '../modules/savedInputValues.js';
 import { openPopupWindow, PopupWindowType } from '../common/popupWindow.js';
 import { showResolutionSelector } from '../modules/resolutionSelector.js';
 import { ProgressBarManager } from '../modules/progressBar.js';
-import { fetchMediaForCompletedItem, createSingleMediaItemHtml, addMediaClickHandlers, createMediaItemsHtml } from '../modules/mediaDisplay.js';
+import { fetchMediaForCompletedItem, createSingleMediaItemHtml, addMediaClickHandlers, createMediaItemsHtml } from '../common/mediaDisplay.js';
 
 // --- DOM Elements ---
 const elements = {
@@ -637,8 +637,11 @@ async function loadPreviousOutputsFromAPI() {
             await loadImagesForCompletedItem(item);
         }
         
-        // Add click handlers for images in previous outputs
-        addMediaClickHandlers('.previous-outputs-list', '.previous-output-img');
+        // Add click handlers for images in previous outputs with "Use as Input" enabled
+        addMediaClickHandlers('.previous-outputs-list', {
+            enableUseAsInput: true,
+            imageSelector: '.previous-output-img'
+        });
         
         previousOutputsLoaded = true;
     } catch (error) {
@@ -655,9 +658,13 @@ async function loadImagesForCompletedItem(item: any) {
         // Use shared utility to fetch and extract media items
         const mediaItems = await fetchMediaForCompletedItem(promptId);
         
-        // Add each media item to the previous outputs list
+        // Add each media item to the previous outputs list with "Use as Input" enabled
         mediaItems.forEach((mediaItem) => {
-            const mediaHtml = createSingleMediaItemHtml(mediaItem);
+            const mediaHtml = createSingleMediaItemHtml(mediaItem, {
+                enableUseAsInput: true,
+                itemClass: 'image-item', // unified class for overlay logic
+                imgClass: 'previous-output-img'
+            });
             elements.previousOutputsList.innerHTML = mediaHtml + elements.previousOutputsList.innerHTML;
         });
     } catch (error) {
@@ -678,19 +685,44 @@ function finishGeneration(messageData: FinishGenerationMessage) {
 
     // Extract all image URLs from the message data
     // messageData is Record<string, string[]> where keys are node IDs and values are arrays of image URLs
-    const allMedia: { url: string; isVideo: boolean; filename: string }[] = [];
+    const allMedia: { url: string; isVideo: boolean; filename: string; subfolder: string; type: string }[] = [];
     Object.values(messageData).forEach((mediaUrlArray) => {
         if (Array.isArray(mediaUrlArray)) {
             mediaUrlArray.forEach((url) => {
                 // Guess type by extension (could be improved if type info is available)
                 const isVideo = url.match(/\.(mp4|webm|ogg)(\?|$)/i) !== null;
-                allMedia.push({ url, isVideo, filename: url.split('/').pop() || '' });
+                // Parse filename, subfolder, and type from the query string
+                let filename = url;
+                let subfolder = '';
+                let type = '';
+                try {
+                    const urlObj = new URL(url, window.location.origin);
+                    filename = urlObj.searchParams.get('filename') || '';
+                    subfolder = urlObj.searchParams.get('subfolder') || '';
+                    type = urlObj.searchParams.get('type') || '';
+                } catch (_e) {
+                    // fallback: try regex
+                    const match = url.match(/filename=([^&]+)/);
+                    if (match) filename = match[1];
+                    const subMatch = url.match(/subfolder=([^&]*)/);
+                    if (subMatch) subfolder = subMatch[1];
+                    const typeMatch = url.match(/type=([^&]*)/);
+                    if (typeMatch) type = typeMatch[1];
+                }
+                allMedia.push({ url, isVideo, filename, subfolder, type });
             });
         }
     });
 
-    elements.outputImagesContainer.innerHTML = createMediaItemsHtml(allMedia, 'output-images-container', 'output-image-item');
-    addMediaClickHandlers('.output-images-container', 'img');
+    elements.outputImagesContainer.innerHTML = createMediaItemsHtml(allMedia, {
+        enableUseAsInput: true,
+        containerClass: 'output-images-container',
+        itemClass: 'image-item' // unified class
+    });
+    addMediaClickHandlers('.output-images-container', {
+        enableUseAsInput: true,
+        imageSelector: '.image-item img'
+    });
     
     // Refresh previous outputs if they are currently loaded/visible
     if (previousOutputsLoaded && !elements.previousOutputsList.classList.contains('hidden')) {

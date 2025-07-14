@@ -225,6 +225,10 @@
     }
 }
 
+.output-image-item {
+    position: relative;
+}
+
 .output-image-item img,
 .output-image-item video {
     width: 100%;
@@ -232,6 +236,158 @@
     height: auto;
     border-radius: 0.5rem;
     display: block;
+}
+
+/* Action buttons for media items */
+.output-images-container .image-actions {
+    position: absolute;
+    top: 0.5rem;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    z-index: 2;
+    min-width: 5.5rem;
+    padding-right: 0.5rem;
+}
+
+.output-images-container .use-as-input-button {
+    background-color: var(--background-secondary-color);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-primary-color);
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    min-width: 3rem;
+    min-height: 2.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+    position: static;
+}
+
+.output-images-container .use-as-input-button:hover {
+    background-color: #4CAF50;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.output-images-container .delete-button {
+    background-color: var(--background-secondary-color);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--text-primary-color);
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    position: static;
+}
+
+.output-images-container .delete-button:hover {
+    background-color: #ff4444;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.output-images-container .use-as-input-button,
+.output-images-container .delete-button {
+    font-size: 1.5rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Action buttons for previous outputs */
+.previous-outputs-list .image-actions {
+    position: absolute;
+    top: 0.5rem;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    z-index: 2;
+    min-width: 5.5rem;
+    padding-right: 0.5rem;
+}
+
+.previous-outputs-list .use-as-input-button {
+    background-color: var(--background-secondary-color);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-primary-color);
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    min-width: 3rem;
+    min-height: 2.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+    position: static;
+}
+
+.previous-outputs-list .use-as-input-button:hover {
+    background-color: #4CAF50;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.previous-outputs-list .delete-button {
+    background-color: var(--background-secondary-color);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--text-primary-color);
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    position: static;
+}
+
+.previous-outputs-list .delete-button:hover {
+    background-color: #ff4444;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.previous-outputs-list .use-as-input-button,
+.previous-outputs-list .delete-button {
+    font-size: 1.5rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .output-image {
@@ -304,6 +460,7 @@
 .previous-output-item {
     display: inline-block;
     margin-bottom: 0.5rem;
+    position: relative;
 }
 
 .previous-output-item:last-child {
@@ -587,4 +744,37 @@
     min-width: 4rem;
     text-align: center;
     margin-left: 0.5rem;
+}
+
+.image-item {
+    width: 100%;
+    position: relative;
+    align-content: center;
+    background-color: var(--background-tertiary-color);
+    border-radius: 0.5rem;
+}
+
+.image-item img {
+    width: 100%;
+    border-radius: 0.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.image-item img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.image-actions {
+    position: absolute;
+    top: 0.5rem;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    z-index: 2;
+    min-width: 5.5rem;
+    padding-right: 0.5rem;
 }

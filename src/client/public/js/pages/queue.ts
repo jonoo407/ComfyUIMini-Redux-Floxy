@@ -3,7 +3,7 @@ import { QueueItem } from '../../../../shared/types/History.js';
 // Import PullToRefresh module
 import { PullToRefresh } from '../common/pullToRefresh.js';
 // Import shared media utilities
-import { fetchMediaForCompletedItem, createMediaItemsHtml, addMediaClickHandlers } from '../modules/mediaDisplay.js';
+import { fetchMediaForCompletedItem, createMediaItemsHtml, addMediaClickHandlers } from '../common/mediaDisplay.js';
 
 function getEmptyQueueHtml(): string {
     return `
@@ -182,8 +182,11 @@ async function displayQueue(queueData: any) {
     // Update clear completed button visibility
     updateClearCompletedButton(hasCompletedItems);
     
-    // Add click handlers for images and videos after DOM is updated
-    addMediaClickHandlers('.queue-item-images', '.image-item img');
+    // Add click handlers for images and videos after DOM is updated with "Use as Input" enabled
+    addMediaClickHandlers('.queue-item-images', {
+        enableUseAsInput: true,
+        imageSelector: '.image-item img'
+    });
 }
 
 async function createQueueItemHtml(item: QueueItem, status: string = 'pending'): Promise<string> {
@@ -198,8 +201,12 @@ async function createQueueItemHtml(item: QueueItem, status: string = 'pending'):
         // Use shared utility to fetch and extract media items
         const mediaItems = await fetchMediaForCompletedItem(promptId);
         
-        // Create HTML for images and videos using shared utility
-        imagesHtml = createMediaItemsHtml(mediaItems);
+        // Create HTML for images and videos using shared utility with "Use as Input" enabled
+        imagesHtml = createMediaItemsHtml(mediaItems, {
+            enableUseAsInput: true,
+            containerClass: 'queue-item-images',
+            itemClass: 'image-item' // unified class
+        });
     }
     
     return `
