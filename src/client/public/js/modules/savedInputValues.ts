@@ -1,7 +1,13 @@
 import { NodeInputValues } from '@shared/types/SavedInputs';
 import { Workflow } from '@shared/types/Workflow';
 
-export const getSavedInputs = () => JSON.parse(localStorage.getItem('savedInputs') || '{}');
+export const getSavedInputs = () => {
+    try {
+        return JSON.parse(localStorage.getItem('savedInputs') || '{}');
+    } catch (_e) {
+        return {};
+    }
+};
 
 export class SaveInputValues {
     static fromWorkflow(workflowType: string, workflowIdentifier: string, filledWorkflow: Workflow) {
