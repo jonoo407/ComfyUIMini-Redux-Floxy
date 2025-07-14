@@ -5,6 +5,8 @@ module.exports = {
   testMatch: ['**/__tests__/**/*.test.ts'],
   moduleNameMapper: {
     '^@shared/(.*)$': '<rootDir>/src/shared/$1',
+    '^(\\.\\./)*client/public/js/(.*)$': '<rootDir>/src/client/public/js/$2',
+    '^(\\.\\./)*common/imageModal\\.js$': '<rootDir>/src/client/public/js/common/imageModal.ts',
   },
   transform: {
     '^.+\\.ts$': ['ts-jest', {
