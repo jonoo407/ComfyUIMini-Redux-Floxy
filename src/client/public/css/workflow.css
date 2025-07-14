@@ -214,10 +214,24 @@
 
 .output-images-container {
     width: 100%;
+    display: grid;
+    grid-gap: 0.5rem;
+    grid-template-columns: 1fr;
 }
 
-.output-images-container a {
-    text-decoration: none;
+@media screen and (min-width: 420px) {
+    .output-images-container {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+}
+
+.output-image-item img,
+.output-image-item video {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    display: block;
 }
 
 .output-image {

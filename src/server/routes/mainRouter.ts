@@ -282,6 +282,17 @@ router.get('/api/queue/completed/:workflowName', async (req, res) => {
     }
 });
 
+router.delete('/api/queue/completed', async (req, res) => {
+    try {
+        const { clearCompletedItems } = await import('../utils/comfyAPIUtils/getQueue');
+        clearCompletedItems();
+        res.json({ message: 'Completed items cleared successfully' });
+    } catch (error) {
+        console.error('Error clearing completed items:', error);
+        res.status(500).json({ error: 'Failed to clear completed items' });
+    }
+});
+
 router.get('/allserverworkflows', async (req, res) => {
     const infoList = Object.entries(serverWorkflowMetadata).map((workflowMetadata) => {
         return {

@@ -1,6 +1,6 @@
-import { openImageModal } from '../common/imageModal.js';
 import { openOverlay } from '../common/overlay.js';
 import { updateNavigationButtons } from '../common/galleryNavigation.js';
+import { addMediaClickHandlers } from '../modules/mediaDisplay.js';
 
 const pageInput = document.getElementById('page-input') as HTMLInputElement;
 
@@ -28,18 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const imageItems = document.querySelectorAll('.image-item');
     updateNavigationButtons(currentPage, totalPages, imageItems);
     
-    const images = document.querySelectorAll('.image-item img');
-    
-    images.forEach((img) => {
-        const imageElement = img as HTMLImageElement;
-        imageElement.style.cursor = 'pointer';
-        imageElement.addEventListener('click', (e) => {
-            e.preventDefault();
-            const imageSrc = imageElement.src;
-            const imageAlt = imageElement.alt || 'Gallery image';
-            openImageModal(imageSrc, imageAlt);
-        });
-    });
+    // Add click handlers for images using shared utility (videos have their own controls)
+    addMediaClickHandlers('.image-item', 'img');
 
     // Add "Use as Input" handlers
     const useAsInputButtons = document.querySelectorAll('.use-as-input-button');

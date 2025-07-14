@@ -17,6 +17,7 @@ import { SaveInputValues } from '../modules/savedInputValues.js';
 import { openPopupWindow, PopupWindowType } from '../common/popupWindow.js';
 import { showResolutionSelector } from '../modules/resolutionSelector.js';
 import { ProgressBarManager } from '../modules/progressBar.js';
+import { fetchMediaForCompletedItem, createSingleMediaItemHtml, addMediaClickHandlers, createMediaItemsHtml } from '../modules/mediaDisplay.js';
 
 // --- DOM Elements ---
 const elements = {
@@ -636,6 +637,9 @@ async function loadPreviousOutputsFromAPI() {
             await loadImagesForCompletedItem(item);
         }
         
+        // Add click handlers for images in previous outputs
+        addMediaClickHandlers('.previous-outputs-list', '.previous-output-img');
+        
         previousOutputsLoaded = true;
     } catch (error) {
         console.error('Error loading previous outputs:', error);
@@ -648,37 +652,20 @@ async function loadImagesForCompletedItem(item: any) {
         const promptId = item[1];
         if (!promptId) return;
         
-        // Fetch history for the completed item to get the generated images
-        const response = await fetch(`/comfyui/history/${promptId}`);
-        if (!response.ok) return;
+        // Use shared utility to fetch and extract media items
+        const mediaItems = await fetchMediaForCompletedItem(promptId);
         
-        const historyData = await response.json();
-        
-        if (historyData[promptId] && historyData[promptId].outputs) {
-            // Extract image URLs from the history response
-            Object.values(historyData[promptId].outputs).forEach((output: any) => {
-                if (output.images) {
-                    output.images.forEach((image: any) => {
-                        // Use the type directly from the history data
-                        const imageUrl = `/comfyui/image?filename=${image.filename}&subfolder=${image.subfolder}&type=${image.type}`;
-                        addItemToPreviousOutputsListElem(imageUrl);
-                    });
-                }
-            });
-        }
+        // Add each media item to the previous outputs list
+        mediaItems.forEach((mediaItem) => {
+            const mediaHtml = createSingleMediaItemHtml(mediaItem);
+            elements.previousOutputsList.innerHTML = mediaHtml + elements.previousOutputsList.innerHTML;
+        });
     } catch (error) {
         console.error('Error loading images for completed item:', error);
     }
 }
 
-function addItemToPreviousOutputsListElem(imageUrl: string) {
-    elements.previousOutputsList.innerHTML =
-        `
-        <a href="${imageUrl}" target="_blank" class="previous-output-item">
-            <img src="${imageUrl}" alt="Previously generated image" class="previous-output-img" loading="lazy">
-        </a>
-    ` + elements.previousOutputsList.innerHTML;
-}
+
 
 function finishGeneration(messageData: FinishGenerationMessage) {
     // Mark workflow as no longer running
@@ -691,14 +678,19 @@ function finishGeneration(messageData: FinishGenerationMessage) {
 
     // Extract all image URLs from the message data
     // messageData is Record<string, string[]> where keys are node IDs and values are arrays of image URLs
-    const allImageUrls: string[] = [];
-    Object.values(messageData).forEach((imageUrlArray) => {
-        if (Array.isArray(imageUrlArray)) {
-            allImageUrls.push(...imageUrlArray);
+    const allMedia: { url: string; isVideo: boolean; filename: string }[] = [];
+    Object.values(messageData).forEach((mediaUrlArray) => {
+        if (Array.isArray(mediaUrlArray)) {
+            mediaUrlArray.forEach((url) => {
+                // Guess type by extension (could be improved if type info is available)
+                const isVideo = url.match(/\.(mp4|webm|ogg)(\?|$)/i) !== null;
+                allMedia.push({ url, isVideo, filename: url.split('/').pop() || '' });
+            });
         }
     });
 
-    elements.outputImagesContainer.innerHTML = allImageUrls.map(urlToImageElem).join('');
+    elements.outputImagesContainer.innerHTML = createMediaItemsHtml(allMedia, 'output-images-container', 'output-image-item');
+    addMediaClickHandlers('.output-images-container', 'img');
     
     // Refresh previous outputs if they are currently loaded/visible
     if (previousOutputsLoaded && !elements.previousOutputsList.classList.contains('hidden')) {
@@ -708,10 +700,6 @@ function finishGeneration(messageData: FinishGenerationMessage) {
     }
     
     console.log('Workflow generation completed successfully');
-}
-
-function urlToImageElem(imageUrl: string) {
-    return `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}" class="output-image"></a>`;
 }
 
 export function cancelRun() {

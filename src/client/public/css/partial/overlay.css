@@ -29,8 +29,15 @@
     opacity: 1;
     visibility: visible;
     transition: opacity 0.2s ease-in-out;
-    top: 0;
-    left: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 320px;
+    max-width: 90vw;
+    background: var(--background-primary-color, #222);
+    border-radius: 1rem;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.25);
+    padding: 2rem 1.5rem 1.5rem 1.5rem;
 }
 
 .overlay-content-wrapper.hidden {
@@ -115,4 +122,15 @@
 .overlay-success {
     color: #4CAF50;
     font-weight: bold;
+}
+
+/* Overlay anchored to an image-item: absolutely center within parent */
+.image-item .overlay-content-wrapper.anchored {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 220px;
+    max-width: 90%;
+    z-index: 10;
 } 

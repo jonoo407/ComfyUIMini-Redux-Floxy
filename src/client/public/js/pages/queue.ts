@@ -1,9 +1,9 @@
-// Import imageModal functions for handling images only
-import { openImageModal } from '../common/imageModal.js';
 // Import types from shared types
-import { QueueItem, HistoryData, HistoryOutput, MediaItem } from '../../../../shared/types/History.js';
+import { QueueItem } from '../../../../shared/types/History.js';
 // Import PullToRefresh module
 import { PullToRefresh } from '../common/pullToRefresh.js';
+// Import shared media utilities
+import { fetchMediaForCompletedItem, createMediaItemsHtml, addMediaClickHandlers } from '../modules/mediaDisplay.js';
 
 function getEmptyQueueHtml(): string {
     return `
@@ -13,6 +13,84 @@ function getEmptyQueueHtml(): string {
             <p>No items are currently in the queue.</p>
         </div>
     `;
+}
+
+// Function to show/hide clear completed button based on completed items
+function updateClearCompletedButton(hasCompletedItems: boolean): void {
+    const btnContainer = document.querySelector('.queue-header-buttons');
+    if (!btnContainer) return;
+    if (hasCompletedItems) {
+        // Always reset to just the Clear Completed button
+        btnContainer.innerHTML = '';
+        const clearBtn = document.createElement('button');
+        clearBtn.id = 'clear-completed-btn';
+        clearBtn.className = 'clear-completed-btn';
+        clearBtn.textContent = 'Clear Completed';
+        clearBtn.onclick = showClearCompletedConfirmation;
+        btnContainer.appendChild(clearBtn);
+    } else {
+        btnContainer.innerHTML = '';
+    }
+}
+
+// Function to show inline confirmation for clearing completed items
+function showClearCompletedConfirmation() {
+    const clearBtn = document.getElementById('clear-completed-btn');
+    if (!clearBtn) return;
+
+    // Create confirm and cancel buttons
+    const confirmBtn = document.createElement('button');
+    confirmBtn.textContent = 'Confirm';
+    confirmBtn.className = 'clear-completed-btn confirm';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.className = 'clear-completed-btn cancel';
+
+    let isProcessing = false;
+
+    confirmBtn.onclick = async () => {
+        if (isProcessing) return;
+        isProcessing = true;
+        
+        confirmBtn.disabled = true;
+        cancelBtn.disabled = true;
+        confirmBtn.textContent = 'Clearing...';
+        
+        try {
+            const response = await fetch('/api/queue/completed', { method: 'DELETE' });
+            if (!response.ok) throw new Error('Failed to clear completed items');
+            await loadQueue();
+        } catch (error) {
+            console.error('Error clearing completed items:', error);
+            confirmBtn.textContent = 'Error';
+            // Restore button after error
+            setTimeout(() => restoreClearCompletedButton(), 2000);
+        } finally {
+            // Reset processing flag after operation completes
+            isProcessing = false;
+        }
+    };
+    
+    cancelBtn.onclick = () => {
+        if (isProcessing) return;
+        // Immediately restore the original button
+        restoreClearCompletedButton();
+    };
+
+    // Use the button container for placement
+    const btnContainer = document.querySelector('.queue-header-buttons');
+    if (btnContainer) {
+        btnContainer.innerHTML = '';
+        btnContainer.appendChild(cancelBtn);
+        btnContainer.appendChild(confirmBtn);
+    }
+}
+
+// Restore the original clear completed button ONLY if there are completed items
+function restoreClearCompletedButton() {
+    // The displayQueue function will handle showing/hiding the button based on completed items
+    // So just reload the queue to update the UI
+    loadQueue();
 }
 
 async function loadQueue() {
@@ -44,10 +122,12 @@ async function displayQueue(queueData: any) {
     
     if (!queueData || (Array.isArray(queueData) && queueData.length === 0)) {
         queueContainer.innerHTML = getEmptyQueueHtml();
+        updateClearCompletedButton(false);
         return;
     }
     
     let html = '';
+    let hasCompletedItems = false;
     
     if (queueData.queue_running && queueData.queue_pending) {
         // If it has queue_running and queue_pending properties
@@ -58,10 +138,11 @@ async function displayQueue(queueData: any) {
         // Check if all queue sections are empty
         const hasRunningItems = runningItems.length > 0 && runningItems[0] !== null;
         const hasPendingItems = pendingItems.length > 0 && pendingItems[0] !== null;
-        const hasCompletedItems = completedItems.length > 0 && completedItems[0] !== null;
+        hasCompletedItems = completedItems.length > 0 && completedItems[0] !== null;
 
         if (!hasRunningItems && !hasPendingItems && !hasCompletedItems) {
             queueContainer.innerHTML = getEmptyQueueHtml();
+            updateClearCompletedButton(false);
             return;
         }
 
@@ -98,8 +179,11 @@ async function displayQueue(queueData: any) {
     
     queueContainer.innerHTML = html;
     
+    // Update clear completed button visibility
+    updateClearCompletedButton(hasCompletedItems);
+    
     // Add click handlers for images and videos after DOM is updated
-    addMediaClickHandlers();
+    addMediaClickHandlers('.queue-item-images', '.image-item img');
 }
 
 async function createQueueItemHtml(item: QueueItem, status: string = 'pending'): Promise<string> {
@@ -111,70 +195,11 @@ async function createQueueItemHtml(item: QueueItem, status: string = 'pending'):
     let imagesHtml = '';
     
     if (status === 'Completed') {
-        try {
-            // Fetch history for the completed item
-            const response = await fetch(`/comfyui/history/${promptId}`);
-            if (response.ok) {
-                const historyData: HistoryData = await response.json();
-                
-                // Extract image and video URLs from the history response
-                const mediaItems: MediaItem[] = [];
-                if (historyData[promptId] && historyData[promptId].outputs) {
-                    Object.values(historyData[promptId].outputs).forEach((output: HistoryOutput) => {
-                        // Handle images
-                        if (output.images) {
-                            output.images.forEach((image: { filename: string; subfolder: string; type: string }) => {
-                                const mediaUrl = `/comfyui/image?filename=${image.filename}&subfolder=${image.subfolder}&type=${image.type}`;
-                                mediaItems.push({
-                                    url: mediaUrl,
-                                    isVideo: false,
-                                    filename: image.filename
-                                });
-                            });
-                        }
-                        
-                        // Handle videos
-                        if (output.videos) {
-                            output.videos.forEach((video: { filename: string; subfolder: string; type: string; format: string; frame_rate: number; fullpath: string }) => {
-                                const mediaUrl = `/comfyui/image?filename=${video.filename}&subfolder=${video.subfolder}&type=${video.type}`;
-                                mediaItems.push({
-                                    url: mediaUrl,
-                                    isVideo: true,
-                                    filename: video.filename
-                                });
-                            });
-                        }
-                    });
-                }
-                
-                // Create HTML for images and videos
-                if (mediaItems.length > 0) {
-                    imagesHtml = `
-                        <div class="queue-item-images">
-                            ${mediaItems.map((item: MediaItem) => {
-                                if (item.isVideo) {
-                                    return `
-                                        <div class="image-item">
-                                            <video src="${item.url}" alt="Generated video" style="cursor: pointer;">
-                                                Your browser does not support the video tag.
-                                            </video>
-                                        </div>
-                                    `;
-                                } else {
-                                    return `
-                                        <div class="image-item">
-                                            <img src="${item.url}" alt="Generated image" style="cursor: pointer;">
-                                        </div>
-                                    `;
-                                }
-                            }).join('')}
-                        </div>
-                    `;
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching history for completed item:', error);
-        }
+        // Use shared utility to fetch and extract media items
+        const mediaItems = await fetchMediaForCompletedItem(promptId);
+        
+        // Create HTML for images and videos using shared utility
+        imagesHtml = createMediaItemsHtml(mediaItems);
     }
     
     return `
@@ -192,23 +217,18 @@ async function createQueueItemHtml(item: QueueItem, status: string = 'pending'):
     `;
 }
 
-// Add click handlers to all images in the queue (videos don't need modal)
-function addMediaClickHandlers(): void {
-    const images = document.querySelectorAll('.queue-item-images .image-item img');
-    
-    images.forEach((img) => {
-        const imageElement = img as HTMLImageElement;
-        imageElement.addEventListener('click', (e) => {
-            e.preventDefault();
-            const imageSrc = imageElement.src;
-            const imageAlt = imageElement.alt || 'Queue image';
-            openImageModal(imageSrc, imageAlt);
-        });
-    });
-}
+
 
 // Load queue when page loads
-document.addEventListener('DOMContentLoaded', loadQueue);
+document.addEventListener('DOMContentLoaded', () => {
+    loadQueue();
+    
+    // Add event listener for clear completed button
+    const clearBtn = document.getElementById('clear-completed-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', showClearCompletedConfirmation);
+    }
+});
 
 // Initialize pull-to-refresh functionality
 const pullToRefresh = new PullToRefresh({

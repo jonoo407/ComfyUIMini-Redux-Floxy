@@ -138,6 +138,11 @@ export function openOverlay({ content, buttons = [], parent }: OverlayOptions) {
     const background = createElement('div', 'overlay-background');
     const contentWrapper = createElement('div', 'overlay-content-wrapper');
     
+    // Add 'anchored' class if overlay is anchored to a parent
+    if (parent) {
+        contentWrapper.classList.add('anchored');
+    }
+
     overlayContainer.appendChild(background);
     overlayContainer.appendChild(contentWrapper);
 

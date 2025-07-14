@@ -176,4 +176,17 @@ export async function getCompletedItemsByWorkflowName(workflowName: string): Pro
     });
 }
 
+/**
+ * Clears all completed items from the queue storage
+ */
+export function clearCompletedItems(): void {
+    // Clear all completed items
+    completedItems.clear();
+    
+    // Clear all workflow name mappings for completed items
+    workflowNamesByPromptId.clear();
+    
+    logger.logOptional('fetch_queue', 'Cleared all completed queue items');
+}
+
 export default getQueue;
