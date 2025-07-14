@@ -274,8 +274,8 @@
 }
 
 .output-images-container .use-as-input-button:hover {
-    background-color: #4CAF50;
-    color: white;
+    background-color: var(--success-bg, #4CAF50);
+    color: var(--success-text, white);
     transform: scale(1.1);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
@@ -299,8 +299,8 @@
 }
 
 .output-images-container .delete-button:hover {
-    background-color: #ff4444;
-    color: white;
+    background-color: var(--error-bg, #ff4444);
+    color: var(--error-text, white);
     transform: scale(1.1);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
@@ -350,8 +350,8 @@
 }
 
 .previous-outputs-list .use-as-input-button:hover {
-    background-color: #4CAF50;
-    color: white;
+    background-color: var(--success-bg, #4CAF50);
+    color: var(--success-text, white);
     transform: scale(1.1);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
@@ -375,8 +375,8 @@
 }
 
 .previous-outputs-list .delete-button:hover {
-    background-color: #ff4444;
-    color: white;
+    background-color: var(--error-bg, #ff4444);
+    color: var(--error-text, white);
     transform: scale(1.1);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
