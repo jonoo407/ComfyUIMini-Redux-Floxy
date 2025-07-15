@@ -10,6 +10,7 @@ const VIDEO_EXTENSIONS = ['.mp4'];
 const createErrorResponse = (error: string, subfolder = '') => ({
     error,
     currentSubfolder: subfolder,
+    parentSubfolder: subfolder ? path.dirname(subfolder) : null,
     scanned: { subfolders: [], images: [] },
     pageInfo: { prevPage: 0, currentPage: 0, nextPage: 0, totalPages: 0 },
 });
@@ -50,8 +51,14 @@ function getRelativeTimeText(timestamp: number): string {
  */
 function getGalleryPageData(page = 0, subfolder = '', itemsPerPage = 20, type = 'output') {
     const configKey = type === 'input' ? 'input_dir' : 'output_dir';
-    const imagePath = config.get(configKey);
     const dirType = type === 'input' ? 'Input' : 'Output';
+
+    // Check if the configuration property exists
+    if (!config.has(configKey)) {
+        return createErrorResponse(`${dirType} directory not configured in config.`);
+    }
+
+    const imagePath = config.get(configKey);
 
     // Validate configuration
     if (!imagePath || typeof imagePath !== 'string') {

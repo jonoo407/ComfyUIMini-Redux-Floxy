@@ -15,10 +15,17 @@ async function getImage(filename: string, subfolder: string, type: string) {
             if (err.code === 'ECONNREFUSED') {
                 // Fallback if ComfyUI is unavailable
                 const configKey = type === 'input' ? 'input_dir' : 'output_dir';
+                
+                // Check if the configuration property exists
+                if (!config.has(configKey)) {
+                    console.error(`${type === 'input' ? 'Input' : 'Output'} directory not configured in config`);
+                    return null;
+                }
+                
                 const dirPath = config.get(configKey);
                 
                 if (!dirPath || typeof dirPath !== 'string') {
-                    console.error(`${type === 'input' ? 'Input' : 'Output'} directory not configured`);
+                    console.error(`${type === 'input' ? 'Input' : 'Output'} directory not set properly in config`);
                     return null;
                 }
                 

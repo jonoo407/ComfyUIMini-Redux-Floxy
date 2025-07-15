@@ -7,8 +7,28 @@ const pageInput = document.getElementById('page-input') as HTMLInputElement;
 const currentPage = parseInt(document.body.getAttribute('data-current-page') || '0', 10);
 const totalPages = parseInt(document.body.getAttribute('data-total-pages') || '0', 10);
 
+// Handle error display more gracefully
 if (document.body.hasAttribute('data-error')) {
-    alert(document.body.getAttribute('data-error'));
+    const error = document.body.getAttribute('data-error');
+    const mainContainer = document.querySelector('.main-container');
+    
+    if (mainContainer && error) {
+        // Create a user-friendly error message
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'error-container';
+        errorContainer.innerHTML = `
+            <div class="error-message">
+                <h2>Input Images Unavailable</h2>
+                <p>${error}</p>
+                <p>Please check your configuration file and ensure the <code>input_dir</code> setting points to a valid directory.</p>
+                <a href="/" class="settings-link">Go Home</a>
+            </div>
+        `;
+        
+        // Clear the main container and show the error
+        mainContainer.innerHTML = '';
+        mainContainer.appendChild(errorContainer);
+    }
 }
 
 if (pageInput) {
