@@ -53,6 +53,9 @@ const progressBarManager = new ProgressBarManager();
 let previousOutputsLoaded = false;
 let isWorkflowRunning = false;
 
+// URL Parameters for overriding input values
+let urlParams: Record<string, Record<string, string>> = {};
+
 // Create wsManager as a const, with empty handlers initially
 const wsManager = new WebSocketManager({});
 
@@ -78,9 +81,129 @@ window.addEventListener('beforeunload', () => {
     wsManager.destroy();
 });
 
+/**
+ * Parses URL parameters to extract node input overrides.
+ * Format: ?nodes={"nodeId":{"inputName":"value"}}
+ * Example: ?nodes={"12":{"seed":"12345","cfg":"7.5"},"13":{"width":"512"}}
+ */
+function parseUrlParameters(): Record<string, Record<string, string>> {
+    const urlSearchParams = new URLSearchParams(window.location.search);
+    const nodesParam = urlSearchParams.get('nodes');
+    
+    if (!nodesParam) {
+        return {};
+    }
+    
+    try {
+        const parsedNodes = JSON.parse(decodeURIComponent(nodesParam));
+        
+        // Validate that it's an object with node structures
+        if (typeof parsedNodes === 'object' && parsedNodes !== null && !Array.isArray(parsedNodes)) {
+            return parsedNodes;
+        } else {
+            console.warn('Invalid nodes parameter structure in URL');
+            return {};
+        }
+    } catch (error) {
+        console.warn('Failed to parse nodes parameter in URL:', error);
+        return {};
+    }
+}
+
+/**
+ * Applies URL parameter values to input fields.
+ * URL parameters take priority over saved values.
+ */
+function applyUrlParameterValues() {
+    const nodeParams = parseUrlParameters();
+    
+    if (Object.keys(nodeParams).length === 0) {
+        return;
+    }
+    
+    elements.allWorkflowInputContainers.forEach((inputContainer) => {
+        const inputElem = inputContainer.querySelector('.workflow-input') as HTMLInputElement;
+        if (!inputElem) return;
+        
+        const [, nodeId, nodeInputName] = inputElem.id.split('-');
+        
+        // Check if this node and input have a URL parameter override
+        const nodeInputs = nodeParams[nodeId];
+        if (nodeInputs && nodeInputs[nodeInputName] !== undefined) {
+            const urlValue = nodeInputs[nodeInputName];
+            
+            // Set the value based on input type
+            if (inputElem instanceof HTMLSelectElement) {
+                // For select elements, try to find the option with the URL value
+                const option = Array.from(inputElem.options).find(opt => opt.value === urlValue);
+                if (option) {
+                    inputElem.value = urlValue;
+                } else {
+                    console.warn(`URL parameter value "${urlValue}" not found in select options for ${inputElem.id}`);
+                }
+            } else {
+                // For other input types (text, number, textarea)
+                inputElem.value = urlValue;
+            }
+            
+            // Trigger change event to ensure any dependent logic runs
+            inputElem.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    });
+}
+
+/**
+ * Updates the URL with current input values as parameters.
+ * This allows users to share the exact configuration they just ran.
+ */
+function updateUrlWithCurrentParams() {
+    const currentUrl = new URL(window.location.href);
+    const currentParams = new URLSearchParams(currentUrl.search);
+    
+    // Collect current input values
+    const nodeParams: Record<string, Record<string, string>> = {};
+    
+    elements.allWorkflowInputContainers.forEach((inputContainer) => {
+        const inputElem = inputContainer.querySelector('.workflow-input') as HTMLInputElement;
+        if (!inputElem) return;
+        
+        const [, nodeId, nodeInputName] = inputElem.id.split('-');
+        const inputValue = inputElem.value;
+        
+        // Only add non-empty values
+        if (inputValue && inputValue.trim() !== '') {
+            if (!nodeParams[nodeId]) {
+                nodeParams[nodeId] = {};
+            }
+            nodeParams[nodeId][nodeInputName] = inputValue;
+        }
+    });
+    
+    // Update the nodes parameter in the URL
+    if (Object.keys(nodeParams).length > 0) {
+        const nodesJson = JSON.stringify(nodeParams);
+        currentParams.set('nodes', nodesJson);
+    } else {
+        // Remove nodes parameter if no inputs have values
+        currentParams.delete('nodes');
+    }
+    
+    // Update the URL without reloading the page
+    const newUrl = `${currentUrl.pathname}?${currentParams.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+}
+
+
 async function loadWorkflow() {
     try {
+        // Parse URL parameters before rendering inputs
+        urlParams = parseUrlParameters();
+        
         await renderInputs(workflowObject, workflowType, workflowIdentifier);
+        
+        // Apply URL parameter values after inputs are rendered
+        applyUrlParameterValues();
+        
         startEventListeners();
         // Set handlers and connect
         await wsManager.setHandlers({
@@ -436,6 +559,7 @@ function generateNodeInputValues(): NodeInputValues {
         const [, nodeId, nodeInputName] = inputElem.id.split('-');
 
         // For textarea elements, save the original template string but use formatted date for execution
+        // Note: This will include any URL parameter values that were applied to the input fields
         const originalValue = inputElem.value;
         const inputValue = (inputElem instanceof HTMLTextAreaElement) ? formatDate(originalValue) : originalValue;
 
@@ -479,6 +603,9 @@ export async function runWorkflow() {
     const filledNodeInputValues = generateNodeInputValues();
 
     const filledWorkflow = new WorkflowInstance(workflowObject).fillWorkflowWithUserInputs(filledNodeInputValues);
+    
+    // Update URL with current input parameters
+    updateUrlWithCurrentParams();
     
     // Send both workflow and workflow name
     const message = {
