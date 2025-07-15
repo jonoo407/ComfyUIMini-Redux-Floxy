@@ -55,7 +55,7 @@ export class ProgressBarManager {
     private analyzeWorkflowStructure(workflow: Workflow): void {
         this.nodeInfoMap.clear();
         
-        // First pass: identify all nodes and their direct dependencies
+        // Identify all nodes and their direct dependencies
         for (const [nodeId, node] of Object.entries(workflow)) {
             const dependencies: string[] = [];
             
@@ -75,17 +75,6 @@ export class ProgressBarManager {
                 id: nodeId,
                 dependencies,
             });
-        }
-
-        // Second pass: build dependent relationships
-        for (const nodeInfo of this.nodeInfoMap.values()) {
-            for (const depId of nodeInfo.dependencies) {
-                const depNode = this.nodeInfoMap.get(depId);
-                if (depNode) {
-                    // The dependents array is no longer used, so we don't add it here.
-                    // The getAllDependencies method will handle transitive dependencies.
-                }
-            }
         }
     }
 
@@ -261,7 +250,16 @@ export class ProgressBarManager {
      * Sets the current node and updates the label
      */
     setCurrentNode(nodeId: string): void {
+        const previousNodeId = this.currentNodeId;
         this.currentNodeId = nodeId;
+        
+        // If we have a new current node, add all its dependencies to completed set
+        if (this.currentNodeId && this.currentNodeId !== previousNodeId) {
+            const allDeps = this.getAllDependencies(this.currentNodeId);
+            for (const depId of allDeps) {
+                this.completedNodes.add(depId);
+            }
+        }
         this.updateCurrentNodeLabel();
     }
 
