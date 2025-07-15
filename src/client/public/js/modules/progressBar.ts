@@ -132,6 +132,25 @@ export class ProgressBarManager {
     }
 
     /**
+     * Initializes the progress manager with workflow structure data from server
+     */
+    initializeWithStructureData(totalNodes: number, workflow?: Workflow): void {
+        this.totalNodes = totalNodes;
+        this.workflow = workflow || null;
+        this.completedNodes.clear();
+        this.currentNodeProgress = 0;
+        this.currentNodeMax = 1;
+        this.currentNodeId = null;
+        
+        // Analyze workflow structure if workflow is provided
+        if (workflow) {
+            this.analyzeWorkflowStructure(workflow);
+        }
+        
+        this.updateTotalProgress();
+    }
+
+    /**
      * Resets the progress bars to 0% and resets counters
      */
     reset(): void {

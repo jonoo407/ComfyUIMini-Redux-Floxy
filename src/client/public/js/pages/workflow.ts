@@ -66,22 +66,8 @@ const workflowObject: WorkflowWithMetadata = workflowDataFromEjs ? workflowDataF
 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
 
-// Initialize the page with enhanced progress bar integration
-loadWorkflow().then(() => {
-    // Pre-initialize progress bar with workflow structure for optimization
-    // This allows the progress bar to pre-compute dependency analysis
-    if (workflowObject) {
-        try {
-            const workflowInstance = new WorkflowInstance(workflowObject);
-            // Pre-analyze structure without starting progress tracking
-            progressBarManager.initializeWithWorkflow(workflowInstance.workflow);
-            progressBarManager.reset(); // Reset but keep cached analysis
-    
-        } catch (error) {
-            console.warn('Failed to pre-initialize progress bar:', error);
-        }
-    }
-});
+// Initialize the page
+loadWorkflow();
 
 // Enhanced cleanup on page unload
 window.addEventListener('beforeunload', () => {
@@ -476,16 +462,14 @@ export async function runWorkflow() {
     // Set running state for proper cleanup
     isWorkflowRunning = true;
     
-    // Reset progress bar (but keep cached analysis if available)
+    // Reset progress bar
     progressBarManager.reset();
 
     const filledNodeInputValues = generateNodeInputValues();
 
     const filledWorkflow = new WorkflowInstance(workflowObject).fillWorkflowWithUserInputs(filledNodeInputValues);
     
-    // Initialize progress manager with the filled workflow
-    // This will use cached analysis if available from pre-initialization
-    progressBarManager.initializeWithWorkflow(filledWorkflow);
+    // Progress bar will be initialized when workflow_structure event is received
     
     // Send both workflow and workflow name
     const message = {
@@ -555,17 +539,15 @@ function handleWebSocketMessage(event: MessageEvent<any>) {
 }
 
 function handleWorkflowStructure(messageData: WorkflowStructureMessage) {
-    // Enhanced workflow structure handling for optimized progress tracking
-    // The progress bar can use this additional server-side information
-    // to validate or enhance its structure analysis
+    // Initialize progress bar with server-validated workflow structure
     const { totalNodes } = messageData;
     
-    // Validate that our client-side analysis matches server-side
-    const clientTotalNodes = progressBarManager.getTotalNodeCount();
-    if (clientTotalNodes !== totalNodes) {
-        console.warn(`Node count mismatch: client=${clientTotalNodes}, server=${totalNodes}`);
-        // The optimized progress bar will handle this gracefully
-    }
+    // Use the original workflow for dependency analysis and display names
+    // The progress bar doesn't need the filled workflow with user inputs
+    const originalWorkflow = new WorkflowInstance(workflowObject).workflow;
+    
+    // Initialize progress bar with server's node count and original workflow structure
+    progressBarManager.initializeWithStructureData(totalNodes, originalWorkflow);
 }
 
 function updateProgressBars(messageData: ProgressMessage) {
