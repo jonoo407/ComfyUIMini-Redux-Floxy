@@ -53,8 +53,7 @@ const progressBarManager = new ProgressBarManager();
 let previousOutputsLoaded = false;
 let isWorkflowRunning = false;
 
-// URL Parameters for overriding input values
-let urlParams: Record<string, Record<string, string>> = {};
+
 
 // Create wsManager as a const, with empty handlers initially
 const wsManager = new WebSocketManager({});
@@ -196,9 +195,6 @@ function updateUrlWithCurrentParams() {
 
 async function loadWorkflow() {
     try {
-        // Parse URL parameters before rendering inputs
-        urlParams = parseUrlParameters();
-        
         await renderInputs(workflowObject, workflowType, workflowIdentifier);
         
         // Apply URL parameter values after inputs are rendered
