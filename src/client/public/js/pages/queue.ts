@@ -5,6 +5,125 @@ import { PullToRefresh } from '../common/pullToRefresh.js';
 // Import shared media utilities
 import { fetchMediaForCompletedItem, createMediaItemsHtml, addMediaClickHandlers } from '../common/mediaDisplay.js';
 
+/**
+ * Creates URL parameters from queue item settings for workflow loading.
+ * Extracts node input values from the queue item and encodes them as URL parameters.
+ */
+function createWorkflowUrlParams(item: QueueItem): string {
+    try {
+        const workflowStructure = item[2]; // The workflow structure is at index 2
+        if (!workflowStructure || typeof workflowStructure !== 'object') {
+            return '';
+        }
+
+        // Collect node parameters from the workflow structure
+        const nodeParams: Record<string, Record<string, string>> = {};
+        
+        Object.entries(workflowStructure).forEach(([nodeId, nodeData]) => {
+            if (nodeData && typeof nodeData === 'object' && 'inputs' in nodeData) {
+                const inputs = (nodeData as any).inputs;
+                if (inputs && typeof inputs === 'object') {
+                    nodeParams[nodeId] = {};
+                    Object.entries(inputs).forEach(([inputName, inputValue]) => {
+                        // Convert value to string and only include non-empty values
+                        const stringValue = String(inputValue);
+                        if (stringValue && stringValue.trim() !== '') {
+                            nodeParams[nodeId][inputName] = stringValue;
+                        }
+                    });
+                }
+            }
+        });
+
+        // Only create URL params if we have node parameters
+        if (Object.keys(nodeParams).length > 0) {
+            const nodesJson = JSON.stringify(nodeParams);
+            return `?nodes=${encodeURIComponent(nodesJson)}`;
+        }
+    } catch (error) {
+        console.warn('Failed to create workflow URL parameters:', error);
+    }
+    
+    return '';
+}
+
+/**
+ * Opens a workflow with the settings from a queue item.
+ */
+async function openWorkflowWithSettings(workflowName: string, promptId: string) {
+    try {
+        // Fetch the queue data to get the specific item
+        const response = await fetch('/api/queue');
+        if (!response.ok) {
+            throw new Error('Failed to fetch queue data');
+        }
+        
+        const queueData = await response.json();
+        
+        // Find the item by prompt ID
+        let targetItem: QueueItem | null = null;
+        
+        // Search in all queue sections
+        const sections = ['queue_running', 'queue_pending', 'queue_completed'];
+        for (const section of sections) {
+            if (queueData[section]) {
+                const items = Array.isArray(queueData[section]) ? queueData[section] : [queueData[section]];
+                targetItem = items.find((item: QueueItem) => item && item[1] === promptId) || null;
+                if (targetItem) break;
+            }
+        }
+        
+        if (!targetItem) {
+            throw new Error('Queue item not found');
+        }
+        
+        // Determine workflow type and get the correct identifier by checking if it exists as a server workflow
+        let workflowType = 'local'; // Default to local
+        let workflowIdentifier = workflowName; // Default to the workflow name
+        
+        try {
+            // Fetch all server workflows to check if this workflow exists
+            const serverWorkflowsResponse = await fetch('/allserverworkflows');
+            if (serverWorkflowsResponse.ok) {
+                const serverWorkflows = await serverWorkflowsResponse.json();
+                const serverWorkflow = serverWorkflows.find((wf: any) => wf.title === workflowName);
+                if (serverWorkflow) {
+                    workflowType = 'server';
+                    workflowIdentifier = serverWorkflow.identifier; // Use the filename/identifier
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to check server workflows, defaulting to local:', error);
+        }
+        
+        const urlParams = createWorkflowUrlParams(targetItem);
+        
+        // Construct the workflow URL using the correct identifier
+        const workflowUrl = `/workflow/${workflowType}/${encodeURIComponent(workflowIdentifier)}${urlParams}`;
+        
+        // Navigate to the workflow page
+        window.location.href = workflowUrl;
+    } catch (error) {
+        console.error('Failed to open workflow with settings:', error);
+    }
+}
+
+/**
+ * Sets up event delegation for load workflow buttons.
+ */
+function setupLoadButtonHandlers() {
+    document.addEventListener('click', async (event) => {
+        const target = event.target as HTMLElement;
+        if (target.classList.contains('load-workflow-btn')) {
+            const workflowName = target.getAttribute('data-workflow-name');
+            const promptId = target.getAttribute('data-prompt-id');
+            
+            if (workflowName && promptId) {
+                await openWorkflowWithSettings(workflowName, promptId);
+            }
+        }
+    });
+}
 
 
 function getEmptyQueueHtml(): string {
@@ -198,6 +317,9 @@ async function displayQueue(queueData: any) {
         enableUseAsInput: true,
         imageSelector: '.image-item img'
     });
+
+    // Setup event delegation for load workflow buttons
+    setupLoadButtonHandlers();
 }
 
 async function createQueueItemHtml(item: QueueItem, status: string = 'pending'): Promise<string> {
@@ -205,6 +327,17 @@ async function createQueueItemHtml(item: QueueItem, status: string = 'pending'):
     
     // Use workflow name directly from the queue data
     const title = item.workflowName || `Item ${promptId}`;
+    
+    // Create load button HTML if this is a workflow item
+    let loadButtonHtml = '';
+    if (item.workflowName) {
+        // Store the workflow name and prompt ID as data attributes
+        loadButtonHtml = `
+            <button class="load-workflow-btn" data-workflow-name="${item.workflowName}" data-prompt-id="${promptId}" title="Load workflow with these settings">
+                🔄
+            </button>
+        `;
+    }
     
     let imagesHtml = '';
     
@@ -224,10 +357,15 @@ async function createQueueItemHtml(item: QueueItem, status: string = 'pending'):
         <div class="queue-item">
             <div class="queue-item-header">
                 <div class="queue-item-info">
-                    <div class="queue-item-title">${title}</div>
+                    <div class="queue-item-title">
+                        ${title}
+                        ${loadButtonHtml}
+                    </div>
                 </div>
-                <div class="queue-item-status ${status}">
-                    ${status}
+                <div class="queue-item-actions">
+                    <div class="queue-item-status ${status}">
+                        ${status}
+                    </div>
                 </div>
             </div>
             ${imagesHtml}
@@ -240,6 +378,7 @@ async function createQueueItemHtml(item: QueueItem, status: string = 'pending'):
 // Load queue when page loads
 document.addEventListener('DOMContentLoaded', () => {
     loadQueue();
+    setupLoadButtonHandlers();
 });
 
 // Initialize pull-to-refresh functionality
