@@ -2,153 +2,119 @@ import path from 'path';
 import fs from 'fs';
 import config from 'config';
 
+// Supported file extensions
+const SUPPORTED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif', '.tiff', '.webp', '.mp4'];
+const VIDEO_EXTENSIONS = ['.mp4'];
+
+// Default error response
+const createErrorResponse = (error: string, subfolder = '') => ({
+    error,
+    currentSubfolder: subfolder,
+    scanned: { subfolders: [], images: [] },
+    pageInfo: { prevPage: 0, currentPage: 0, nextPage: 0, totalPages: 0 },
+});
+
 function getRelativeTimeText(timestamp: number): string {
     const now = Date.now();
     const secondsPast = Math.floor((now - timestamp) / 1000);
 
-    if (secondsPast < 60) {
-        return `${secondsPast} second(s) ago`;
+    const timeUnits = [
+        { seconds: 31536000, label: 'year' },
+        { seconds: 2628000, label: 'month' },
+        { seconds: 604800, label: 'week' },
+        { seconds: 86400, label: 'day' },
+        { seconds: 3600, label: 'hour' },
+        { seconds: 60, label: 'minute' },
+        { seconds: 1, label: 'second' }
+    ];
+
+    for (const unit of timeUnits) {
+        if (secondsPast >= unit.seconds) {
+            const value = Math.floor(secondsPast / unit.seconds);
+            return `${value} ${unit.label}${value !== 1 ? '(s)' : ''} ago`;
+        }
     }
-    if (secondsPast < 3600) {
-        const minutesAgo = Math.floor(secondsPast / 60);
-        return `${minutesAgo} minute(s) ago`;
-    }
-    if (secondsPast < 86400) {
-        const hoursAgo = Math.floor(secondsPast / 3600);
-        return `${hoursAgo} hours(s) ago`;
-    }
-    if (secondsPast < 604800) {
-        const daysAgo = Math.floor(secondsPast / 86400);
-        return `${daysAgo} days(s) ago`;
-    }
-    if (secondsPast < 604800) {
-        const daysAgo = Math.floor(secondsPast / 86400);
-        return `${daysAgo} days(s) ago`;
-    }
-    if (secondsPast < 2628000) {
-        const weeksAgo = Math.floor(secondsPast / 604800);
-        return `${weeksAgo} week(s) ago`;
-    }
-    if (secondsPast < 31536000) {
-        const monthsAgo = Math.floor(secondsPast / 2628000);
-        return `${monthsAgo} month(s) ago`;
-    }
-    const yearsAgo = Math.floor(secondsPast / 31536000);
-    return `${yearsAgo} year(s) ago`;
+
+    return 'just now';
 }
-
-/**
- * @typedef {object} GalleryImageData
- * @property {string} path - The ComfyUIMini url path for the image file.
- * @property {bool} isVideo - If this is a video file
- * @property {number} time - Latest file modification time in ms since Unix epoch.
- * @property {string} timeText - Human-readable relative time since last image mofification, e.g. '2 hour(s) ago'.
- */
-
-/**
- * @typedef {object} GalleryPageData
- * @property {string} currentSubfolder - Currently the subfolder we are in.
- * @property {Object} scanned - List of images and available subfolders.
- * @property {GalleryImageData[]} scanned.images - List of image data.
- * @property {string[]} scanned.subfolders - List of subfolders in the currently opened subfolder.
- * @property {Object} pageInfo - Info around current page index.
- * @property {number} pageInfo.prevPage - Previous page number.
- * @property {number} pageInfo.currentPage - Current page number.
- * @property {number} pageInfo.nextPage - Next page number.
- * @property {number} pageInfo.totalPages - Total number of pages.
- */
 
 /**
  * Gets a list of images at the page.
  *
  * Returns images in the range `(page * itemsPerPage)` to `(page * itemsPerPage) + itemsPerPage`
- * @param {number} page - Page number to retreive.
+ * @param {number} page - Page number to retrieve.
  * @param {string} subfolder - Subfolder within gallery directory.
  * @param {number} itemsPerPage - Images sent per page.
+ * @param {string} type - Type of images to retrieve ('input' or 'output').
  * @returns {GalleryPageData} - Object containing paginated images and additional page info.
  */
-function getGalleryPageData(page = 0, subfolder = '', itemsPerPage = 20) {
-    const imageOutputPath = config.get('output_dir');
+function getGalleryPageData(page = 0, subfolder = '', itemsPerPage = 20, type = 'output') {
+    const configKey = type === 'input' ? 'input_dir' : 'output_dir';
+    const imagePath = config.get(configKey);
+    const dirType = type === 'input' ? 'Input' : 'Output';
 
-    if (!imageOutputPath || !(typeof imageOutputPath === 'string')) {
-        return {
-            error: 'Output directory not set properly in config.',
-            scanned: { subfolders: [], images: [] },
-            pageInfo: { prevPage: 0, currentPage: 0, nextPage: 0, totalPages: 0 },
-        };
+    // Validate configuration
+    if (!imagePath || typeof imagePath !== 'string') {
+        return createErrorResponse(`${dirType} directory not set properly in config.`);
     }
 
-    if (!fs.existsSync(imageOutputPath)) {
-        return {
-            error: 'Invalid output directory.',
-            scanned: { subfolders: [], images: [] },
-            pageInfo: { prevPage: 0, currentPage: 0, nextPage: 0, totalPages: 0 },
-        };
+    if (!fs.existsSync(imagePath)) {
+        return createErrorResponse(`Invalid ${dirType.toLowerCase()} directory.`);
     }
 
-    const targetPath = path.join(imageOutputPath, subfolder);
+    const targetPath = path.join(imagePath, subfolder);
 
     if (!fs.existsSync(targetPath)) {
-        return {
-            error: 'Invalid subfolder path.',
-            currentSubfolder: subfolder,
-            scanned: { subfolders: [], images: [] },
-            pageInfo: { prevPage: 0, currentPage: 0, nextPage: 0, totalPages: 0 },
-        };
+        return createErrorResponse('Invalid subfolder path.', subfolder);
     }
 
+    // Get all files and filter for supported extensions
     const files = fs.readdirSync(targetPath);
+    const imageFiles = files.filter(file => 
+        SUPPORTED_EXTENSIONS.includes(path.extname(file).toLowerCase())
+    );
 
-    const filteredFiles = files
-        .filter((file) => {
+    // Process image files
+    const processedFiles = imageFiles
+        .map(file => {
             const ext = path.extname(file).toLowerCase();
-            const isFileImage = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif', '.tiff', '.webp', '.mp4'].includes(
-                ext
-            );
-
-            return isFileImage;
-        })
-        .map((file) => {
-            const ext = path.extname(file).toLowerCase();
-            const isVideo = ['.mp4'].includes(
-                ext
-            );
-            const mtime = fs.statSync(path.join(targetPath, file)).mtime.getTime();
-
+            const filePath = path.join(targetPath, file);
+            const stats = fs.statSync(filePath);
+            
             return {
-                path: `/comfyui/image?filename=${file}&subfolder=${subfolder}&type=output`,
+                path: `/comfyui/image?filename=${file}&subfolder=${subfolder}&type=${type}`,
                 filename: file,
-                isVideo: isVideo,
-                time: mtime,
-                timeText: getRelativeTimeText(mtime),
+                isVideo: VIDEO_EXTENSIONS.includes(ext),
+                time: stats.mtime.getTime(),
+                timeText: getRelativeTimeText(stats.mtime.getTime()),
             };
         })
         .sort((a, b) => b.time - a.time);
 
+    // Pagination
     const startIndex = page * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
+    const paginatedFiles = processedFiles.slice(startIndex, endIndex);
 
-    const paginatedFiles = filteredFiles.slice(startIndex, endIndex);
-
-    let subfolders: string[];
+    // Get subfolders
+    let subfolders: string[] = [];
     try {
-        subfolders = fs
-            .readdirSync(targetPath)
-            .filter((item) => fs.statSync(path.join(targetPath, item)).isDirectory());
+        subfolders = files
+            .filter(item => fs.statSync(path.join(targetPath, item)).isDirectory());
     } catch (error) {
         console.log('Error getting subfolders:', error);
-        subfolders = [];
     }
 
-    const totalPages = Math.ceil(filteredFiles.length / itemsPerPage) - 1;
-    const prevPage = page - 1 >= 0 ? page - 1 : 0;
-    const nextPage = page + 1 <= totalPages ? page + 1 : totalPages;
+    // Calculate page info
+    const totalPages = Math.max(0, Math.ceil(processedFiles.length / itemsPerPage) - 1);
+    const prevPage = Math.max(0, page - 1);
+    const nextPage = Math.min(totalPages, page + 1);
 
     return {
         currentSubfolder: subfolder,
         parentSubfolder: subfolder ? path.dirname(subfolder) : null,
-        scanned: { subfolders: subfolders, images: paginatedFiles },
-        pageInfo: { prevPage: prevPage, currentPage: page, nextPage: nextPage, totalPages: totalPages },
+        scanned: { subfolders, images: paginatedFiles },
+        pageInfo: { prevPage, currentPage: page, nextPage, totalPages },
         error: null,
     };
 }

@@ -13,6 +13,7 @@
     "hide_all_input_on_auto_covert": false,
     "enable_gallery_delete": false,
     "output_dir": "path/to/comfyui/output/folder",
+    "input_dir": "path/to/comfyui/input/folder",
     "developer": {
         "min_comfyui_version": "v0.2.2-50-7183fd1"
     }

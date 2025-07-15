@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head', { title: "Input Images", theme }) %>
+    <link rel="stylesheet" href="/css/gallery.css">
+    <link rel="stylesheet" href="/css/partial/overlay.css">
+    <link rel="stylesheet" href="/css/partial/icons.css">
+    <script src="/js/pages/input-images.js" type="module" defer></script>
+</head>
+<body 
+<% if (error) { %>
+    data-error="<%= error %>"
+<% } %>
+    data-current-page="<%= pageInfo.currentPage %>"
+    data-total-pages="<%= pageInfo.totalPages %>"
+>
+    <%- include('../partials/navbar') %>
+    <%- include('../partials/sidebar', { activePage: 'input-images' }) %>
+    <div class="main-container">
+        <div id="subfolders-list">
+            <% if (currentSubfolder && currentSubfolder !== '') { %>
+                <a href="/input-images/" class="subfolder-link">(Default)</a>
+            <% } %>
+            <% if (parentSubfolder !== null) { %>
+                <a href="/input-images/<%= parentSubfolder %>" class="subfolder-link">..</a>
+            <% } %>
+            <% 
+              const inputImagesPath = currentSubfolder ? `input-images/${currentSubfolder}` : 'input-images';
+              for (const subfolder of scanned.subfolders) { %>
+                <a href="/<%= inputImagesPath %>/<%= subfolder %>" class="subfolder-link"><%= subfolder %></a>
+            <% } %>
+        </div>
+        
+        <div id="images-grid">
+            <% for (const image of scanned.images) { %>
+                <div class="image-item" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>">
+                    <span><%= image.timeText %> </span>
+                    <div class="image-actions">
+                        <% if (enableInputImagesDelete) { %>
+                            <button class="delete-button" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>">🗑️</button>
+                        <% } %>
+                    </div>
+                    <% if (image.isVideo) { %>
+                        <video src="<%= image.path %>" loop controls></video>
+                    <% } else { %>
+                        <img src="<%= image.path %>">
+                    <% } %>
+                </div>
+            <% } %>
+        </div>
+        <div class="pagination-container">
+            <div class="pagination-controls">
+                <a href="?page=0" class="pagination-button"><span class="icon arrow-double-left"></span></a>
+                <a href="?page=<%= pageInfo.currentPage === 0 ? 0 : pageInfo.currentPage -1 %>" class="pagination-button"><span class="icon arrow-left"></span></a>
+                <input type="number" id="page-input" class="pagination-button" placeholder="<%= pageInfo.currentPage %>" value="<%= pageInfo.currentPage %>">
+                <a href="?page=<%= pageInfo.currentPage === pageInfo.totalPages ? pageInfo.totalPages : pageInfo.currentPage + 1 %>" class="pagination-button"><span class="icon arrow-right"></span></a>
+                <a href="?page=<%= pageInfo.totalPages %>" class="pagination-button"><span class="icon arrow-double-right"></span></a>
+            </div>
+        </div>
+    </div>
+    <%- include('../partials/scrollbuttons') %>
+</body>
+</html> 

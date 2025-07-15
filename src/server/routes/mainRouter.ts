@@ -16,6 +16,7 @@ import loadAndRenderWorkflow from 'server/utils/loadAndRenderWorkflow';
 import fs from 'fs';
 import path from 'path';
 import config from 'config';
+import { Request, Response } from 'express';
 
 const router = express.Router();
 
@@ -37,7 +38,9 @@ router.get('/', (req: RequestWithTheme, res) => {
 });
 
 router.get('/import', (req: RequestWithTheme, res) => {
-    res.render('pages/import', { theme: req.theme });
+    res.render('pages/import', { 
+        theme: req.theme,
+    });
 });
 
 router.get('/edit/:type/:identifier', (req: RequestWithTheme, res) => {
@@ -153,65 +156,24 @@ router.get('/gallery/*', (req: RequestWithTheme, res) => {
     });
 });
 
-// Route to serve individual gallery images
-router.get('/gallery/image/*', (req, res) => {
-    const fullPath = (req.params as any)[0] || '';
-    
-    if (!fullPath) {
-        res.status(400).json({ error: 'Image path is required' });
-        return;
-    }
+router.get('/input-images/*', (req: RequestWithTheme, res) => {
+    const fullPath = req.params[0] || '';
+    const subfolder = fullPath.split('?')[0];
+    const page = Number(req.query.page) || 0;
+    const itemsPerPage = Number(req.cookies['inputImagesItemsPerPage']) || 20;
 
-    const outputDir = config.get('output_dir');
-    if (!outputDir || typeof outputDir !== 'string') {
-        res.status(500).json({ error: 'Output directory not configured' });
-        return;
-    }
+    const pageData = getGalleryPageData(page, subfolder, itemsPerPage, 'input');
 
-    const filePath = path.join(outputDir, fullPath);
-
-    // Security check: ensure the file is within the output directory
-    const resolvedFilePath = path.resolve(filePath);
-    const resolvedOutputDir = path.resolve(outputDir);
-    
-    if (!resolvedFilePath.startsWith(resolvedOutputDir)) {
-        res.status(403).json({ error: 'Access denied' });
-        return;
-    }
-
-    try {
-        if (fs.existsSync(filePath)) {
-            // Get file extension to determine content type
-            const ext = path.extname(filePath).toLowerCase();
-            let contentType = 'application/octet-stream';
-            
-            if (['.jpg', '.jpeg'].includes(ext)) {
-                contentType = 'image/jpeg';
-            } else if (ext === '.png') {
-                contentType = 'image/png';
-            } else if (ext === '.gif') {
-                contentType = 'image/gif';
-            } else if (ext === '.webp') {
-                contentType = 'image/webp';
-            } else if (ext === '.bmp') {
-                contentType = 'image/bmp';
-            }
-            
-            res.setHeader('Content-Type', contentType);
-            res.sendFile(filePath);
-        } else {
-            res.status(404).json({ error: 'Image not found' });
-        }
-    } catch (error) {
-        console.error('Error serving gallery image:', error);
-        res.status(500).json({ error: 'Failed to serve image' });
-    }
+    res.render('pages/input-images', { 
+        theme: req.theme, 
+        enableInputImagesDelete: config.get('enable_gallery_delete'), // Use same setting as gallery
+        ...pageData 
+    });
 });
 
-router.delete('/gallery/delete', (req, res) => {
-    // Check if delete is enabled in config
+function handleDeleteImage(req: Request, res: Response, dirKey: string, errorPrefix: string) {
     if (!config.get('enable_gallery_delete')) {
-        res.status(403).json({ error: 'Gallery delete is disabled' });
+        res.status(403).json({ error: `${errorPrefix} delete is disabled` });
         return;
     }
 
@@ -222,19 +184,19 @@ router.delete('/gallery/delete', (req, res) => {
         return;
     }
 
-    const outputDir = config.get('output_dir');
-    if (!outputDir || typeof outputDir !== 'string') {
-        res.status(500).json({ error: 'Output directory not configured' });
+    const dir = config.get(dirKey);
+    if (!dir || typeof dir !== 'string') {
+        res.status(500).json({ error: `${errorPrefix} directory not configured` });
         return;
     }
 
-    const filePath = path.join(outputDir, subfolder || '', filename);
+    const filePath = path.join(dir, subfolder || '', filename);
 
-    // Security check: ensure the file is within the output directory
+    // Security check: ensure the file is within the directory
     const resolvedFilePath = path.resolve(filePath);
-    const resolvedOutputDir = path.resolve(outputDir);
-    
-    if (!resolvedFilePath.startsWith(resolvedOutputDir)) {
+    const resolvedDir = path.resolve(dir);
+
+    if (!resolvedFilePath.startsWith(resolvedDir)) {
         res.status(403).json({ error: 'Access denied' });
         return;
     }
@@ -247,17 +209,29 @@ router.delete('/gallery/delete', (req, res) => {
             res.status(404).json({ error: 'File not found' });
         }
     } catch (error) {
-        console.error('Error deleting file:', error);
+        console.error(`Error deleting file:`, error);
         res.status(500).json({ error: 'Failed to delete file' });
     }
+}
+
+router.delete('/gallery/delete', (req, res) => {
+    handleDeleteImage(req, res, 'output_dir', 'Gallery');
+});
+
+router.delete('/input-images/delete', (req, res) => {
+    handleDeleteImage(req, res, 'input_dir', 'Input images');
 });
 
 router.get('/settings', (req: RequestWithTheme, res) => {
-    res.render('pages/settings', { theme: req.theme });
+    res.render('pages/settings', { 
+        theme: req.theme,
+    });
 });
 
 router.get('/queue', (req: RequestWithTheme, res) => {
-    res.render('pages/queue', { theme: req.theme });
+    res.render('pages/queue', { 
+        theme: req.theme,
+    });
 });
 
 router.get('/api/queue', async (req, res) => {

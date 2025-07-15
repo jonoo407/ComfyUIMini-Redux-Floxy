@@ -14,29 +14,35 @@ async function getImage(filename: string, subfolder: string, type: string) {
         if (err instanceof Error && 'code' in err) {
             if (err.code === 'ECONNREFUSED') {
                 // Fallback if ComfyUI is unavailable
-                if (type === 'output') {
-                    const readFile = fs.readFileSync(path.join(config.get('output_dir'), subfolder, filename));
-                    
-                    // Determine content type based on file extension
-                    const ext = path.extname(filename).toLowerCase();
-                    let contentType = 'image/png'; // default
-                    
-                    if (['.jpg', '.jpeg'].includes(ext)) {
-                        contentType = 'image/jpeg';
-                    } else if (['.png', '.ppm', '.bmp', '.pgm', '.tif', '.tiff', '.webp'].includes(ext)) {
-                        contentType = 'image/png';
-                    } else if (['.mp4'].includes(ext)) {
-                        contentType = 'video/mp4';
-                    }
-
-                    return {
-                        data: readFile,
-                        headers: {
-                            'content-type': contentType,
-                            'content-length': readFile.length,
-                        },
-                    };
+                const configKey = type === 'input' ? 'input_dir' : 'output_dir';
+                const dirPath = config.get(configKey);
+                
+                if (!dirPath || typeof dirPath !== 'string') {
+                    console.error(`${type === 'input' ? 'Input' : 'Output'} directory not configured`);
+                    return null;
                 }
+                
+                const readFile = fs.readFileSync(path.join(dirPath, subfolder, filename));
+                
+                // Determine content type based on file extension
+                const ext = path.extname(filename).toLowerCase();
+                let contentType = 'image/png'; // default
+                
+                if (['.jpg', '.jpeg'].includes(ext)) {
+                    contentType = 'image/jpeg';
+                } else if (['.png', '.ppm', '.bmp', '.pgm', '.tif', '.tiff', '.webp'].includes(ext)) {
+                    contentType = 'image/png';
+                } else if (['.mp4'].includes(ext)) {
+                    contentType = 'video/mp4';
+                }
+
+                return {
+                    data: readFile,
+                    headers: {
+                        'content-type': contentType,
+                        'content-length': readFile.length,
+                    },
+                };
             }
         }
 
