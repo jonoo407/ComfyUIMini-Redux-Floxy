@@ -469,8 +469,6 @@ export async function runWorkflow() {
 
     const filledWorkflow = new WorkflowInstance(workflowObject).fillWorkflowWithUserInputs(filledNodeInputValues);
     
-    // Progress bar will be initialized when workflow_structure event is received
-    
     // Send both workflow and workflow name
     const message = {
         workflow: filledWorkflow,
@@ -540,14 +538,11 @@ function handleWebSocketMessage(event: MessageEvent<any>) {
 
 function handleWorkflowStructure(messageData: WorkflowStructureMessage) {
     // Initialize progress bar with server-validated workflow structure
-    const { totalNodes } = messageData;
+    const { totalNodes, workflow } = messageData;
     
-    // Use the original workflow for dependency analysis and display names
-    // The progress bar doesn't need the filled workflow with user inputs
-    const originalWorkflow = new WorkflowInstance(workflowObject).workflow;
-    
-    // Initialize progress bar with server's node count and original workflow structure
-    progressBarManager.initializeWithStructureData(totalNodes, originalWorkflow);
+    // Use the server's workflow structure for dependency analysis and display names
+    // This is the exact workflow that the server is processing
+    progressBarManager.initializeWithStructureData(totalNodes, workflow);
 }
 
 function updateProgressBars(messageData: ProgressMessage) {

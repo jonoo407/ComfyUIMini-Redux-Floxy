@@ -7,9 +7,7 @@ export interface ProgressMessage {
 
 export interface WorkflowStructureMessage {
     totalNodes: number;
-    outputNodeCount: number;
-    hasDependencies?: boolean;
-    nodeTypes?: Record<string, number>;
+    workflow: any; // The complete workflow structure for dependency analysis
     promptId?: string;
 }
 
