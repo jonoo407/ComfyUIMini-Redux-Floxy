@@ -21,6 +21,7 @@ import { showResolutionSelector } from '../modules/resolutionSelector.js';
 import { ProgressBarManager } from '../modules/progressBar.js';
 import { fetchMediaForCompletedItem, createSingleMediaItemHtml, addMediaClickHandlers, createMediaItemsHtml } from '../common/mediaDisplay.js';
 import { formatDate } from '../common/formatString.js';
+import { createWebSocketConnection, ensureWebSocketConnection } from '../common/websocket.js';
 
 // --- DOM Elements ---
 const elements = {
@@ -63,62 +64,6 @@ const workflowType = passedWorkflowType;
 const workflowObject: WorkflowWithMetadata = workflowDataFromEjs ? workflowDataFromEjs : fetchLocalWorkflow();
 
 // --- WebSocket Management ---
-/**
- * Creates and establishes a new WebSocket connection
- * @returns Promise that resolves when the connection is established
- */
-function createWebSocketConnection(): Promise<WebSocket> {
-    return new Promise((resolve, reject) => {
-        // Use wss:// when the page is served over HTTPS
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const newWs = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
-        
-        newWs.onopen = () => {
-            console.log('WebSocket connection established');
-            setupWebSocketEventHandlers(newWs);
-            resolve(newWs);
-        };
-        
-        newWs.onerror = (error) => {
-            console.error('WebSocket connection error:', error);
-            reject(new Error('Failed to establish WebSocket connection'));
-        };
-        
-        // Set a timeout for connection establishment
-        setTimeout(() => {
-            if (newWs.readyState !== WebSocket.OPEN) {
-                reject(new Error('WebSocket connection timeout'));
-            }
-        }, 5000); // 5 second timeout
-    });
-}
-
-/**
- * Ensures WebSocket connection is open, reconnecting if necessary
- * @returns Promise that resolves with an open WebSocket connection
- */
-async function ensureWebSocketConnection(): Promise<WebSocket> {
-    if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
-        console.log('WebSocket connection is closed or closing, attempting to reconnect...');
-        
-        // Close existing connection if it exists
-        if (ws && ws.readyState !== WebSocket.CLOSED) {
-            ws.close();
-        }
-        
-        try {
-            ws = await createWebSocketConnection();
-            // Set up message handler for the new connection
-            ws.onmessage = handleWebSocketMessage;
-            return ws;
-        } catch (error) {
-            console.error('Failed to reconnect WebSocket:', error);
-            throw error;
-        }
-    }
-    
-    return ws;
-}
 
 // Initialize the page
 loadWorkflow();
@@ -140,8 +85,16 @@ async function loadWorkflow() {
         
         // Initialize WebSocket connection
         try {
-            ws = await createWebSocketConnection();
-            ws.onmessage = handleWebSocketMessage;
+            ws = await createWebSocketConnection({
+                onMessage: handleWebSocketMessage,
+                onClose: (event) => {
+                    console.log('WebSocket connection closed:', event.code, event.reason);
+                    if (isWorkflowRunning) {
+                        console.warn('WebSocket closed during workflow execution');
+                        // The next attempt to send a message will trigger reconnection
+                    }
+                }
+            });
         } catch (error) {
             console.warn('Failed to establish initial WebSocket connection:', error);
             // Don't show error popup for initial connection failure
@@ -541,7 +494,7 @@ export async function runWorkflow() {
     
     try {
         // Ensure WebSocket connection is open before sending
-        ws = await ensureWebSocketConnection();
+        ws = await ensureWebSocketConnection(ws);
         ws.send(JSON.stringify(message));
         elements.cancelRunButton.classList.remove('disabled');
         
@@ -614,22 +567,7 @@ function handleWebSocketMessage(event: MessageEvent<any>) {
     }
 }
 
-// Add WebSocket error and close event handlers
-function setupWebSocketEventHandlers(websocket: WebSocket) {
-    websocket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        // Don't show popup for connection errors during workflow execution
-        // The runWorkflow function will handle reconnection
-    };
-    
-    websocket.onclose = (event) => {
-        console.log('WebSocket connection closed:', event.code, event.reason);
-        if (isWorkflowRunning) {
-            console.warn('WebSocket closed during workflow execution');
-            // The next attempt to send a message will trigger reconnection
-        }
-    };
-}
+
 
 function handleWorkflowStructure(messageData: WorkflowStructureMessage) {
     // Initialize progress bar with server-validated workflow structure
