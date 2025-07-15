@@ -21,7 +21,7 @@ import { showResolutionSelector } from '../modules/resolutionSelector.js';
 import { ProgressBarManager } from '../modules/progressBar.js';
 import { fetchMediaForCompletedItem, createSingleMediaItemHtml, addMediaClickHandlers, createMediaItemsHtml } from '../common/mediaDisplay.js';
 import { formatDate } from '../common/formatString.js';
-import { createWebSocketConnection, ensureWebSocketConnection } from '../common/websocket.js';
+import { WebSocketManager } from '../common/websocket.js';
 
 // --- DOM Elements ---
 const elements = {
@@ -52,7 +52,9 @@ const progressBarManager = new ProgressBarManager();
 // --- Variables ---
 let previousOutputsLoaded = false;
 let isWorkflowRunning = false;
-let ws: WebSocket;
+
+// Create wsManager as a const, with empty handlers initially
+const wsManager = new WebSocketManager({});
 
 // @ts-expect-error - passedWorkflowIdentifier is fetched via the inline script supplied by EJS
 const workflowIdentifier = passedWorkflowIdentifier;
@@ -73,36 +75,28 @@ window.addEventListener('beforeunload', () => {
     // Keep workflows running when leaving the page
     // Only clean up UI resources
     progressBarManager.cleanup();
-    if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.close();
-    }
+    wsManager.destroy();
 });
 
 async function loadWorkflow() {
     try {
         await renderInputs(workflowObject, workflowType, workflowIdentifier);
         startEventListeners();
-        
-        // Initialize WebSocket connection
-        try {
-            ws = await createWebSocketConnection({
-                onMessage: handleWebSocketMessage,
-                onClose: (event) => {
-                    console.log('WebSocket connection closed:', event.code, event.reason);
-                    if (isWorkflowRunning) {
-                        console.warn('WebSocket closed during workflow execution');
-                        // The next attempt to send a message will trigger reconnection
-                    }
+        // Set handlers and connect
+        await wsManager.setHandlers({
+            onMessage: handleWebSocketMessage,
+            onClose: (event: CloseEvent) => {
+                console.log('WebSocket connection closed:', event.code, event.reason);
+                if (isWorkflowRunning) {
+                    console.warn('WebSocket closed during workflow execution');
+                    // The next attempt to send a message will trigger reconnection
                 }
-            });
-        } catch (error) {
-            console.warn('Failed to establish initial WebSocket connection:', error);
-            // Don't show error popup for initial connection failure
-            // Connection will be attempted when user tries to run workflow
-        }
+            }
+        }).connect();
     } catch (error) {
-        console.error('Failed to load workflow:', error);
-        openPopupWindow('Failed to load workflow inputs', PopupWindowType.ERROR, error instanceof Error ? error.message : 'Unknown error');
+        console.warn('Failed to establish initial WebSocket connection:', error);
+        // Don't show error popup for initial connection failure
+        // Connection will be attempted when user tries to run workflow
     }
 }
 
@@ -493,9 +487,8 @@ export async function runWorkflow() {
     };
     
     try {
-        // Ensure WebSocket connection is open before sending
-        ws = await ensureWebSocketConnection(ws);
-        ws.send(JSON.stringify(message));
+        // Send message (send() will ensure connection)
+        await wsManager.send(message);
         elements.cancelRunButton.classList.remove('disabled');
         
     } catch (error) {
