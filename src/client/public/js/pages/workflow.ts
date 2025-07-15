@@ -51,6 +51,7 @@ const progressBarManager = new ProgressBarManager();
 // --- Variables ---
 let previousOutputsLoaded = false;
 let isWorkflowRunning = false;
+let ws: WebSocket;
 
 // @ts-expect-error - passedWorkflowIdentifier is fetched via the inline script supplied by EJS
 const workflowIdentifier = passedWorkflowIdentifier;
@@ -61,10 +62,63 @@ const workflowType = passedWorkflowType;
 // @ts-expect-error - workflowDataFromEjs is fetched via the inline script supplied by EJS
 const workflowObject: WorkflowWithMetadata = workflowDataFromEjs ? workflowDataFromEjs : fetchLocalWorkflow();
 
-// --- Initialise WebSocket ---
-// Use wss:// when the page is served over HTTPS
-const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
+// --- WebSocket Management ---
+/**
+ * Creates and establishes a new WebSocket connection
+ * @returns Promise that resolves when the connection is established
+ */
+function createWebSocketConnection(): Promise<WebSocket> {
+    return new Promise((resolve, reject) => {
+        // Use wss:// when the page is served over HTTPS
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const newWs = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
+        
+        newWs.onopen = () => {
+            console.log('WebSocket connection established');
+            setupWebSocketEventHandlers(newWs);
+            resolve(newWs);
+        };
+        
+        newWs.onerror = (error) => {
+            console.error('WebSocket connection error:', error);
+            reject(new Error('Failed to establish WebSocket connection'));
+        };
+        
+        // Set a timeout for connection establishment
+        setTimeout(() => {
+            if (newWs.readyState !== WebSocket.OPEN) {
+                reject(new Error('WebSocket connection timeout'));
+            }
+        }, 5000); // 5 second timeout
+    });
+}
+
+/**
+ * Ensures WebSocket connection is open, reconnecting if necessary
+ * @returns Promise that resolves with an open WebSocket connection
+ */
+async function ensureWebSocketConnection(): Promise<WebSocket> {
+    if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+        console.log('WebSocket connection is closed or closing, attempting to reconnect...');
+        
+        // Close existing connection if it exists
+        if (ws && ws.readyState !== WebSocket.CLOSED) {
+            ws.close();
+        }
+        
+        try {
+            ws = await createWebSocketConnection();
+            // Set up message handler for the new connection
+            ws.onmessage = handleWebSocketMessage;
+            return ws;
+        } catch (error) {
+            console.error('Failed to reconnect WebSocket:', error);
+            throw error;
+        }
+    }
+    
+    return ws;
+}
 
 // Initialize the page
 loadWorkflow();
@@ -74,7 +128,7 @@ window.addEventListener('beforeunload', () => {
     // Keep workflows running when leaving the page
     // Only clean up UI resources
     progressBarManager.cleanup();
-    if (ws.readyState === WebSocket.OPEN) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
         ws.close();
     }
 });
@@ -83,6 +137,16 @@ async function loadWorkflow() {
     try {
         await renderInputs(workflowObject, workflowType, workflowIdentifier);
         startEventListeners();
+        
+        // Initialize WebSocket connection
+        try {
+            ws = await createWebSocketConnection();
+            ws.onmessage = handleWebSocketMessage;
+        } catch (error) {
+            console.warn('Failed to establish initial WebSocket connection:', error);
+            // Don't show error popup for initial connection failure
+            // Connection will be attempted when user tries to run workflow
+        }
     } catch (error) {
         console.error('Failed to load workflow:', error);
         openPopupWindow('Failed to load workflow inputs', PopupWindowType.ERROR, error instanceof Error ? error.message : 'Unknown error');
@@ -476,15 +540,29 @@ export async function runWorkflow() {
     };
     
     try {
+        // Ensure WebSocket connection is open before sending
+        ws = await ensureWebSocketConnection();
         ws.send(JSON.stringify(message));
         elements.cancelRunButton.classList.remove('disabled');
-        ws.onmessage = handleWebSocketMessage;
         
     } catch (error) {
         console.error('Failed to send workflow:', error);
         isWorkflowRunning = false;
         progressBarManager.reset();
-        openPopupWindow('Failed to start workflow execution', PopupWindowType.ERROR);
+        
+        // Provide more specific error message based on the error type
+        let errorMessage = 'Failed to start workflow execution';
+        if (error instanceof Error) {
+            if (error.message.includes('WebSocket connection timeout')) {
+                errorMessage = 'Connection timeout. Please check your network connection and try again.';
+            } else if (error.message.includes('Failed to establish WebSocket connection')) {
+                errorMessage = 'Unable to connect to the server. Please check if the server is running and try again.';
+            } else {
+                errorMessage = error.message;
+            }
+        }
+        
+        openPopupWindow(errorMessage, PopupWindowType.ERROR);
     }
 }
 
@@ -534,6 +612,23 @@ function handleWebSocketMessage(event: MessageEvent<any>) {
     } catch (error) {
         console.error('Failed to parse WebSocket message:', error);
     }
+}
+
+// Add WebSocket error and close event handlers
+function setupWebSocketEventHandlers(websocket: WebSocket) {
+    websocket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        // Don't show popup for connection errors during workflow execution
+        // The runWorkflow function will handle reconnection
+    };
+    
+    websocket.onclose = (event) => {
+        console.log('WebSocket connection closed:', event.code, event.reason);
+        if (isWorkflowRunning) {
+            console.warn('WebSocket closed during workflow execution');
+            // The next attempt to send a message will trigger reconnection
+        }
+    };
 }
 
 function handleWorkflowStructure(messageData: WorkflowStructureMessage) {
