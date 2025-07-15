@@ -67,6 +67,25 @@ function handleSendMessage(clientWs: WebSocket, comfyWs: WebSocket, data: Buffer
         }
     } else if (message.type === 'progress') {
         clientWs.send(JSON.stringify(message));
+    } else if (message.type === 'executing') {
+        clientWs.send(JSON.stringify({
+            type: 'node_executing',
+            data: {
+                node: message.data.node,
+                display_node: message.data.display_node,
+                prompt_id: message.data.prompt_id
+            }
+        }));
+    } else if (message.type === 'executed') {
+        clientWs.send(JSON.stringify({
+            type: 'node_executed',
+            data: {
+                node: message.data.node,
+                display_node: message.data.display_node,
+                output: message.data.output,
+                prompt_id: message.data.prompt_id
+            }
+        }));
     }
 }
 

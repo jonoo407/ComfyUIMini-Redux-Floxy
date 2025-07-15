@@ -258,6 +258,22 @@ export class ProgressBarManager {
     }
 
     /**
+     * Sets the current node and updates the label
+     */
+    setCurrentNode(nodeId: string): void {
+        this.currentNodeId = nodeId;
+        this.updateCurrentNodeLabel();
+    }
+
+    /**
+     * Marks a node as completed and updates the total progress
+     */
+    markNodeCompleted(nodeId: string): void {
+        this.completedNodes.add(nodeId);
+        this.updateTotalProgress();
+    }
+
+    /**
      * Gets the display name for a node
      */
     private getNodeDisplayName(nodeId: string): string {

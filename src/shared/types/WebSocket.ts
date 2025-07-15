@@ -18,4 +18,17 @@ export interface PreviewMessage {
     image: string;
 }
 
+export interface NodeExecutingMessage {
+    node: string;
+    display_node: string;
+    prompt_id: string;
+}
+
+export interface NodeExecutedMessage {
+    node: string;
+    display_node: string;
+    output: any; // Node output data can vary by node type
+    prompt_id: string;
+}
+
 export type FinishGenerationMessage = Record<string, string[]>;

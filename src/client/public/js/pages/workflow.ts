@@ -2,6 +2,8 @@
 // External dependencies
 import {
     FinishGenerationMessage,
+    NodeExecutingMessage,
+    NodeExecutedMessage,
     PreviewMessage,
     ProgressMessage,
     WorkflowStructureMessage,
@@ -522,6 +524,14 @@ function handleWebSocketMessage(event: MessageEvent<any>) {
                 updateImagePreview(message.data);
                 break;
 
+            case 'node_executing':
+                handleNodeExecuting(message.data);
+                break;
+
+            case 'node_executed':
+                handleNodeExecuted(message.data);
+                break;
+
             case 'completed':
                 finishGeneration(message.data);
                 break;
@@ -582,6 +592,16 @@ function updateImagePreview(messageData: PreviewMessage) {
     }
 
     previewImageElem.src = `data:${messageData.mimetype};base64,${messageData.image}`;
+}
+
+function handleNodeExecuting(messageData: NodeExecutingMessage) {
+    // Update the current node label in the progress bar
+    progressBarManager.setCurrentNode(messageData.node);
+}
+
+function handleNodeExecuted(messageData: NodeExecutedMessage) {
+    // Mark the node as completed in the progress bar
+    progressBarManager.markNodeCompleted(messageData.node);
 }
 
 
