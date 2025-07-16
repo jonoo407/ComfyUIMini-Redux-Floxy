@@ -26,6 +26,7 @@ interface InputImagesModalOptions {
     onImageSelect?: (filename: string, subfolder: string) => void;
     onCancel?: () => void;
     fallbackImages?: string[];
+    onUploadComplete?: (filename: string) => void;
 }
 
 /**

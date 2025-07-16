@@ -149,6 +149,71 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // Handle file uploads
+    document.addEventListener('change', async (e) => {
+        const target = e.target as HTMLInputElement;
+        
+        if (target.classList.contains('file-input')) {
+            const file = target.files?.[0];
+            if (!file) return;
+
+            const inputId = target.getAttribute('data-select-id');
+            if (!inputId) return;
+
+            const hiddenInput = document.getElementById(inputId) as HTMLInputElement;
+            const previewImg = document.getElementById(`${inputId}-preview`) as HTMLImageElement;
+
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+
+                const response = await fetch('/comfyui/upload/image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Upload failed');
+                }
+
+                const result = await response.json();
+                
+                // Try different possible locations for the filename
+                let filename = result.name || result.filename || result.externalResponse?.name || result.externalResponse?.filename;
+                
+                // If still no filename, try to get it from the file object
+                if (!filename) {
+                    filename = file.name;
+                }
+
+                // Update the hidden input value
+                hiddenInput.value = filename;
+
+                // Update the preview image
+                if (previewImg) {
+                    previewImg.src = `/comfyui/image?filename=${filename}&subfolder=&type=input`;
+                }
+
+                // Trigger change event on the hidden input
+                hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+                // Update the data-fallback-images attribute on the select button
+                const selectButton = document.getElementById(`${inputId}-select-button`) as HTMLButtonElement;
+                if (selectButton) {
+                    const currentFallbackImages = JSON.parse(selectButton.dataset.fallbackImages || '[]');
+                    const updatedFallbackImages = [...new Set([...currentFallbackImages, filename])];
+                    selectButton.dataset.fallbackImages = JSON.stringify(updatedFallbackImages);
+                }
+
+            } catch (error) {
+                console.error('Upload failed:', error);
+            }
+
+            // Clear the file input
+            target.value = '';
+        }
+    });
 });
 
 /**
