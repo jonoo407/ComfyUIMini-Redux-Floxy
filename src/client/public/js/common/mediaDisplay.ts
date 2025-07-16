@@ -8,6 +8,7 @@ import { openOverlay } from '../common/overlay.js';
 export interface MediaDisplayOptions {
     enableUseAsInput?: boolean;
     enableDelete?: boolean;
+    deleteEndpoint?: string; // Endpoint for delete operations (e.g., '/gallery/delete' or '/input-images/delete')
     containerClass?: string;
     itemClass?: string;
     imageSelector?: string;
@@ -213,6 +214,7 @@ export function addMediaClickHandlers(containerSelector: string, options: MediaD
     const {
         enableUseAsInput = false,
         enableDelete = false,
+        deleteEndpoint = '/gallery/delete', // Default to gallery delete endpoint
         imageSelector = 'img'
     } = options;
 
@@ -350,7 +352,7 @@ export function addMediaClickHandlers(containerSelector: string, options: MediaD
                                 className: 'overlay-confirm',
                                 onClick: async (_close) => {
                                     try {
-                                        const response = await fetch('/gallery/delete', {
+                                        const response = await fetch(deleteEndpoint, {
                                             method: 'DELETE',
                                             headers: {
                                                 'Content-Type': 'application/json',

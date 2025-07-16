@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     addMediaClickHandlers('.image-item', {
         enableUseAsInput: false, // These already are used as inputs
         enableDelete: hasDeleteButtons, // Only enable delete handlers if buttons exist (config enabled)
+        deleteEndpoint: '/input-images/delete', // Use input images delete endpoint
         imageSelector: 'img'
     });
 }); 
