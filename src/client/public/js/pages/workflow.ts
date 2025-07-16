@@ -29,6 +29,8 @@ const elements = {
     outputImagesContainer: document.querySelector('.output-images-container') as HTMLElement,
     runButton: document.querySelector('.run-workflow') as HTMLButtonElement,
     cancelRunButton: document.querySelector('.cancel-run-button') as HTMLButtonElement,
+    saveToGalleryToggle: document.querySelector('#save-to-gallery-toggle') as HTMLInputElement,
+    toggleLabelText: document.querySelector('#toggle-label-text') as HTMLElement,
     get allFileInputs() {
         return document.querySelectorAll('.workflow-input-container .file-input') as NodeListOf<HTMLElement>;
     },
@@ -207,6 +209,13 @@ async function loadWorkflow() {
         // Apply URL parameter values after inputs are rendered
         applyUrlParameterValues();
         
+        // Show/hide save to gallery toggle based on workflow content
+        const hasSaveImages = hasSaveImageNodes(workflowObject);
+        const toggleContainer = elements.saveToGalleryToggle?.parentElement?.parentElement;
+        if (toggleContainer) {
+            toggleContainer.style.display = hasSaveImages ? 'flex' : 'none';
+        }
+        
         startEventListeners();
         // Set handlers and connect
         await wsManager.setHandlers({
@@ -245,6 +254,16 @@ function fetchLocalWorkflow(): WorkflowWithMetadata {
 }
 
 /**
+ * Updates the toggle label text based on the toggle state.
+ */
+function updateToggleLabel() {
+    if (elements.toggleLabelText) {
+        const isChecked = elements.saveToGalleryToggle?.checked ?? true;
+        elements.toggleLabelText.textContent = isChecked ? 'Save output to gallery' : 'Preview images only';
+    }
+}
+
+/**
  * Starts the event listeners for the various elements on the page.
  */
 function startEventListeners() {
@@ -260,6 +279,13 @@ function startEventListeners() {
     elements.allResolutionSelectors.forEach((resolutionSelector) =>
         resolutionSelectorEventListener(resolutionSelector)
     );
+
+    // Add toggle event listener
+    if (elements.saveToGalleryToggle) {
+        elements.saveToGalleryToggle.addEventListener('change', updateToggleLabel);
+        // Set initial label text
+        updateToggleLabel();
+    }
 
     // Initialize auto-expand textareas
     initializeAutoExpandTextareas();
@@ -517,6 +543,48 @@ function generateSeed() {
         .padStart(16, '0');
 }
 
+/**
+ * Checks if a workflow contains SaveImage nodes.
+ *
+ * @param workflow The workflow to check
+ * @returns True if the workflow contains SaveImage nodes, false otherwise
+ */
+function hasSaveImageNodes(workflow: any): boolean {
+    for (const nodeId in workflow) {
+        if (workflow[nodeId]?.class_type === 'SaveImage') {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Converts SaveImage nodes to PreviewImage nodes in a workflow.
+ *
+ * @param workflow The workflow to modify
+ * @returns A new workflow with SaveImage nodes converted to PreviewImage nodes
+ */
+function convertSaveImageToPreviewImage(workflow: any): any {
+    const modifiedWorkflow = { ...workflow };
+    
+    for (const nodeId in modifiedWorkflow) {
+        const node = modifiedWorkflow[nodeId];
+        if (node?.class_type === 'SaveImage') {
+            // Convert SaveImage to PreviewImage
+            modifiedWorkflow[nodeId] = {
+                inputs: {
+                    images: node.inputs.images // Keep only the images input
+                },
+                class_type: 'PreviewImage',
+                _meta: {
+                    title: node._meta?.title?.replace('Save', 'Preview') || 'Preview Image'
+                }
+            };
+        }
+    }
+    
+    return modifiedWorkflow;
+}
 
 
 function generateNodeInputValues(): NodeInputValues {
@@ -577,7 +645,13 @@ export async function runWorkflow() {
 
     const filledNodeInputValues = generateNodeInputValues();
 
-    const filledWorkflow = new WorkflowInstance(workflowObject).fillWorkflowWithUserInputs(filledNodeInputValues);
+    let filledWorkflow = new WorkflowInstance(workflowObject).fillWorkflowWithUserInputs(filledNodeInputValues);
+    
+    // Apply save to gallery toggle logic
+    const shouldSaveToGallery = elements.saveToGalleryToggle?.checked ?? true;
+    if (!shouldSaveToGallery) {
+        filledWorkflow = convertSaveImageToPreviewImage(filledWorkflow);
+    }
     
     // Update URL with current input parameters
     updateUrlWithCurrentParams();
