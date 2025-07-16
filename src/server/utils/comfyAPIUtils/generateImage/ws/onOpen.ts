@@ -11,27 +11,41 @@ async function handleOpenComfyWsConnection(clientWs: WebSocket, promptId: string
 
         const queueJson = await getQueue();
 
-        if (queueJson['queue_running'][0] === undefined) {
-            // If there is no running queue after we have queued an image that most likely
-            // means that we have ran the workflow before and ComfyUI is reusing the output image.
-
-            sendCachedImages(clientWs, promptId);
-        } else {
-            // Otherwise, we have queued generating the image.
-
+        // Check if our prompt is currently running
+        if (queueJson['queue_running'].length > 0) {
             const runningItem = queueJson['queue_running'][0] as QueueItem;
-            const workflowStructure = runningItem[2] || {};
+            const runningPromptId = runningItem[1];
             
-            // Send complete workflow structure for progress bar initialization
-            clientWs.send(JSON.stringify({ 
-                type: 'workflow_structure', 
-                data: {
-                    totalNodes: Object.keys(workflowStructure).length,
-                    workflow: workflowStructure,
-                    promptId: promptId
-                }
-            }));
+            if (runningPromptId === promptId) {
+                // Our prompt is running, send workflow structure for progress tracking
+                const workflowStructure = runningItem[2] || {};
+                clientWs.send(JSON.stringify({ 
+                    type: 'workflow_structure', 
+                    data: {
+                        totalNodes: Object.keys(workflowStructure).length,
+                        workflow: workflowStructure,
+                        promptId: promptId
+                    }
+                }));
+                return;
+            }
+            
+            // Different prompt is running, wait for ours
+            logger.logOptional('queue_image', `Different prompt (${runningPromptId}) is currently running, waiting for our prompt (${promptId})`);
+            return;
         }
+
+        // No running queue, check if our prompt is pending
+        const isPending = queueJson['queue_pending'].some((item: QueueItem) => item[1] === promptId);
+        
+        if (isPending) {
+            logger.logOptional('queue_image', `Prompt ${promptId} is in pending queue, waiting for it to start`);
+            return;
+        }
+
+        // Not running or pending, likely cached - send cached images
+        sendCachedImages(clientWs, promptId);
+        
     } catch (error) {
         handleComfyWsError(clientWs, error);
     }

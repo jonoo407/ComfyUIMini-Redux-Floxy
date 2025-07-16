@@ -640,8 +640,8 @@ export async function runWorkflow() {
     // Set running state for proper cleanup
     isWorkflowRunning = true;
     
-    // Reset progress bar
-    progressBarManager.reset();
+    // Don't reset progress bar here - wait until we receive workflow_structure message
+    // This prevents resetting when enqueuing while another workflow is running
 
     const filledNodeInputValues = generateNodeInputValues();
 
@@ -739,6 +739,9 @@ function handleWebSocketMessage(event: MessageEvent<any>) {
 
 
 function handleWorkflowStructure(messageData: WorkflowStructureMessage) {
+    // Reset progress bar when we receive workflow structure - this means our workflow is now running
+    progressBarManager.reset();
+    
     // Initialize progress bar with server-validated workflow structure
     const { totalNodes, workflow } = messageData;
     
