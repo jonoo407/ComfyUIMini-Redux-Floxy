@@ -1,3 +1,5 @@
+import { sanitizeNodeId } from '../common/utils.js';
+
 const elements = {
     get resolutionSelector() {
         return document.querySelector('#resolution-selector') as HTMLElement;
@@ -12,15 +14,6 @@ const elements = {
         return document.querySelectorAll('input[name="scale"]') as NodeListOf<HTMLInputElement>;
     },
 };
-
-/**
- * Sanitizes a node ID for use in CSS selectors by replacing invalid characters.
- * @param nodeId The node ID to sanitize
- * @returns A sanitized version safe for use in CSS selectors
- */
-function sanitizeNodeId(nodeId: string): string {
-    return nodeId.replace(/[:]/g, '_');
-}
 
 function updateResolutionTexts() {
     elements.allResolutionButtons.forEach((button) => {

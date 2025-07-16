@@ -1,3 +1,6 @@
+import { openInputImagesModal } from '../common/inputImagesModal.js';
+import { generateInputId } from '../common/utils.js';
+
 export interface BaseRenderConfig {
     node_id: string;
     input_name_in_node: string;
@@ -19,20 +22,22 @@ export interface NumberRenderConfig extends BaseRenderConfig {
 
 export interface SelectRenderConfig extends BaseRenderConfig {
     list: string[];
-    imageUpload?: boolean;
+}
+
+export interface ImageRenderConfig extends BaseRenderConfig {
+    list: string[];
 }
 
 export interface BooleanRenderConfig extends BaseRenderConfig {}
 
 /**
- * Sanitizes a node ID for use in CSS selectors by replacing invalid characters.
- * @param nodeId The node ID to sanitize
- * @returns A sanitized version safe for use in CSS selectors
+ * Creates a consistent input container HTML structure
+ * @param id The input ID
+ * @param title The input title/label
+ * @param inputHtml The HTML content for the input
+ * @param additionalClass Optional additional CSS class
+ * @returns The complete input container HTML
  */
-function sanitizeNodeId(nodeId: string): string {
-    return nodeId.replace(/[:]/g, '_');
-}
-
 const createInputContainer = (id: string, title: string, inputHtml: string, additionalClass?: string): string => `
     <div class="workflow-input-container${additionalClass ? ' ' + additionalClass : ''}">
         <label for="${id}">${title}</label>
@@ -43,20 +48,85 @@ const createInputContainer = (id: string, title: string, inputHtml: string, addi
 `;
 
 /**
+ * Renders an image input with modal selection and upload functionality.
+ * @param {ImageRenderConfig} inputOptions Options for the image input.
+ * @returns {string}
+ */
+export function renderImageInput(inputOptions: ImageRenderConfig): string {
+    const id = generateInputId(inputOptions.node_id, inputOptions.input_name_in_node);
+
+    // Create a hidden input to store the selected value
+    const hiddenInput = `<input type="hidden" id="${id}" class="workflow-input" value="${inputOptions.default}">`;
+    
+    // Create the display button and preview
+    const displayButton = `<button type="button" id="${id}-select-button" class="workflow-input image-select-button">
+        <span class="icon gallery"></span>
+        <span class="button-text">Select Image</span>
+    </button>`;
+    
+    const uploadButton = `<label for="${id}-file_input" class="file-input-label"><span class="icon upload"></span></label>
+    <input type="file" id="${id}-file_input" data-select-id="${id}" class="file-input" accept="image/jpeg,image/png,image/webp">`;
+    
+    const imagePreview = `<img src="/comfyui/image?filename=${inputOptions.default}&subfolder=&type=input" class="input-image-preview" id="${id}-preview">`;
+
+    const html = `
+        ${hiddenInput}
+        <div class="image-input-controls">
+            ${displayButton}
+            ${uploadButton}
+        </div>
+        ${imagePreview}
+    `;
+
+    return createInputContainer(
+        id,
+        inputOptions.title,
+        html,
+        'has-image-upload'
+    );
+}
+
+// Add event handlers for image selection after DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    // Handle image selection button clicks
+    document.addEventListener('click', async (e) => {
+        const target = e.target as HTMLElement;
+        const selectButton = target.closest('.image-select-button') as HTMLButtonElement;
+        
+        if (selectButton) {
+            e.preventDefault();
+            const inputId = selectButton.id.replace('-select-button', '');
+            const hiddenInput = document.getElementById(inputId) as HTMLInputElement;
+            const previewImg = document.getElementById(`${inputId}-preview`) as HTMLImageElement;
+            
+            if (!hiddenInput) return;
+            
+            await openInputImagesModal({
+                onImageSelect: (filename: string, subfolder: string) => {
+                    // Update the hidden input value
+                    hiddenInput.value = filename;
+                    
+                    // Update the preview image
+                    if (previewImg) {
+                        const subfolderParam = subfolder ? `&subfolder=${subfolder}` : '';
+                        previewImg.src = `/comfyui/image?filename=${filename}${subfolderParam}&type=input`;
+                    }
+                    
+                    // Trigger change event on the hidden input
+                    hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+        }
+    });
+});
+
+/**
  *
  * @param {SelectRenderConfig} inputOptions Options for the select input.
  * @returns {string}
  */
 export function renderSelectInput(inputOptions: SelectRenderConfig): string {
-    const hasImageUpload = inputOptions.imageUpload;
-
-    function renderUploadMenu(inputId: string) {
-        return `<label for="${inputId}-file_input" class="file-input-label"><span class="icon upload"></span></label>
-        <input type="file" id="${inputId}-file_input" data-select-id="${inputId}" class="file-input" accept="image/jpeg,image/png,image/webp">
-        <img src="/comfyui/image?filename=${inputOptions.default}&subfolder=&type=input" class="input-image-preview">`;
-    }
-
-    const id = `input-${sanitizeNodeId(inputOptions.node_id)}-${inputOptions.input_name_in_node}`;
+    const id = generateInputId(inputOptions.node_id, inputOptions.input_name_in_node);
 
     const createSelectOptions = (options: string[]) => {
         let optionsHtml = '';
@@ -77,9 +147,7 @@ export function renderSelectInput(inputOptions: SelectRenderConfig): string {
     return createInputContainer(
         id,
         inputOptions.title,
-        `<select id="${id}" class="workflow-input ${hasImageUpload ? 'has-image-upload' : ''}">${createSelectOptions(inputOptions.list)}</select>
-        ${hasImageUpload === true ? renderUploadMenu(id) : ''}`,
-        hasImageUpload ? 'has-image-upload' : ''
+        `<select id="${id}" class="workflow-input">${createSelectOptions(inputOptions.list)}</select>`
     );
 }
 
@@ -89,7 +157,7 @@ export function renderSelectInput(inputOptions: SelectRenderConfig): string {
  * @returns {string}
  */
 export function renderTextInput(inputOptions: TextRenderConfig): string {
-    const id = `input-${sanitizeNodeId(inputOptions.node_id)}-${inputOptions.input_name_in_node}`;
+    const id = generateInputId(inputOptions.node_id, inputOptions.input_name_in_node);
     const format = inputOptions.format || 'multiline';
     
     let inputHtml = '';
@@ -131,7 +199,7 @@ export function renderNumberInput(inputOptions: NumberRenderConfig & { numberfie
 
     const hasAdditionalButton = showRandomiseToggle || showResolutionSelector;
 
-    const id = `input-${sanitizeNodeId(inputOptions.node_id)}-${inputOptions.input_name_in_node}`;
+    const id = generateInputId(inputOptions.node_id, inputOptions.input_name_in_node);
     const { default: defaultValue, step, min, max, numberfield_format } = inputOptions;
 
     const randomiseToggleHTML = `
@@ -202,7 +270,7 @@ export function renderNumberInput(inputOptions: NumberRenderConfig & { numberfie
 }
 
 export function renderBooleanInput(inputOptions: BooleanRenderConfig): string {
-    const id = `input-${sanitizeNodeId(inputOptions.node_id)}-${inputOptions.input_name_in_node}`;
+    const id = generateInputId(inputOptions.node_id, inputOptions.input_name_in_node);
     const checked = ['true', '1'].includes(String(inputOptions.default).toLowerCase()) ? 'checked' : '';
     return createInputContainer(
         id,

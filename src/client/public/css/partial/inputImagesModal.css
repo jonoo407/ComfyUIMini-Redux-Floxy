@@ -1,0 +1,332 @@
+/* Image input controls styling */
+.image-input-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.image-select-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--background-secondary-color);
+    color: var(--text-primary-color);
+    border: 1px solid var(--background-tertiary-color);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.image-select-button:hover {
+    background-color: var(--background-tertiary-color);
+}
+
+.image-select-button .icon {
+    font-size: 1rem;
+}
+
+.image-select-button .button-text {
+    font-weight: 500;
+}
+
+/* Ensure the hidden input is properly styled for form submission */
+.workflow-input-container.has-image-upload input[type="hidden"] {
+    display: none;
+}
+
+/* Adjust preview image styling */
+.input-image-preview {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 0.5rem;
+    border: 1px solid var(--background-tertiary-color);
+}
+
+.input-images-modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    cursor: pointer;
+}
+
+.input-images-modal-content {
+    position: relative;
+    width: 90%;
+    height: 90%;
+    max-width: 1200px;
+    max-height: 800px;
+    background-color: var(--background-primary-color);
+    border-radius: 1rem;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    cursor: default;
+    overflow: hidden;
+}
+
+.input-images-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--background-secondary-color);
+    background-color: var(--background-secondary-color);
+    min-height: 4rem;
+}
+
+.input-images-modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--text-primary-color);
+    font-weight: 600;
+}
+
+.input-images-modal-close {
+    width: 2.5rem;
+    height: 2.5rem;
+    background-color: var(--background-tertiary-color);
+    border: none;
+    border-radius: 50%;
+    color: var(--text-primary-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+}
+
+.input-images-modal-close:hover {
+    background-color: var(--background-primary-color);
+}
+
+.input-images-modal-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 1.5rem;
+    gap: 1rem;
+}
+
+.input-images-subfolders {
+    flex-shrink: 0;
+    margin-bottom: 0.5rem;
+}
+
+.input-images-subfolders-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+.subfolder-link {
+    padding: 0.5rem 1rem;
+    background-color: var(--background-secondary-color);
+    color: var(--text-primary-color);
+    text-decoration: none;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s ease;
+    font-size: 0.9rem;
+    border: 1px solid transparent;
+}
+
+.subfolder-link:hover {
+    background-color: var(--background-tertiary-color);
+    border-color: var(--text-secondary-color);
+}
+
+.input-images-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+    overflow-y: auto;
+    padding: 0.5rem;
+    min-height: 300px;
+    align-content: start;
+}
+
+.input-images-item {
+    background-color: var(--background-secondary-color);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    border: 2px solid transparent;
+    display: flex;
+    flex-direction: column;
+    height: fit-content;
+}
+
+.input-images-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border-color: var(--text-secondary-color);
+}
+
+.input-images-thumbnail {
+    width: 100%;
+    height: 140px;
+    object-fit: contain;
+    display: block;
+    background-color: var(--background-tertiary-color);
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.input-images-item-info {
+    padding: 0.75rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.input-images-filename {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-primary-color);
+    font-weight: 600;
+    word-break: break-word;
+    line-height: 1.2;
+}
+
+.input-images-time {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-secondary-color);
+    line-height: 1.2;
+}
+
+.input-images-pagination {
+    flex-shrink: 0;
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--background-secondary-color);
+}
+
+.input-images-pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.pagination-button {
+    padding: 0.5rem 0.75rem;
+    background-color: var(--background-secondary-color);
+    color: var(--text-primary-color);
+    text-decoration: none;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid transparent;
+}
+
+.pagination-button:hover {
+    background-color: var(--background-tertiary-color);
+    border-color: var(--text-secondary-color);
+}
+
+.pagination-info {
+    color: var(--text-secondary-color);
+    font-size: 0.9rem;
+    margin: 0 1rem;
+    font-weight: 500;
+}
+
+.input-images-empty,
+.input-images-error {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+.input-images-empty::before {
+    content: '📁';
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.input-images-error {
+    color: #ff4444;
+}
+
+.input-images-error::before {
+    content: '⚠️';
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+    .input-images-modal-content {
+        width: 95%;
+        height: 95%;
+    }
+    
+    .input-images-modal-header {
+        padding: 1rem 1.5rem;
+        min-height: 3.5rem;
+    }
+    
+    .input-images-modal-header h2 {
+        font-size: 1.25rem;
+    }
+    
+    .input-images-modal-close {
+        width: 2rem;
+        height: 2rem;
+        font-size: 1.25rem;
+    }
+    
+    .input-images-modal-body {
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+    
+    .input-images-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 0.75rem;
+        min-height: 250px;
+    }
+    
+    .input-images-thumbnail {
+        height: 120px;
+        object-fit: contain;
+    }
+    
+    .input-images-item-info {
+        padding: 0.5rem;
+    }
+    
+    .input-images-filename {
+        font-size: 0.8rem;
+    }
+    
+    .input-images-time {
+        font-size: 0.7rem;
+    }
+} 

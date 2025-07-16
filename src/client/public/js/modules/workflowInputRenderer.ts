@@ -1,5 +1,5 @@
 import { InputOption, WorkflowWithMetadata } from '@shared/types/Workflow.js';
-import { BaseRenderConfig, renderNumberInput, renderSelectInput, renderTextInput, renderBooleanInput } from './inputRenderers.js';
+import { BaseRenderConfig, renderNumberInput, renderSelectInput, renderTextInput, renderBooleanInput, renderImageInput } from './inputRenderers.js';
 import { NormalisedComfyInputInfo, ProcessedObjectInfo } from '@shared/types/ComfyObjectInfo.js';
 import { getSavedInputs } from './savedInputValues.js';
 import { openPopupWindow, PopupWindowType } from '../common/popupWindow.js';
@@ -130,13 +130,19 @@ export function renderInput(
         }
 
         case 'ARRAY': {
-            const selectRenderOptions = {
-                list: comfyInputInfo.list,
-                imageUpload: comfyInputInfo.imageUpload,
-                ...baseRenderOptions,
-            };
-
-            return renderSelectInput(selectRenderOptions);
+            if (comfyInputInfo.imageUpload) {
+                const imageRenderOptions = {
+                    list: comfyInputInfo.list,
+                    ...baseRenderOptions,
+                };
+                return renderImageInput(imageRenderOptions);
+            } else {
+                const selectRenderOptions = {
+                    list: comfyInputInfo.list,
+                    ...baseRenderOptions,
+                };
+                return renderSelectInput(selectRenderOptions);
+            }
         }
 
         case 'BOOLEAN': {

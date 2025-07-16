@@ -32,9 +32,7 @@ const elements = {
     get allFileInputs() {
         return document.querySelectorAll('.workflow-input-container .file-input') as NodeListOf<HTMLElement>;
     },
-    get allSelectsWithImageUploads() {
-        return document.querySelectorAll('select.workflow-input.has-image-upload') as NodeListOf<HTMLSelectElement>;
-    },
+
     get allWorkflowInputContainers() {
         return document.querySelectorAll('.workflow-input-container') as NodeListOf<HTMLElement>;
     },
@@ -141,8 +139,17 @@ function applyUrlParameterValues() {
                     console.warn(`URL parameter value "${urlValue}" not found in select options for ${inputElem.id}`);
                 }
             } else {
-                // For other input types (text, number, textarea)
+                // For other input types (text, number, textarea, hidden)
                 inputElem.value = urlValue;
+                
+                // Special handling for image inputs - update preview image
+                if (inputContainer.classList.contains('has-image-upload')) {
+                    const previewImg = document.getElementById(`${inputElem.id}-preview`) as HTMLImageElement;
+                    if (previewImg && urlValue) {
+                        // Update the preview image with the URL parameter value
+                        previewImg.src = `/comfyui/image?filename=${urlValue}&subfolder=&type=input`;
+                    }
+                }
             }
             
             // Trigger change event to ensure any dependent logic runs
@@ -247,7 +254,6 @@ function startEventListeners() {
     elements.inputsContainer.addEventListener('click', handleInputContainerClick);
 
     elements.allFileInputs.forEach((element) => fileUploadEventListener(element));
-    elements.allSelectsWithImageUploads.forEach((selectElement) => imageSelectEventListener(selectElement));
 
     elements.previousOutputsToggler.addEventListener('click', togglePreviousOutputs);
 
@@ -340,35 +346,10 @@ function expandElement(element: HTMLElement) {
     });
 }
 
-/**
- * Handles updating the preview for a image select element.
- *
- * @param selectElement The select element to listen to.
- */
-function imageSelectEventListener(selectElement: HTMLSelectElement) {
-    selectElement.addEventListener('change', (e: Event) => {
-        const target = e.target as HTMLSelectElement;
 
-        const selectedOption = target.options[target.selectedIndex];
-        const selectedValue = selectedOption.value;
-
-        if (!selectedValue) {
-            return;
-        }
-
-        const innerInputWrapperElem = target.closest('.inner-input-wrapper');
-
-        if (!innerInputWrapperElem) {
-            return;
-        }
-
-        const imagePreviewElem = innerInputWrapperElem.querySelector('.input-image-preview') as HTMLImageElement;
-        imagePreviewElem.src = `/comfyui/image?filename=${selectedValue}&subfolder=&type=input`;
-    });
-}
 
 /**
- * Handles uploading an image file to the server for image select inputs.
+ * Handles uploading an image file to the server for image inputs.
  *
  * @param inputElement The file input element to listen to.
  */
@@ -400,23 +381,34 @@ function fileUploadEventListener(inputElement: HTMLElement) {
 
                 if (responseJson.error) {
                     console.error(responseJson.error);
-                }
-
-                const selectId = inputElement.getAttribute('data-select-id');
-
-                if (!selectId) {
-                    console.error('No linked select attribute found');
                     return;
                 }
 
-                const linkedSelect = document.getElementById(selectId);
+                const inputId = inputElement.getAttribute('data-select-id');
 
-                if (!linkedSelect) {
-                    console.error('Linked select not found');
+                if (!inputId) {
+                    console.error('No linked input id found');
                     return;
                 }
 
-                addOptionToSelect(linkedSelect as HTMLSelectElement, responseJson.externalResponse.name);
+                const hiddenInput = document.getElementById(inputId) as HTMLInputElement;
+                const previewImg = document.getElementById(`${inputId}-preview`) as HTMLImageElement;
+
+                if (!hiddenInput) {
+                    console.error('Linked hidden input not found');
+                    return;
+                }
+
+                // Update the hidden input value with the uploaded filename
+                hiddenInput.value = responseJson.externalResponse.name;
+                
+                // Update the preview image
+                if (previewImg) {
+                    previewImg.src = `/comfyui/image?filename=${responseJson.externalResponse.name}&subfolder=&type=input`;
+                }
+                
+                // Trigger change event on the hidden input
+                hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
             } catch (err) {
                 console.error(err);
             }
@@ -424,20 +416,7 @@ function fileUploadEventListener(inputElement: HTMLElement) {
     });
 }
 
-/**
- * Adds a new select option to a select element.
- * Used to add new images to existing selects when a new image is uploaded for image inputs.
- *
- * @param selectElem The select to add the option to.
- * @param option The option to add.
- */
-function addOptionToSelect(selectElem: HTMLSelectElement, option: string) {
-    const optionElem = document.createElement('option');
-    optionElem.value = option;
-    optionElem.textContent = option;
 
-    selectElem.appendChild(optionElem);
-}
 
 /**
  * Handles clicks on elements inside the input container.

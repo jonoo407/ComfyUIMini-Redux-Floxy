@@ -1,6 +1,7 @@
 import { WorkflowInstance } from '@shared/classes/Workflow';
 import { NormalisedComfyInputInfo, ProcessedObjectInfo } from '@shared/types/ComfyObjectInfo';
 import { InputOption, WorkflowMetadata, WorkflowWithMetadata, Workflow } from '@shared/types/Workflow';
+import { sanitizeNodeId } from '../common/utils.js';
 
 export class WorkflowEditor {
     containerElem: HTMLElement;
@@ -11,15 +12,6 @@ export class WorkflowEditor {
     private comfyInputsInfo: ProcessedObjectInfo | null;
     private currentFilter: 'all' | 'visible' | 'hidden' = 'all';
     private hasValidationErrors: boolean = false;
-
-    /**
-     * Sanitizes a node ID for use in CSS selectors by replacing invalid characters.
-     * @param nodeId The node ID to sanitize
-     * @returns A sanitized version safe for use in CSS selectors
-     */
-    private static sanitizeNodeId(nodeId: string): string {
-        return nodeId.replace(/[:]/g, '_');
-    }
 
     /**
      *
@@ -453,7 +445,7 @@ export class WorkflowEditor {
 
         const inputTitle = userInputOptions.title || inputTypeText;
 
-        const idPrefix = `${WorkflowEditor.sanitizeNodeId(nodeId)}-${inputNameInNode}`;
+        const idPrefix = `${sanitizeNodeId(nodeId)}-${inputNameInNode}`;
 
         const html = WorkflowEditor.renderInputItemHTML(
             nodeId,
@@ -721,7 +713,7 @@ export class WorkflowEditor {
                 const comfyInputsInfo = this.comfyInputsInfo?.[inputNode.class_type]?.[inputName];
                 if (!comfyInputsInfo) return;
                 const defaultValue = inputNode.inputs[inputName].toString();
-                const idPrefix = `${WorkflowEditor.sanitizeNodeId(nodeId)}-${inputName}`;
+                const idPrefix = `${sanitizeNodeId(nodeId)}-${inputName}`;
                 const inputTypeText = `[${nodeId}] ${inputNode.class_type}: ${inputName}`;
                 const inputTitle = inputOption.title || inputTypeText;
                 // Get the current input counter from the original element

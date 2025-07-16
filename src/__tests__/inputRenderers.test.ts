@@ -3,11 +3,13 @@ import {
   renderTextInput,
   renderNumberInput,
   renderBooleanInput,
+  renderImageInput,
   BaseRenderConfig,
   TextRenderConfig,
   NumberRenderConfig,
   SelectRenderConfig,
-  BooleanRenderConfig
+  BooleanRenderConfig,
+  ImageRenderConfig
 } from '../client/public/js/modules/inputRenderers';
 
 // Helper function to parse HTML and return DOM elements
@@ -83,32 +85,6 @@ describe('inputRenderers', () => {
       expect(options?.[0].selected).toBe(true);
     });
 
-    it('should render image upload elements when imageUpload is true', () => {
-      const config = { ...baseConfig, imageUpload: true };
-      const html = renderSelectInput(config);
-      const container = parseHtml(html);
-      
-      expect(hasClass(container, 'has-image-upload')).toBe(true);
-      
-      const fileInput = container.querySelector('input[type="file"]');
-      expect(fileInput).toBeTruthy();
-      expect(fileInput?.getAttribute('accept')).toBe('image/jpeg,image/png,image/webp');
-      
-      const imagePreview = container.querySelector('img');
-      expect(imagePreview).toBeTruthy();
-      expect(imagePreview?.src).toContain('/comfyui/image?filename=option1&subfolder=&type=input');
-    });
-
-    it('should not render image upload elements when imageUpload is false', () => {
-      const config = { ...baseConfig, imageUpload: false };
-      const html = renderSelectInput(config);
-      const container = parseHtml(html);
-      
-      expect(hasClass(container, 'has-image-upload')).toBe(false);
-      expect(container.querySelector('input[type="file"]')).toBeFalsy();
-      expect(container.querySelector('img')).toBeFalsy();
-    });
-
     it('should handle empty options list', () => {
       const config = { ...baseConfig, list: [] };
       const html = renderSelectInput(config);
@@ -118,6 +94,79 @@ describe('inputRenderers', () => {
       expect(select).toBeTruthy();
       const options = select?.querySelectorAll('option');
       expect(options?.[0].textContent).toContain("Couldn't find 'option1'");
+    });
+  });
+
+  describe('renderImageInput', () => {
+    const baseConfig: ImageRenderConfig = {
+      node_id: 'test-node',
+      input_name_in_node: 'test-input',
+      title: 'Test Image',
+      default: 'image1.jpg',
+      list: ['image1.jpg', 'image2.png', 'image3.webp']
+    };
+
+    it('should render image input with select button and upload elements correctly', () => {
+      const html = renderImageInput(baseConfig);
+      const container = parseHtml(html);
+      
+      expect(container).toBeTruthy();
+      expect(container.className).toContain('workflow-input-container');
+      expect(hasClass(container, 'has-image-upload')).toBe(true);
+      
+      const label = container.querySelector('label');
+      expect(label).toBeTruthy();
+      expect(label?.getAttribute('for')).toBe('input-test-node-test-input');
+      expect(label?.textContent).toBe('Test Image');
+      
+      // Check for hidden input
+      const hiddenInput = container.querySelector('input[type="hidden"]');
+      expect(hiddenInput).toBeTruthy();
+      expect(hiddenInput?.id).toBe('input-test-node-test-input');
+      expect(hasClass(hiddenInput!, 'workflow-input')).toBe(true);
+      expect((hiddenInput as HTMLInputElement)?.value).toBe('image1.jpg');
+      
+      // Check for select button
+      const selectButton = container.querySelector('.image-select-button');
+      expect(selectButton).toBeTruthy();
+      expect(selectButton?.id).toBe('input-test-node-test-input-select-button');
+      expect(hasClass(selectButton!, 'workflow-input')).toBe(true);
+      
+      // Check for upload button
+      const fileInput = container.querySelector('input[type="file"]');
+      expect(fileInput).toBeTruthy();
+      expect(fileInput?.getAttribute('accept')).toBe('image/jpeg,image/png,image/webp');
+      expect(fileInput?.getAttribute('data-select-id')).toBe('input-test-node-test-input');
+      
+      // Check for image preview
+      const imagePreview = container.querySelector('img');
+      expect(imagePreview).toBeTruthy();
+      expect(imagePreview?.id).toBe('input-test-node-test-input-preview');
+      expect(imagePreview?.src).toContain('/comfyui/image?filename=image1.jpg&subfolder=&type=input');
+    });
+
+    it('should handle empty default value', () => {
+      const config = { ...baseConfig, default: '' };
+      const html = renderImageInput(config);
+      const container = parseHtml(html);
+      
+      const hiddenInput = container.querySelector('input[type="hidden"]') as HTMLInputElement;
+      expect(hiddenInput?.value).toBe('');
+      
+      const imagePreview = container.querySelector('img') as HTMLImageElement;
+      expect(imagePreview?.src).toContain('/comfyui/image?filename=&subfolder=&type=input');
+    });
+
+    it('should handle special characters in default value', () => {
+      const config = { ...baseConfig, default: 'test image (1).jpg' };
+      const html = renderImageInput(config);
+      const container = parseHtml(html);
+      
+      const hiddenInput = container.querySelector('input[type="hidden"]') as HTMLInputElement;
+      expect(hiddenInput?.value).toBe('test image (1).jpg');
+      
+      const imagePreview = container.querySelector('img') as HTMLImageElement;
+      expect(imagePreview?.src).toContain('/comfyui/image?filename=test%20image%20(1).jpg&subfolder=&type=input');
     });
   });
 
@@ -494,13 +543,12 @@ describe('inputRenderers', () => {
     });
 
     it('should add additional class when provided', () => {
-      const html = renderSelectInput({
+      const html = renderImageInput({
         node_id: 'test',
         input_name_in_node: 'test',
         title: 'Test',
         default: 'value',
-        list: ['value'],
-        imageUpload: true
+        list: ['value']
       });
       const container = parseHtml(html);
       

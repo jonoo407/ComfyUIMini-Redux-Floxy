@@ -171,6 +171,23 @@ router.get('/input-images/*', (req: RequestWithTheme, res) => {
     });
 });
 
+// API endpoint for input images modal
+router.get('/api/input-images/*', (req: RequestWithTheme, res) => {
+    const fullPath = req.params[0] || '';
+    const subfolder = fullPath.split('?')[0];
+    const page = Number(req.query.page) || 0;
+    const itemsPerPage = Number(req.query.itemsPerPage) || 20;
+
+    const pageData = getGalleryPageData(page, subfolder, itemsPerPage, 'input');
+
+    if (pageData.error) {
+        res.status(500).json({ error: pageData.error });
+        return;
+    }
+
+    res.json(pageData);
+});
+
 function handleDeleteImage(req: Request, res: Response, dirKey: string, errorPrefix: string) {
     if (!config.get('enable_gallery_delete')) {
         res.status(403).json({ error: `${errorPrefix} delete is disabled` });
