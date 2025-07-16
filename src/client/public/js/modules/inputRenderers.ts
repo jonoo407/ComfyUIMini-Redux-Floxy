@@ -70,7 +70,13 @@ export function renderImageInput(inputOptions: ImageRenderConfig): string {
     </button>
     <input type="file" id="${id}-file_input" data-select-id="${id}" class="file-input" accept="image/jpeg,image/png,image/webp" style="display: none;">`;
     
-    const imagePreview = `<img src="/comfyui/image?filename=${inputOptions.default}&subfolder=&type=input" class="input-image-preview" id="${id}-preview">`;
+    const imagePreview = `<img src="/comfyui/image?filename=${inputOptions.default}&subfolder=&type=input" class="input-image-preview" id="${id}-preview" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" onload="this.style.display='block'; this.nextElementSibling.style.display='none';">
+    <div class="input-image-placeholder" style="display: ${inputOptions.default ? 'none' : 'block'};">
+        <div class="placeholder-content">
+            <span class="icon gallery"></span>
+            <span class="placeholder-text">No image selected</span>
+        </div>
+    </div>`;
 
     const html = `
         ${hiddenInput}
@@ -124,6 +130,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (previewImg) {
                         const subfolderParam = subfolder ? `&subfolder=${subfolder}` : '';
                         previewImg.src = `/comfyui/image?filename=${filename}${subfolderParam}&type=input`;
+                        previewImg.style.display = 'block';
+                        
+                        // Hide placeholder
+                        const placeholder = previewImg.nextElementSibling as HTMLElement;
+                        if (placeholder && placeholder.classList.contains('input-image-placeholder')) {
+                            placeholder.style.display = 'none';
+                        }
                     }
                     
                     // Trigger change event on the hidden input
@@ -193,6 +206,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Update the preview image
                 if (previewImg) {
                     previewImg.src = `/comfyui/image?filename=${filename}&subfolder=&type=input`;
+                    previewImg.style.display = 'block';
+                    
+                    // Hide placeholder
+                    const placeholder = previewImg.nextElementSibling as HTMLElement;
+                    if (placeholder && placeholder.classList.contains('input-image-placeholder')) {
+                        placeholder.style.display = 'none';
+                    }
                 }
 
                 // Trigger change event on the hidden input
