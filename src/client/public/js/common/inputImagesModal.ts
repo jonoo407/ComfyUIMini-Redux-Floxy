@@ -25,6 +25,7 @@ interface InputImagesPageData {
 interface InputImagesModalOptions {
     onImageSelect?: (filename: string, subfolder: string) => void;
     onCancel?: () => void;
+    fallbackImages?: string[];
 }
 
 /**
@@ -32,7 +33,7 @@ interface InputImagesModalOptions {
  * @param options Configuration options for the modal
  */
 export async function openInputImagesModal(options: InputImagesModalOptions = {}): Promise<void> {
-    const { onImageSelect, onCancel } = options;
+    const { onImageSelect, onCancel, fallbackImages } = options;
 
     // Create modal container
     const modalContainer = document.createElement('div');
@@ -63,6 +64,25 @@ export async function openInputImagesModal(options: InputImagesModalOptions = {}
 
     let currentSubfolder = '';
 
+    // Render fallback images when API fails
+    function renderFallbackImages(fallbackImages: string[]): void {
+        const fallbackImageData = fallbackImages.map(filename => ({
+            filename,
+            path: `/comfyui/image?filename=${filename}&subfolder=&type=input`,
+            isVideo: false,
+            time: 0,
+            timeText: ''
+        }));
+        
+        // Hide subfolder navigation and pagination for fallback images
+        subfoldersContainer.innerHTML = '';
+        paginationContainer.innerHTML = '';
+        
+        // Render the fallback images
+        imagesGrid.innerHTML = '';
+        renderImages(fallbackImageData);
+    }
+
     // Load input images data
     async function loadInputImages(subfolder: string = '', page: number = 0): Promise<void> {
         try {
@@ -92,11 +112,15 @@ export async function openInputImagesModal(options: InputImagesModalOptions = {}
 
         } catch (error) {
             console.error('Error loading input images:', error);
-            imagesGrid.innerHTML = `
-                <div class="input-images-error">
-                    <p>Failed to load input images: ${error instanceof Error ? error.message : 'Unknown error'}</p>
-                </div>
-            `;
+            if (fallbackImages && fallbackImages.length > 0) {
+                renderFallbackImages(fallbackImages);
+            } else {
+                imagesGrid.innerHTML = `
+                    <div class="input-images-error">
+                        <p>Failed to load input images: ${error instanceof Error ? error.message : 'Unknown error'}</p>
+                    </div>
+                `;
+            }
         }
     }
 

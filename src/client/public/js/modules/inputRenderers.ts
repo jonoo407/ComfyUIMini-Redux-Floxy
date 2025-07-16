@@ -59,7 +59,7 @@ export function renderImageInput(inputOptions: ImageRenderConfig): string {
     const hiddenInput = `<input type="hidden" id="${id}" class="workflow-input" value="${inputOptions.default}">`;
     
     // Create the display button and preview
-    const displayButton = `<button type="button" id="${id}-select-button" class="workflow-input image-select-button">
+    const displayButton = `<button type="button" id="${id}-select-button" class="workflow-input image-select-button" data-fallback-images='${JSON.stringify(inputOptions.list || [])}'>
         <span class="icon gallery"></span>
         <span class="button-text">Select Image</span>
     </button>`;
@@ -98,6 +98,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const inputId = selectButton.id.replace('-select-button', '');
             const hiddenInput = document.getElementById(inputId) as HTMLInputElement;
             const previewImg = document.getElementById(`${inputId}-preview`) as HTMLImageElement;
+
+            // Find the inputOptions.list for this input (by DOM traversal)
+            // We'll store the list as a data attribute on the select button for easy access
+            let fallbackImages: string[] = [];
+            if (selectButton.dataset.fallbackImages) {
+                try {
+                    fallbackImages = JSON.parse(selectButton.dataset.fallbackImages);
+                } catch {}
+            }
             
             if (!hiddenInput) return;
             
@@ -114,7 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // Trigger change event on the hidden input
                     hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
-                }
+                },
+                fallbackImages
             });
         }
     });
