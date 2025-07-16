@@ -25,11 +25,13 @@ router.use(themeMiddleware);
 router.use(express.json());
 
 router.get('/', (req: RequestWithTheme, res) => {
-    const formattedWorkflowMetadata = Object.values(serverWorkflowMetadata).map((workflowMetadata) => ({
-        ...workflowMetadata,
-        type: 'server',
-        icon: 'server',
-    }));
+    const formattedWorkflowMetadata = Object.values(serverWorkflowMetadata)
+        .sort((a, b) => a.title.localeCompare(b.title))
+        .map((workflowMetadata) => ({
+            ...workflowMetadata,
+            type: 'server',
+            icon: 'server',
+        }));
 
     res.render('pages/index', {
         serverWorkflowMetadata: formattedWorkflowMetadata,
