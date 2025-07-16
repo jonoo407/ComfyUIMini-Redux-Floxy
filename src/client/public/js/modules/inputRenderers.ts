@@ -64,8 +64,11 @@ export function renderImageInput(inputOptions: ImageRenderConfig): string {
         <span class="button-text">Select Image</span>
     </button>`;
     
-    const uploadButton = `<label for="${id}-file_input" class="file-input-label"><span class="icon upload"></span></label>
-    <input type="file" id="${id}-file_input" data-select-id="${id}" class="file-input" accept="image/jpeg,image/png,image/webp">`;
+    const uploadButton = `<button type="button" id="${id}-upload-button" class="workflow-input image-upload-button">
+        <span class="icon upload"></span>
+        <span class="button-text">Upload</span>
+    </button>
+    <input type="file" id="${id}-file_input" data-select-id="${id}" class="file-input" accept="image/jpeg,image/png,image/webp" style="display: none;">`;
     
     const imagePreview = `<img src="/comfyui/image?filename=${inputOptions.default}&subfolder=&type=input" class="input-image-preview" id="${id}-preview">`;
 
@@ -105,7 +108,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (selectButton.dataset.fallbackImages) {
                 try {
                     fallbackImages = JSON.parse(selectButton.dataset.fallbackImages);
-                } catch {}
+                } catch {
+                    // Ignore JSON parse errors, fallbackImages will remain empty array
+                }
             }
             
             if (!hiddenInput) return;
@@ -126,6 +131,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 fallbackImages
             });
+        }
+    });
+
+    // Handle upload button clicks
+    document.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        const uploadButton = target.closest('.image-upload-button') as HTMLButtonElement;
+        
+        if (uploadButton) {
+            e.preventDefault();
+            const inputId = uploadButton.id.replace('-upload-button', '');
+            const fileInput = document.getElementById(`${inputId}-file_input`) as HTMLInputElement;
+            
+            if (fileInput) {
+                fileInput.click();
+            }
         }
     });
 });
