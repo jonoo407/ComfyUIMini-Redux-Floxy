@@ -73,3 +73,237 @@ body.locked {
         max-height: 98%;
     }
 } 
+
+/* Mask Creation Modal Styles */
+.mask-creation-modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+}
+.mask-creation-modal-content {
+    background: var(--background-primary-color, #222);
+    border-radius: 1rem;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.25);
+    padding: 1.2rem 1.2rem 0.5rem 1.2rem;
+    min-width: 320px;
+    max-width: 95vw;
+    max-height: 95vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+.mask-creation-modal-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+.mask-creation-modal-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: var(--text-primary-color);
+}
+.mask-creation-modal-close {
+    background: none;
+    border: none;
+    color: var(--text-primary-color);
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+}
+.mask-creation-modal-body {
+    width: 100%;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.mask-creation-controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+.mask-creation-controls label {
+    color: var(--text-primary-color);
+    font-size: 1rem;
+}
+.mask-creation-controls .tool-button {
+    background: var(--background-secondary-color, #444);
+    color: var(--text-primary-color);
+    border: 1px solid var(--background-tertiary-color, #333);
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.2s;
+}
+.mask-creation-controls .tool-button.active {
+    background: var(--background-tertiary-color, #666);
+    font-weight: bold;
+}
+.mask-canvas-container {
+    background: #111;
+    border-radius: 0.5rem;
+    border: 1px solid var(--background-tertiary-color, #333);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: auto;
+    padding: 1em;
+    touch-action: none; /* Prevent touch scrolling on mobile */
+    width: 100%;
+    height: auto;
+}
+.mask-canvas {
+    display: block;
+    max-width: 100%;
+    max-height: 90vh;
+    background: #222;
+    border-radius: 0.5rem;
+    cursor: crosshair;
+    object-fit: contain;
+    width: auto;
+    height: auto;
+    box-sizing: border-box;
+}
+.mask-instructions {
+    color: var(--text-secondary-color, #aaa);
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+.mask-creation-modal-footer {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+    background: var(--background-primary-color, #222);
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    padding-bottom: 0.5rem;
+    z-index: 2;
+    flex-shrink: 0;
+}
+.mask-creation-modal-footer button {
+    background: var(--background-secondary-color, #444);
+    color: var(--text-primary-color);
+    border: 1px solid var(--background-tertiary-color, #333);
+    border-radius: 0.5rem;
+    padding: 0.5rem 1.2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.mask-creation-modal-footer button:hover {
+    background: var(--background-tertiary-color, #666);
+} 
+
+/* --- Mask Creation Modal Responsive Fixes --- */
+@media (max-width: 600px) {
+  .mask-creation-modal-content {
+    padding: 0.5rem 0.5rem 0.2rem 0.5rem;
+    min-width: 0;
+    max-width: 98vw;
+    max-height: 95vh; /* Leave some space for safe area */
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .mask-creation-modal-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+  }
+  
+  .mask-canvas-container {
+    flex: 1;
+    max-width: 95vw;
+    max-height: none;
+    padding: 0.2em;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 0;
+  }
+  
+  /* Mobile-specific touch improvements */
+  .mask-canvas {
+    touch-action: none; /* Prevent default touch behaviors like scrolling */
+    -webkit-touch-callout: none; /* Prevent callout on long press */
+    -webkit-user-select: none; /* Prevent text selection */
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+  
+  .mask-creation-controls {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    flex-shrink: 0;
+  }
+  
+  .mask-creation-controls .tool-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+    min-height: 2.5rem; /* Ensure buttons are large enough for touch */
+  }
+  
+  .mask-creation-controls input[type="range"] {
+    min-width: 80px;
+  }
+  
+  .mask-instructions {
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+    flex-shrink: 0;
+  }
+  
+  .mask-creation-modal-footer {
+    padding: 0.5rem 0;
+    margin-top: 0.5rem;
+  }
+  
+  .mask-creation-modal-footer button {
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+    min-height: 3rem; /* Larger touch target */
+  }
+  
+  /* Ensure square images fit properly */
+  .mask-canvas-container.square-image {
+    aspect-ratio: 1;
+    max-width: 90vw;
+    max-height: 90vw;
+  }
+} 

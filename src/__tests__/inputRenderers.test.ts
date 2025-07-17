@@ -3,14 +3,16 @@ import {
   renderTextInput,
   renderNumberInput,
   renderBooleanInput,
-  renderImageInput,
   BaseRenderConfig,
   TextRenderConfig,
   NumberRenderConfig,
   SelectRenderConfig,
-  BooleanRenderConfig,
-  ImageRenderConfig
+  BooleanRenderConfig
 } from '../client/public/js/modules/inputRenderers';
+import {
+  renderImageInput,
+  ImageRenderConfig
+} from '../client/public/js/modules/imageInputRenderer';
 
 // Helper function to parse HTML and return DOM elements
 function parseHtml(html: string): HTMLElement {
@@ -142,7 +144,7 @@ describe('inputRenderers', () => {
       const imagePreview = container.querySelector('img');
       expect(imagePreview).toBeTruthy();
       expect(imagePreview?.id).toBe('input-test-node-test-input-preview');
-      expect(imagePreview?.src).toContain('/comfyui/image?filename=image1.jpg&subfolder=&type=input');
+      expect(imagePreview?.src).toContain('/comfyui/image?filename=image1.jpg&type=input');
     });
 
     it('should handle empty default value', () => {
@@ -154,7 +156,7 @@ describe('inputRenderers', () => {
       expect(hiddenInput?.value).toBe('');
       
       const imagePreview = container.querySelector('img') as HTMLImageElement;
-      expect(imagePreview?.src).toContain('/comfyui/image?filename=&subfolder=&type=input');
+      expect(imagePreview?.src).toContain('/comfyui/image?filename=&type=input');
     });
 
     it('should handle special characters in default value', () => {
@@ -166,7 +168,7 @@ describe('inputRenderers', () => {
       expect(hiddenInput?.value).toBe('test image (1).jpg');
       
       const imagePreview = container.querySelector('img') as HTMLImageElement;
-      expect(imagePreview?.src).toContain('/comfyui/image?filename=test%20image%20(1).jpg&subfolder=&type=input');
+      expect(imagePreview?.src).toContain('/comfyui/image?filename=test%20image%20(1).jpg&type=input');
     });
   });
 

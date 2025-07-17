@@ -67,6 +67,8 @@ const workflowType = passedWorkflowType;
 // @ts-expect-error - workflowDataFromEjs is fetched via the inline script supplied by EJS
 const workflowObject: WorkflowWithMetadata = workflowDataFromEjs ? workflowDataFromEjs : fetchLocalWorkflow();
 
+import { constructImageUrl } from '../common/imageUtils.js';
+
 // --- WebSocket Management ---
 
 // Initialize the page
@@ -149,7 +151,7 @@ function applyUrlParameterValues() {
                     const previewImg = document.getElementById(`${inputElem.id}-preview`) as HTMLImageElement;
                     if (previewImg && urlValue) {
                         // Update the preview image with the URL parameter value
-                        previewImg.src = `/comfyui/image?filename=${urlValue}&subfolder=&type=input`;
+                        previewImg.src = constructImageUrl(urlValue, 'input');
                     }
                 }
             }
@@ -430,7 +432,7 @@ function fileUploadEventListener(inputElement: HTMLElement) {
                 
                 // Update the preview image
                 if (previewImg) {
-                    previewImg.src = `/comfyui/image?filename=${responseJson.externalResponse.name}&subfolder=&type=input`;
+                    previewImg.src = constructImageUrl(responseJson.externalResponse.name, 'input');
                 }
                 
                 // Trigger change event on the hidden input

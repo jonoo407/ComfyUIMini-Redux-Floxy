@@ -275,6 +275,15 @@
     font-weight: 500;
 }
 
+/* Dynamic display states for image input */
+.input-image-placeholder.hidden {
+    display: none;
+}
+
+.input-image-preview.hidden {
+    display: none;
+}
+
 .workflow-input-container .file-input-label:active {
     transform: scale(0.95);
 }

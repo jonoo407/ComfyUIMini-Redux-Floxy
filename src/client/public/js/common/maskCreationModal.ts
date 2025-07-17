@@ -1,0 +1,390 @@
+export interface MaskCreationModalOptions {
+    imageSrc: string;
+    imageFilename: string;
+    maskSrc?: string;
+    onMaskCreated?: (filename: string) => void;
+    onCancel?: () => void;
+}
+
+export function openMaskCreationModal(options: MaskCreationModalOptions) {
+    const { imageSrc, imageFilename: _imageFilename, maskSrc, onMaskCreated: _onMaskCreated, onCancel } = options;
+    
+    // Create modal structure
+    const modal = createModalStructure();
+    document.body.appendChild(modal);
+    document.body.classList.add('locked');
+    
+    // Get DOM elements
+    const elements = getModalElements(modal);
+    
+    // Initialize state
+    const state = initializeState();
+    
+    // Set up event listeners
+    setupEventListeners(elements, state, options);
+    
+    // Load the base image
+    loadBaseImage(imageSrc, elements, state, maskSrc);
+    
+    return { close: () => closeModal(modal, onCancel) };
+}
+
+function createModalStructure(): HTMLDivElement {
+    const modal = document.createElement('div');
+    modal.className = 'mask-creation-modal-container';
+    modal.innerHTML = `
+        <div class="mask-creation-modal-content">
+            <div class="mask-creation-modal-header">
+                <h2>Create Mask</h2>
+                <button class="mask-creation-modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="mask-creation-modal-body">
+                <div class="mask-creation-controls">
+                    <label>Brush Size: <input type="range" min="1" max="100" value="20" id="mask-brush-size"></label>
+                    <button id="mask-tool-brush" class="tool-button active" data-tool="brush">Brush</button>
+                    <button id="mask-tool-eraser" class="tool-button" data-tool="eraser">Eraser</button>
+                    <button id="mask-clear" class="tool-button">Clear</button>
+                </div>
+                <div class="mask-canvas-container">
+                    <canvas id="mask-canvas"></canvas>
+                </div>
+                <div class="mask-instructions">
+                    <p>Draw on the image to create a mask.<br>White = masked (transparent), Black = visible.</p>
+                </div>
+            </div>
+            <div class="mask-creation-modal-footer">
+                <button class="mask-creation-cancel">Cancel</button>
+                <button class="mask-creation-save">Save Mask</button>
+            </div>
+        </div>
+    `;
+    return modal;
+}
+
+function getModalElements(modal: HTMLDivElement) {
+    return {
+        closeBtn: modal.querySelector('.mask-creation-modal-close') as HTMLButtonElement,
+        cancelBtn: modal.querySelector('.mask-creation-cancel') as HTMLButtonElement,
+        saveBtn: modal.querySelector('.mask-creation-save') as HTMLButtonElement,
+        brushBtn: modal.querySelector('#mask-tool-brush') as HTMLButtonElement,
+        eraserBtn: modal.querySelector('#mask-tool-eraser') as HTMLButtonElement,
+        clearBtn: modal.querySelector('#mask-clear') as HTMLButtonElement,
+        brushSizeInput: modal.querySelector('#mask-brush-size') as HTMLInputElement,
+        canvas: modal.querySelector('#mask-canvas') as HTMLCanvasElement,
+        modal
+    };
+}
+
+function initializeState() {
+    return {
+        isDrawing: false,
+        lastX: 0,
+        lastY: 0,
+        brushSize: 20,
+        tool: 'brush' as 'brush' | 'eraser',
+        img: null as HTMLImageElement | null,
+        maskLayer: null as HTMLCanvasElement | null,
+        maskCtx: null as CanvasRenderingContext2D | null,
+        ctx: null as CanvasRenderingContext2D | null
+    };
+}
+
+function setupEventListeners(elements: any, state: any, options: MaskCreationModalOptions) {
+    const { canvas, closeBtn, cancelBtn, saveBtn, brushBtn, eraserBtn, clearBtn, brushSizeInput } = elements;
+    
+    // Canvas drawing events - Mouse
+    canvas.addEventListener('mousedown', (e: MouseEvent) => handlePointerDown(e, state, canvas));
+    canvas.addEventListener('mousemove', (e: MouseEvent) => handlePointerMove(e, state, canvas));
+    canvas.addEventListener('mouseup', () => handlePointerUp(state));
+    canvas.addEventListener('mouseleave', () => handlePointerUp(state));
+    
+    // Canvas drawing events - Touch (for mobile)
+    canvas.addEventListener('touchstart', (e: TouchEvent) => {
+        e.preventDefault();
+        if (e.touches.length === 1) {
+            handlePointerDown(e.touches[0] as any, state, canvas);
+        }
+    });
+    canvas.addEventListener('touchmove', (e: TouchEvent) => {
+        e.preventDefault();
+        if (e.touches.length === 1) {
+            handlePointerMove(e.touches[0] as any, state, canvas);
+        }
+    });
+    canvas.addEventListener('touchend', (e: TouchEvent) => {
+        e.preventDefault();
+        handlePointerUp(state);
+    });
+    
+    // Control buttons
+    brushBtn.onclick = () => setTool('brush', brushBtn, eraserBtn, state);
+    eraserBtn.onclick = () => setTool('eraser', brushBtn, eraserBtn, state);
+    brushSizeInput.oninput = () => setBrushSize(brushSizeInput, state);
+    clearBtn.onclick = () => clearMask(state);
+    
+    // Modal controls
+    closeBtn.onclick = () => closeModal(elements.modal, options.onCancel);
+    cancelBtn.onclick = () => closeModal(elements.modal, options.onCancel);
+    saveBtn.onclick = () => saveMask(state, options, elements.modal);
+    
+    // Add touch event handlers for mobile
+    saveBtn.addEventListener('touchstart', (e: TouchEvent) => {
+        e.preventDefault();
+        saveMask(state, options, elements.modal);
+    });
+    
+    cancelBtn.addEventListener('touchstart', (e: TouchEvent) => {
+        e.preventDefault();
+        closeModal(elements.modal, options.onCancel);
+    });
+    
+    // Escape key
+    const esc = (e: KeyboardEvent) => { 
+        if (e.key === 'Escape') closeModal(elements.modal, options.onCancel); 
+    };
+    document.addEventListener('keydown', esc);
+    elements.modal.addEventListener('remove', () => document.removeEventListener('keydown', esc));
+}
+
+function loadBaseImage(imageSrc: string, elements: any, state: any, maskSrc?: string) {
+    const img = new window.Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+        setupCanvas(img, elements.canvas, state);
+        if (maskSrc) {
+            loadExistingMask(maskSrc, state);
+        } else {
+            drawPreview(state);
+        }
+    };
+    
+    img.onerror = (error) => {
+        console.error('Error loading base image:', error);
+    };
+    
+    img.src = imageSrc;
+}
+
+function setupCanvas(img: HTMLImageElement, canvas: HTMLCanvasElement, state: any) {
+    // Use original image size - let CSS handle the responsive sizing
+    canvas.width = img.width;
+    canvas.height = img.height;
+    
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(img, 0, 0);
+    
+    // Create mask layer with same size
+    const maskLayer = document.createElement('canvas');
+    maskLayer.width = img.width;
+    maskLayer.height = img.height;
+    const maskCtx = maskLayer.getContext('2d')!;
+    maskCtx.clearRect(0, 0, maskLayer.width, maskLayer.height);
+    
+    // Add class for square images to help with responsive sizing
+    const container = canvas.parentElement;
+    if (container && img.width === img.height) {
+        container.classList.add('square-image');
+    }
+    
+    // Store references
+    state.img = img;
+    state.maskLayer = maskLayer;
+    state.maskCtx = maskCtx;
+    state.ctx = ctx;
+}
+
+function loadExistingMask(maskSrc: string, state: any) {
+    const maskedImg = new window.Image();
+    maskedImg.crossOrigin = 'anonymous';
+    
+    maskedImg.onload = () => {
+        extractMaskFromImage(maskedImg, state);
+        drawPreview(state);
+    };
+    
+    maskedImg.onerror = (error) => {
+        console.error('Error loading masked image:', error);
+        drawPreview(state);
+    };
+    
+    maskedImg.src = maskSrc;
+}
+
+function extractMaskFromImage(maskedImg: HTMLImageElement, state: any) {
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = maskedImg.width;
+    tempCanvas.height = maskedImg.height;
+    const tempCtx = tempCanvas.getContext('2d')!;
+    tempCtx.drawImage(maskedImg, 0, 0);
+    
+    const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+    const maskData = state.maskCtx!.createImageData(tempCanvas.width, tempCanvas.height);
+    
+    // Check if the image has any alpha data
+    let hasAlphaData = false;
+    for (let i = 0; i < imageData.data.length; i += 4) {
+        if (imageData.data[i + 3] < 255) {
+            hasAlphaData = true;
+            break;
+        }
+    }
+    
+    if (hasAlphaData) {
+        // Extract alpha channel and invert it back to mask
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            const alpha = imageData.data[i + 3];
+            const maskValue = 255 - alpha;
+            maskData.data[i] = maskValue;     // Red
+            maskData.data[i + 1] = maskValue; // Green
+            maskData.data[i + 2] = maskValue; // Blue
+            maskData.data[i + 3] = 255;       // Alpha
+        }
+        state.maskCtx!.putImageData(maskData, 0, 0);
+    }
+}
+
+function handlePointerDown(e: MouseEvent | Touch, state: any, canvas: HTMLCanvasElement) {
+    state.isDrawing = true;
+    [state.lastX, state.lastY] = getXY(e, canvas);
+}
+
+function handlePointerUp(state: any) {
+    state.isDrawing = false;
+    state.maskCtx!.beginPath();
+}
+
+function handlePointerMove(e: MouseEvent | Touch, state: any, canvas: HTMLCanvasElement) {
+    if (!state.isDrawing) return;
+    
+    const [x, y] = getXY(e, canvas);
+    const maskCtx = state.maskCtx!;
+    
+    maskCtx.lineCap = 'round';
+    maskCtx.lineJoin = 'round';
+    maskCtx.lineWidth = state.brushSize;
+    
+    if (state.tool === 'brush') {
+        maskCtx.globalCompositeOperation = 'source-over';
+        maskCtx.strokeStyle = 'white';
+    } else {
+        // Eraser: add black to create visible areas (remove from mask)
+        maskCtx.globalCompositeOperation = 'source-over';
+        maskCtx.strokeStyle = 'black';
+    }
+    
+    maskCtx.beginPath();
+    maskCtx.moveTo(state.lastX, state.lastY);
+    maskCtx.lineTo(x, y);
+    maskCtx.stroke();
+    
+    [state.lastX, state.lastY] = [x, y];
+    drawPreview(state);
+}
+
+function getXY(e: MouseEvent | Touch, canvas: HTMLCanvasElement): [number, number] {
+    const rect = canvas.getBoundingClientRect();
+    return [
+        (e.clientX - rect.left) * (canvas.width / rect.width),
+        (e.clientY - rect.top) * (canvas.height / rect.height)
+    ];
+}
+
+function drawPreview(state: any) {
+    const ctx = state.ctx!;
+    const img = state.img!;
+    const maskLayer = state.maskLayer!;
+    
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.drawImage(img, 0, 0);
+    ctx.globalAlpha = 0.5;
+    ctx.drawImage(maskLayer, 0, 0);
+    ctx.globalAlpha = 1.0;
+}
+
+function setTool(tool: 'brush' | 'eraser', brushBtn: HTMLButtonElement, eraserBtn: HTMLButtonElement, state: any) {
+    state.tool = tool;
+    if (tool === 'brush') {
+        brushBtn.classList.add('active');
+        eraserBtn.classList.remove('active');
+    } else {
+        eraserBtn.classList.add('active');
+        brushBtn.classList.remove('active');
+    }
+}
+
+function setBrushSize(brushSizeInput: HTMLInputElement, state: any) {
+    state.brushSize = parseInt(brushSizeInput.value);
+}
+
+function clearMask(state: any) {
+    state.maskCtx!.clearRect(0, 0, state.maskLayer!.width, state.maskLayer!.height);
+    drawPreview(state);
+}
+
+async function saveMask(state: any, options: MaskCreationModalOptions, modal: HTMLDivElement) {
+    const maskCanvas = document.createElement('canvas');
+    maskCanvas.width = state.img!.width;
+    maskCanvas.height = state.img!.height;
+    const maskCtx = maskCanvas.getContext('2d')!;
+    
+    // Get the mask data from the maskLayer and create a grayscale mask image
+    const sourceMaskData = state.maskLayer!.getContext('2d')!.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+    const maskData = maskCtx.createImageData(maskCanvas.width, maskCanvas.height);
+    
+    // Create the mask: white areas in our mask should become transparent (alpha=0)
+    // black areas should become opaque (alpha=255)
+    for (let i = 0; i < maskData.data.length; i += 4) {
+        const maskValue = sourceMaskData.data[i]; // Use red channel as mask value
+        // Invert the mask: white (255) -> alpha 0, black (0) -> alpha 255
+        const alphaValue = 255 - maskValue;
+        maskData.data[i] = 255;     // Red (white)
+        maskData.data[i + 1] = 255; // Green (white)
+        maskData.data[i + 2] = 255; // Blue (white)
+        maskData.data[i + 3] = alphaValue; // Alpha (transparency)
+    }
+    
+    maskCtx.putImageData(maskData, 0, 0);
+    
+    maskCanvas.toBlob(async (blob) => {
+        if (!blob) return;
+        
+        const maskName = options.imageFilename.replace(/\.[^/.]+$/, '') + '_mask.png';
+        const maskFile = new File([blob], maskName, { type: 'image/png' });
+        
+        // Determine the original image subfolder
+        let originalSubfolder = '';
+        if (options.imageFilename.includes('clipspace/')) {
+            originalSubfolder = 'clipspace';
+        }
+        
+        // Create the original image reference
+        const originalRef = JSON.stringify({
+            filename: options.imageFilename.replace('clipspace/', ''),
+            subfolder: originalSubfolder,
+            type: 'input'
+        });
+        
+        try {
+            // Import and use the upload mask function
+            const { uploadMaskFile } = await import('../modules/imageInputRenderer.js');
+            const filename = await uploadMaskFile(maskFile, originalRef, 'clipspace');
+            
+            if (options.onMaskCreated) {
+                options.onMaskCreated(filename);
+            }
+            
+            // Close the modal after successful save
+            closeModal(modal, options.onCancel);
+        } catch (error) {
+            console.error('Failed to save mask:', error);
+            alert('Failed to save mask. Please try again.');
+        }
+    }, 'image/png');
+}
+
+function closeModal(modal: HTMLDivElement, onCancel?: () => void) {
+    document.body.classList.remove('locked');
+    modal.remove();
+    if (onCancel) onCancel();
+} 

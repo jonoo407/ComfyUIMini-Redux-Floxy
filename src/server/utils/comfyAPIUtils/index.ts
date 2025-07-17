@@ -5,6 +5,7 @@ import getHistory from './getHistory';
 import interruptGeneration from './interruptGeneration';
 import getRawObjectInfo from './getRawObjectInfo';
 import uploadImage from './uploadImage';
+import uploadMask from './uploadMask';
 import generateImage from './generateImage';
 
 export {
@@ -16,4 +17,5 @@ export {
     getImage,
     getRawObjectInfo,
     uploadImage,
+    uploadMask,
 };

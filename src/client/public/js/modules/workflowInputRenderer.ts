@@ -1,5 +1,6 @@
 import { InputOption, WorkflowWithMetadata } from '@shared/types/Workflow.js';
-import { BaseRenderConfig, renderNumberInput, renderSelectInput, renderTextInput, renderBooleanInput, renderImageInput } from './inputRenderers.js';
+import { BaseRenderConfig, renderNumberInput, renderSelectInput, renderTextInput, renderBooleanInput } from './inputRenderers.js';
+import { renderImageInput } from './imageInputRenderer.js';
 import { NormalisedComfyInputInfo, ProcessedObjectInfo } from '@shared/types/ComfyObjectInfo.js';
 import { getSavedInputs } from './savedInputValues.js';
 import { openPopupWindow, PopupWindowType } from '../common/popupWindow.js';
