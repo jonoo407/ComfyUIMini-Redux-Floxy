@@ -24,6 +24,9 @@ async function getAllWorkflowsInfo(): Promise<WorkflowInfo[]> {
 
     workflowsInfoList = workflowsInfoList.concat(serverWorkflowInfoJson);
 
+    // Sort workflows alphabetically by title
+    workflowsInfoList.sort((a, b) => a.title.localeCompare(b.title));
+
     return workflowsInfoList;
 }
 
