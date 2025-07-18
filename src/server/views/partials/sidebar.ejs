@@ -20,14 +20,29 @@
             <span class="icon clock"></span>
             <span class="sidebar-list-item-text">Queue <span id="queue-count"></span></span>
         </a>
-        <a href="/gallery/" class="sidebar-list-item <%= activePage === 'gallery' ? 'active' : '' %>">
+        <div class="sidebar-list-item sidebar-list-item-dropdown gallery-dropdown <%= activePage === 'gallery' || activePage === 'input-images' ? 'active' : '' %> <%= galleryDisabled ? 'disabled' : '' %>" id="gallery-dropdown">
             <span class="icon gallery"></span>
             <span class="sidebar-list-item-text">Gallery</span>
-        </a>
-        <a href="/input-images/" class="sidebar-list-item <%= activePage === 'input-images' ? 'active' : '' %>">
-            <span class="icon input-images"></span>
-            <span class="sidebar-list-item-text">Input Images</span>
-        </a>
+            <span class="dropdown-arrow">▼</span>
+        </div>
+        <div class="sidebar-dropdown-list gallery-dropdown-list hidden" id="gallery-dropdown-list">
+            <% if (galleryDisabled) { %>
+                <span class="sidebar-dropdown-list-item disabled">No gallery directories configured</span>
+            <% } else { %>
+                <% if (hasOutputDir) { %>
+                    <a href="/gallery/" class="sidebar-dropdown-list-item">
+                        <span class="icon gallery"></span>
+                        <span class="sidebar-list-item-text">Output Images</span>
+                    </a>
+                <% } %>
+                <% if (hasInputDir) { %>
+                    <a href="/input-images/" class="sidebar-dropdown-list-item">
+                        <span class="icon input-images"></span>
+                        <span class="sidebar-list-item-text">Input Images</span>
+                    </a>
+                <% } %>
+            <% } %>
+        </div>
         <a href="/settings" class="sidebar-list-item <%= activePage === 'settings' ? 'active' : '' %>">
             <span class="icon settings"></span>
             <span class="sidebar-list-item-text">Settings</span>

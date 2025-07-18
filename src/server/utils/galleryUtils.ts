@@ -127,3 +127,18 @@ function getGalleryPageData(page = 0, subfolder = '', itemsPerPage = 20, type = 
 }
 
 export { getGalleryPageData };
+
+export function getGallerySidebarData() {
+    const outputDir = config.get('output_dir');
+    const inputDir = config.get('input_dir');
+    
+    const hasOutputDir = outputDir && outputDir !== 'path/to/comfyui/output/folder';
+    const hasInputDir = inputDir && inputDir !== 'path/to/comfyui/input/folder';
+    const galleryDisabled = !hasOutputDir && !hasInputDir;
+    
+    return {
+        hasOutputDir,
+        hasInputDir,
+        galleryDisabled
+    };
+}

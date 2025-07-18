@@ -2,6 +2,7 @@ import { RequestWithTheme } from '@shared/types/Requests';
 import { WorkflowType } from '@shared/types/Workflow';
 import { Response } from 'express';
 import { readServerWorkflow, readWorkflowMetadata } from './workflowUtils';
+import { renderPage } from './renderUtils';
 
 function loadAndRenderWorkflow(
     workflowType: WorkflowType,
@@ -11,13 +12,12 @@ function loadAndRenderWorkflow(
     page: string
 ) {
     if (workflowType === 'local') {
-        res.render(page, {
+        renderPage(req, res, page, {
             workflowTitle: workflowIdentifier,
             workflowIdentifier: workflowIdentifier,
             workflowText: 'null',
             workflowType: 'local',
-            workflowFilename: '',
-            theme: req.theme,
+            workflowFilename: ''
         });
     } else {
         const workflowFileJson = readServerWorkflow(workflowIdentifier);
@@ -39,13 +39,12 @@ function loadAndRenderWorkflow(
         const metadata = readWorkflowMetadata(workflowIdentifier);
         const workflowTitle = metadata?.title || workflowIdentifier;
 
-        res.render(page, {
+        renderPage(req, res, page, {
             workflowTitle: workflowTitle,
             workflowIdentifier: workflowIdentifier,
             workflowText: JSON.stringify(workflowFileJson),
             workflowType: 'server',
-            workflowFilename: workflowIdentifier,
-            theme: req.theme,
+            workflowFilename: workflowIdentifier
         });
     }
 }

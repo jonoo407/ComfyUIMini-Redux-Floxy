@@ -170,6 +170,21 @@ body.locked {
     aspect-ratio: 1/1;
 }
 
+.sidebar-dropdown-list-item.disabled {
+    color: var(--text-tertiary-color);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.sidebar-list-item-dropdown.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.sidebar-list-item-dropdown.disabled:active {
+    transform: none;
+}
+
 /* navbar */
 .navbar {
     position: fixed;

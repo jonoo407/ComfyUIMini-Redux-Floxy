@@ -11,6 +11,7 @@ import {
     updateAllWorkflowMetadata,
 } from '../utils/workflowUtils';
 import { getGalleryPageData } from '../utils/galleryUtils';
+import { renderPage } from '../utils/renderUtils';
 import { RequestWithTheme } from '@shared/types/Requests';
 import loadAndRenderWorkflow from 'server/utils/loadAndRenderWorkflow';
 import fs from 'fs';
@@ -33,16 +34,13 @@ router.get('/', (req: RequestWithTheme, res) => {
             icon: 'server',
         }));
 
-    res.render('pages/index', {
-        serverWorkflowMetadata: formattedWorkflowMetadata,
-        theme: req.theme,
+    renderPage(req, res, 'pages/index', {
+        serverWorkflowMetadata: formattedWorkflowMetadata
     });
 });
 
 router.get('/import', (req: RequestWithTheme, res) => {
-    res.render('pages/import', { 
-        theme: req.theme,
-    });
+    renderPage(req, res, 'pages/import');
 });
 
 router.get('/edit/:type/:identifier', (req: RequestWithTheme, res) => {
@@ -151,10 +149,9 @@ router.get('/gallery/*', (req: RequestWithTheme, res) => {
 
     const pageData = getGalleryPageData(page, subfolder, itemsPerPage);
 
-    res.render('pages/gallery', { 
-        theme: req.theme, 
+    renderPage(req, res, 'pages/gallery', {
         enableGalleryDelete: config.get('enable_gallery_delete'),
-        ...pageData 
+        ...pageData
     });
 });
 
@@ -166,10 +163,9 @@ router.get('/input-images/*', (req: RequestWithTheme, res) => {
 
     const pageData = getGalleryPageData(page, subfolder, itemsPerPage, 'input');
 
-    res.render('pages/input-images', { 
-        theme: req.theme, 
+    renderPage(req, res, 'pages/input-images', {
         enableInputImagesDelete: config.get('enable_gallery_delete'), // Use same setting as gallery
-        ...pageData 
+        ...pageData
     });
 });
 
@@ -242,15 +238,11 @@ router.delete('/input-images/delete', (req, res) => {
 });
 
 router.get('/settings', (req: RequestWithTheme, res) => {
-    res.render('pages/settings', { 
-        theme: req.theme,
-    });
+    renderPage(req, res, 'pages/settings');
 });
 
 router.get('/queue', (req: RequestWithTheme, res) => {
-    res.render('pages/queue', { 
-        theme: req.theme,
-    });
+    renderPage(req, res, 'pages/queue');
 });
 
 router.get('/api/queue', async (req, res) => {

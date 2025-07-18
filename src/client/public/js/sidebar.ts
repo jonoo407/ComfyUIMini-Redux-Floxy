@@ -6,6 +6,8 @@ const elements = {
     dropdownButtonItem: document.querySelector('.sidebar-list-item-dropdown') as HTMLElement,
     dropdownList: document.querySelector('.sidebar-dropdown-list') as HTMLElement,
     dropdownArrow: document.querySelector('.dropdown-arrow') as HTMLElement,
+    galleryDropdown: document.getElementById('gallery-dropdown') as HTMLElement,
+    galleryDropdownArrow: document.querySelector('#gallery-dropdown .dropdown-arrow') as HTMLElement,
     toggleButton: document.getElementById('sidebar-toggle') as HTMLElement,
     queueCount: document.getElementById('queue-count') as HTMLElement,
 };
@@ -13,6 +15,7 @@ const elements = {
 elements.toggleButton.addEventListener('click', () => openSidebar());
 
 elements.dropdownButtonItem.addEventListener('click', () => toggleDropdown());
+elements.galleryDropdown.addEventListener('click', () => toggleGalleryDropdown());
 
 function toggleDropdown() {
     if (elements.dropdownList.classList.contains('hidden')) {
@@ -21,6 +24,22 @@ function toggleDropdown() {
     } else {
         elements.dropdownList.classList.add('hidden');
         elements.dropdownArrow.innerHTML = '▼';
+    }
+}
+
+function toggleGalleryDropdown() {
+    // Don't toggle if disabled
+    if (elements.galleryDropdown.classList.contains('disabled')) {
+        return;
+    }
+    
+    const galleryDropdownList = document.getElementById('gallery-dropdown-list') as HTMLElement;
+    if (galleryDropdownList.classList.contains('hidden')) {
+        galleryDropdownList.classList.remove('hidden');
+        elements.galleryDropdownArrow.innerHTML = '▲';
+    } else {
+        galleryDropdownList.classList.add('hidden');
+        elements.galleryDropdownArrow.innerHTML = '▼';
     }
 }
 
