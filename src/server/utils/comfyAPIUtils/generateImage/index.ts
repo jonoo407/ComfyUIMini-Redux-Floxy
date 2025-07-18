@@ -39,10 +39,10 @@ async function generateImage(workflowPrompt: Workflow, clientWs: WebSocket, work
             storeWorkflowName(promptId, workflowName);
         }
 
-        await handleOpenComfyWsConnection(clientWs, promptId);
+        await handleOpenComfyWsConnection(clientWs);
 
         comfyWsConnection.on('message', (data, isBinary) => handleComfyWsMessage(clientWs, comfyWsConnection, data, isBinary));
-        comfyWsConnection.on('close', async () => await handleComfyWsClose(clientWs, promptId));
+        comfyWsConnection.on('close', async () => await handleComfyWsClose(clientWs));
         comfyWsConnection.on('error', (error) => handleComfyWsError(comfyWsConnection, error));
     });
 }

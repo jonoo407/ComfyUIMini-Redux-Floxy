@@ -25,8 +25,27 @@ export interface NodeExecutingMessage {
 export interface NodeExecutedMessage {
     node: string;
     display_node: string;
-    output: any; // Node output data can vary by node type
+    output: {
+        images: Array<{
+            filename: string;
+            subfolder: string;
+            type: string;
+        }>;
+    };
     prompt_id: string;
+}
+
+export interface ExecutionSuccessMessage {
+    prompt_id: string;
+    timestamp: number;
+}
+
+export interface ExecutionInterruptedMessage {
+    prompt_id: string;
+    node_id: string;
+    node_type: string;
+    executed: any[];
+    timestamp: number;
 }
 
 export type FinishGenerationMessage = Record<string, string[]>;
