@@ -1,6 +1,6 @@
-# ComfyUI Mini
+# ComfyUI Mini Redux
 
-A mobile-friendly WebUI to run ComfyUI workflows.
+A mobile-friendly PWA to run ComfyUI workflows.
 
 ![App Preview](https://github.com/user-attachments/assets/78a52443-ac9c-498c-8df3-129acd94a48c)
 
