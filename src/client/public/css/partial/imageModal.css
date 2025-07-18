@@ -93,8 +93,8 @@ body.locked {
     box-shadow: 0 4px 32px rgba(0,0,0,0.25);
     padding: 1.2rem 1.2rem 0.5rem 1.2rem;
     min-width: 320px;
-    max-width: 95vw;
-    max-height: 95vh;
+    width: 95vw;
+    height: 95vh;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -107,6 +107,7 @@ body.locked {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
+    flex-shrink: 0;
 }
 .mask-creation-modal-header h2 {
     margin: 0;
@@ -124,10 +125,11 @@ body.locked {
 .mask-creation-modal-body {
     width: 100%;
     flex: 1 1 auto;
-    overflow-y: auto;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-height: 0;
 }
 .mask-creation-controls {
     display: flex;
@@ -135,6 +137,7 @@ body.locked {
     align-items: center;
     margin-bottom: 1rem;
     flex-wrap: wrap;
+    flex-shrink: 0;
 }
 .mask-creation-controls label {
     color: var(--text-primary-color);
@@ -162,22 +165,20 @@ body.locked {
     display: flex;
     align-items: center;
     justify-content: center;
-    max-width: 90vw;
-    max-height: 90vh;
+    width: 100%;
+    height: 100%;
     overflow: auto;
     padding: 1em;
     touch-action: none; /* Prevent touch scrolling on mobile */
-    width: 100%;
-    height: auto;
+    flex: 1;
+    min-height: 0;
 }
 .mask-canvas {
     display: block;
     max-width: 100%;
-    max-height: 90vh;
     background: #222;
     border-radius: 0.5rem;
     cursor: crosshair;
-    object-fit: contain;
     width: auto;
     height: auto;
     box-sizing: border-box;
@@ -187,6 +188,7 @@ body.locked {
     font-size: 0.95rem;
     margin-bottom: 1rem;
     text-align: center;
+    flex-shrink: 0;
 }
 .mask-creation-modal-footer {
     width: 100%;
@@ -221,8 +223,8 @@ body.locked {
   .mask-creation-modal-content {
     padding: 0.5rem 0.5rem 0.2rem 0.5rem;
     min-width: 0;
-    max-width: 98vw;
-    max-height: 95vh; /* Leave some space for safe area */
+    width: 98vw;
+    height: 98vh; /* Use more of the viewport */
     display: flex;
     flex-direction: column;
   }
@@ -237,14 +239,13 @@ body.locked {
   
   .mask-canvas-container {
     flex: 1;
-    max-width: 95vw;
-    max-height: none;
+    width: 100%;
+    height: 100%;
     padding: 0.2em;
-    overflow: hidden;
+    overflow: auto;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
     min-height: 0;
   }
   
@@ -253,15 +254,9 @@ body.locked {
     touch-action: none; /* Prevent default touch behaviors like scrolling */
     -webkit-touch-callout: none; /* Prevent callout on long press */
     -webkit-user-select: none; /* Prevent text selection */
-    -khtml-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-    max-width: 100% !important;
-    max-height: 100% !important;
-    width: auto !important;
-    height: auto !important;
-    object-fit: contain;
     flex-shrink: 0;
   }
   
@@ -300,10 +295,5 @@ body.locked {
     min-height: 3rem; /* Larger touch target */
   }
   
-  /* Ensure square images fit properly */
-  .mask-canvas-container.square-image {
-    aspect-ratio: 1;
-    max-width: 90vw;
-    max-height: 90vw;
-  }
+
 } 

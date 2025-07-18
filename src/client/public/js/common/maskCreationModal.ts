@@ -23,6 +23,8 @@ export function openMaskCreationModal(options: MaskCreationModalOptions) {
     // Set up event listeners
     setupEventListeners(elements, state, options);
     
+
+    
     // Load the base image
     loadBaseImage(imageSrc, elements, state, maskSrc);
     
@@ -49,7 +51,7 @@ function createModalStructure(): HTMLDivElement {
                     <canvas id="mask-canvas"></canvas>
                 </div>
                 <div class="mask-instructions">
-                    <p>Draw on the image to create a mask.<br>White = masked (transparent), Black = visible.</p>
+                    <p>Draw on the image to create a mask.</p>
                 </div>
             </div>
             <div class="mask-creation-modal-footer">
@@ -143,7 +145,20 @@ function setupEventListeners(elements: any, state: any, options: MaskCreationMod
         if (e.key === 'Escape') closeModal(elements.modal, options.onCancel); 
     };
     document.addEventListener('keydown', esc);
-    elements.modal.addEventListener('remove', () => document.removeEventListener('keydown', esc));
+    
+    // Window resize handler
+    const handleResize = () => {
+        if (state.img && elements.canvas) {
+            setupCanvas(state.img, elements.canvas, state);
+            drawPreview(state);
+        }
+    };
+    window.addEventListener('resize', handleResize);
+    
+    elements.modal.addEventListener('remove', () => {
+        document.removeEventListener('keydown', esc);
+        window.removeEventListener('resize', handleResize);
+    });
 }
 
 function loadBaseImage(imageSrc: string, elements: any, state: any, maskSrc?: string) {
@@ -151,12 +166,34 @@ function loadBaseImage(imageSrc: string, elements: any, state: any, maskSrc?: st
     img.crossOrigin = 'anonymous';
     
     img.onload = () => {
-        setupCanvas(img, elements.canvas, state);
-        if (maskSrc) {
-            loadExistingMask(maskSrc, state);
-        } else {
-            drawPreview(state);
-        }
+        // Wait for the modal to be fully rendered by checking container dimensions
+        const waitForContainer = () => {
+            const container = elements.canvas.parentElement;
+            if (container) {
+                const rect = container.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) {
+                    setupCanvas(img, elements.canvas, state);
+                    if (maskSrc) {
+                        loadExistingMask(maskSrc, state);
+                    } else {
+                        drawPreview(state);
+                    }
+                } else {
+                    // Container not ready yet, try again
+                    requestAnimationFrame(waitForContainer);
+                }
+            } else {
+                // Fallback if container not found
+                setupCanvas(img, elements.canvas, state);
+                if (maskSrc) {
+                    loadExistingMask(maskSrc, state);
+                } else {
+                    drawPreview(state);
+                }
+            }
+        };
+        
+        waitForContainer();
     };
     
     img.onerror = (error) => {
@@ -167,31 +204,68 @@ function loadBaseImage(imageSrc: string, elements: any, state: any, maskSrc?: st
 }
 
 function setupCanvas(img: HTMLImageElement, canvas: HTMLCanvasElement, state: any) {
-    // Use original image size - let CSS handle the responsive sizing
-    canvas.width = img.width;
-    canvas.height = img.height;
+    // Calculate maximum available space for the canvas
+    const container = canvas.parentElement;
+    if (!container) return;
+    
+    const containerRect = container.getBoundingClientRect();
+    const padding = 32; // Reduced padding to use more space
+    const maxWidth = containerRect.width - padding;
+    const maxHeight = containerRect.height - padding;
+    
+    // Calculate scale to fit the image within the available space
+    const scaleX = maxWidth / img.width;
+    const scaleY = maxHeight / img.height;
+    
+    // For portrait images, prioritize height scaling to fill more space
+    // For landscape images, prioritize width scaling
+    let scale;
+    if (img.height > img.width) {
+        // Portrait image - scale to fit height, but don't exceed width
+        scale = Math.min(scaleY, scaleX, 1);
+    } else {
+        // Landscape image - scale to fit width, but don't exceed height
+        scale = Math.min(scaleX, scaleY, 1);
+    }
+    
+    // Set canvas size to the scaled dimensions
+    const scaledWidth = Math.round(img.width * scale);
+    const scaledHeight = Math.round(img.height * scale);
+    
+    canvas.width = scaledWidth;
+    canvas.height = scaledHeight;
     
     const ctx = canvas.getContext('2d')!;
-    ctx.drawImage(img, 0, 0);
+    if (!ctx) {
+        console.error('Failed to get canvas context');
+        return;
+    }
     
-    // Create mask layer with same size
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    
+    ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
+    
+    // Create mask layer with same scaled size
     const maskLayer = document.createElement('canvas');
-    maskLayer.width = img.width;
-    maskLayer.height = img.height;
+    maskLayer.width = scaledWidth;
+    maskLayer.height = scaledHeight;
     const maskCtx = maskLayer.getContext('2d')!;
     maskCtx.clearRect(0, 0, maskLayer.width, maskLayer.height);
     
     // Add class for square images to help with responsive sizing
-    const container = canvas.parentElement;
-    if (container && img.width === img.height) {
+    if (img.width === img.height) {
         container.classList.add('square-image');
     }
     
-    // Store references
+    // Store references and scaling information
     state.img = img;
     state.maskLayer = maskLayer;
     state.maskCtx = maskCtx;
     state.ctx = ctx;
+    state.scale = scale;
+    state.originalWidth = img.width;
+    state.originalHeight = img.height;
 }
 
 function loadExistingMask(maskSrc: string, state: any) {
@@ -212,6 +286,7 @@ function loadExistingMask(maskSrc: string, state: any) {
 }
 
 function extractMaskFromImage(maskedImg: HTMLImageElement, state: any) {
+    // Create a temporary canvas to work with the original image size
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = maskedImg.width;
     tempCanvas.height = maskedImg.height;
@@ -219,7 +294,6 @@ function extractMaskFromImage(maskedImg: HTMLImageElement, state: any) {
     tempCtx.drawImage(maskedImg, 0, 0);
     
     const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-    const maskData = state.maskCtx!.createImageData(tempCanvas.width, tempCanvas.height);
     
     // Check if the image has any alpha data
     let hasAlphaData = false;
@@ -231,7 +305,20 @@ function extractMaskFromImage(maskedImg: HTMLImageElement, state: any) {
     }
     
     if (hasAlphaData) {
+        // Create a temporary canvas to scale the mask to the current canvas size
+        const scaledCanvas = document.createElement('canvas');
+        scaledCanvas.width = state.maskLayer!.width;
+        scaledCanvas.height = state.maskLayer!.height;
+        const scaledCtx = scaledCanvas.getContext('2d')!;
+        
+        // Create a temporary canvas with the original mask data
+        const originalMaskCanvas = document.createElement('canvas');
+        originalMaskCanvas.width = maskedImg.width;
+        originalMaskCanvas.height = maskedImg.height;
+        const originalMaskCtx = originalMaskCanvas.getContext('2d')!;
+        
         // Extract alpha channel and invert it back to mask
+        const maskData = originalMaskCtx.createImageData(maskedImg.width, maskedImg.height);
         for (let i = 0; i < imageData.data.length; i += 4) {
             const alpha = imageData.data[i + 3];
             const maskValue = 255 - alpha;
@@ -240,7 +327,16 @@ function extractMaskFromImage(maskedImg: HTMLImageElement, state: any) {
             maskData.data[i + 2] = maskValue; // Blue
             maskData.data[i + 3] = 255;       // Alpha
         }
-        state.maskCtx!.putImageData(maskData, 0, 0);
+        originalMaskCtx.putImageData(maskData, 0, 0);
+        
+        // Scale the mask to the current canvas size
+        scaledCtx.imageSmoothingEnabled = true;
+        scaledCtx.imageSmoothingQuality = 'high';
+        scaledCtx.drawImage(originalMaskCanvas, 0, 0, state.maskLayer!.width, state.maskLayer!.height);
+        
+        // Copy the scaled mask to the mask layer
+        const scaledMaskData = scaledCtx.getImageData(0, 0, state.maskLayer!.width, state.maskLayer!.height);
+        state.maskCtx!.putImageData(scaledMaskData, 0, 0);
     }
 }
 
@@ -296,7 +392,7 @@ function drawPreview(state: any) {
     const maskLayer = state.maskLayer!;
     
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.drawImage(img, 0, 0);
+    ctx.drawImage(img, 0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.globalAlpha = 0.5;
     ctx.drawImage(maskLayer, 0, 0);
     ctx.globalAlpha = 1.0;
@@ -324,27 +420,48 @@ function clearMask(state: any) {
 
 async function saveMask(state: any, options: MaskCreationModalOptions, modal: HTMLDivElement) {
     const maskCanvas = document.createElement('canvas');
-    maskCanvas.width = state.img!.width;
-    maskCanvas.height = state.img!.height;
+    maskCanvas.width = state.originalWidth;
+    maskCanvas.height = state.originalHeight;
     const maskCtx = maskCanvas.getContext('2d')!;
     
-    // Get the mask data from the maskLayer and create a grayscale mask image
-    const sourceMaskData = state.maskLayer!.getContext('2d')!.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
-    const maskData = maskCtx.createImageData(maskCanvas.width, maskCanvas.height);
+    // Get the mask data from the scaled maskLayer
+    const scaledMaskData = state.maskLayer!.getContext('2d')!.getImageData(0, 0, state.maskLayer!.width, state.maskLayer!.height);
+    
+    // Create a temporary canvas to scale the mask back to original size
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = state.originalWidth;
+    tempCanvas.height = state.originalHeight;
+    const tempCtx = tempCanvas.getContext('2d')!;
+    
+    // Create a temporary canvas with the scaled mask data
+    const scaledCanvas = document.createElement('canvas');
+    scaledCanvas.width = state.maskLayer!.width;
+    scaledCanvas.height = state.maskLayer!.height;
+    const scaledCtx = scaledCanvas.getContext('2d')!;
+    scaledCtx.putImageData(scaledMaskData, 0, 0);
+    
+    // Scale the mask back to original size
+    tempCtx.imageSmoothingEnabled = true;
+    tempCtx.imageSmoothingQuality = 'high';
+    tempCtx.drawImage(scaledCanvas, 0, 0, state.originalWidth, state.originalHeight);
+    
+    // Get the scaled mask data
+    const maskData = tempCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+    const finalMaskData = maskCtx.createImageData(maskCanvas.width, maskCanvas.height);
     
     // Create the mask: white areas in our mask should become transparent (alpha=0)
     // black areas should become opaque (alpha=255)
-    for (let i = 0; i < maskData.data.length; i += 4) {
-        const maskValue = sourceMaskData.data[i]; // Use red channel as mask value
+    for (let i = 0; i < finalMaskData.data.length; i += 4) {
+        const maskValue = maskData.data[i]; // Use red channel as mask value
         // Invert the mask: white (255) -> alpha 0, black (0) -> alpha 255
         const alphaValue = 255 - maskValue;
-        maskData.data[i] = 255;     // Red (white)
-        maskData.data[i + 1] = 255; // Green (white)
-        maskData.data[i + 2] = 255; // Blue (white)
-        maskData.data[i + 3] = alphaValue; // Alpha (transparency)
+        finalMaskData.data[i] = 255;     // Red (white)
+        finalMaskData.data[i + 1] = 255; // Green (white)
+        finalMaskData.data[i + 2] = 255; // Blue (white)
+        finalMaskData.data[i + 3] = alphaValue; // Alpha (transparency)
     }
     
-    maskCtx.putImageData(maskData, 0, 0);
+    maskCtx.putImageData(finalMaskData, 0, 0);
     
     maskCanvas.toBlob(async (blob) => {
         if (!blob) return;
