@@ -231,6 +231,17 @@
     height: 100%;
     object-fit: contain;
     border-radius: 0.5rem;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+}
+.input-image-preview:hover, .input-image-preview:active {
+    box-shadow: 0 0 0 2px var(--accent-color, #007bff);
+}
+@media (max-width: 600px) {
+    .input-image-preview {
+        max-width: 100vw;
+        max-height: 40vw;
+    }
 }
 
 .input-image-placeholder {

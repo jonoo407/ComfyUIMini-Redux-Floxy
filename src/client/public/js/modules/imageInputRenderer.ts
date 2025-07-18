@@ -41,7 +41,7 @@ export function renderImageInput(inputOptions: ImageRenderConfig): string {
     // Create the display button and preview
     const displayButton = `<button type="button" id="${id}-select-button" class="workflow-input image-select-button" data-fallback-images='${JSON.stringify(inputOptions.list || [])}'>
         <span class="icon gallery"></span>
-        <span class="button-text">Select Image</span>
+        <span class="button-text">Select</span>
     </button>`;
     
     const uploadButton = `<button type="button" id="${id}-upload-button" class="workflow-input image-upload-button">
@@ -50,13 +50,8 @@ export function renderImageInput(inputOptions: ImageRenderConfig): string {
     </button>
     <input type="file" id="${id}-file_input" data-select-id="${id}" class="file-input" accept="image/jpeg,image/png,image/webp">`;
     
-    const editMaskButton = `<button type="button" id="${id}-edit-mask-button" class="workflow-input image-edit-mask-button ${inputOptions.default ? '' : 'disabled'}" ${inputOptions.default ? '' : 'disabled'}>
-        <span class="icon mask"></span>
-        <span class="button-text">Edit Mask</span>
-    </button>`;
-    
     // Create image preview using the utility function
-    const imagePreview = `<img src="${constructImageUrl(inputOptions.default, 'input')}" class="input-image-preview ${inputOptions.default ? '' : 'hidden'}" id="${id}-preview" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden'); document.getElementById('${id}-edit-mask-button').classList.add('disabled'); document.getElementById('${id}-edit-mask-button').setAttribute('disabled', 'disabled');" onload="this.classList.remove('hidden'); this.nextElementSibling.classList.add('hidden'); document.getElementById('${id}-edit-mask-button').classList.remove('disabled'); document.getElementById('${id}-edit-mask-button').removeAttribute('disabled');">
+    const imagePreview = `<img src="${constructImageUrl(inputOptions.default, 'input')}" class="input-image-preview ${inputOptions.default ? '' : 'hidden'}" id="${id}-preview" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');" onload="this.classList.remove('hidden'); this.nextElementSibling.classList.add('hidden');">
     <div class="input-image-placeholder ${inputOptions.default ? 'hidden' : ''}">
         <div class="placeholder-content">
             <span class="icon gallery"></span>
@@ -69,7 +64,7 @@ export function renderImageInput(inputOptions: ImageRenderConfig): string {
         <div class="image-input-controls">
             ${displayButton}
             ${uploadButton}
-            ${editMaskButton}
+            <!-- Edit Mask button removed -->
         </div>
         ${imagePreview}
     `;
@@ -160,20 +155,6 @@ export async function uploadMaskFile(maskFile: File, originalImageRef: string, s
 
 // Add event handlers for image selection after DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // Helper function to update Edit Mask button state
-    function updateEditMaskButtonState(inputId: string, hasImage: boolean) {
-        const editMaskButton = document.getElementById(`${inputId}-edit-mask-button`) as HTMLButtonElement;
-        if (editMaskButton) {
-            if (hasImage) {
-                editMaskButton.classList.remove('disabled');
-                editMaskButton.removeAttribute('disabled');
-            } else {
-                editMaskButton.classList.add('disabled');
-                editMaskButton.setAttribute('disabled', 'disabled');
-            }
-        }
-    }
-
     // Function to create preview with mask overlay
     async function createPreviewWithMaskOverlay(previewImg: HTMLImageElement, imageSrc: string) {
         try {
@@ -350,9 +331,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                     
-                    // Enable Edit Mask button
-                    updateEditMaskButtonState(inputId, true);
-                    
                     // Trigger change event on the hidden input
                     hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
                 },
@@ -413,9 +391,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // Enable Edit Mask button
-                updateEditMaskButtonState(inputId, true);
-
                 // Trigger change event on the hidden input
                 hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
 
@@ -436,23 +411,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Add event handler for Edit Mask button
+    // Instead, add event handler for clicking the image preview
     document.addEventListener('click', async (e) => {
         const target = e.target as HTMLElement;
-        const editMaskButton = target.closest('.image-edit-mask-button') as HTMLButtonElement;
-        if (editMaskButton && !editMaskButton.disabled) {
-            e.preventDefault();
-            const inputId = editMaskButton.id.replace('-edit-mask-button', '');
+        if (target.classList.contains('input-image-preview') && !target.classList.contains('hidden')) {
+            const previewImg = target as HTMLImageElement;
+            const inputId = previewImg.id.replace('-preview', '');
             const hiddenInput = document.getElementById(inputId) as HTMLInputElement;
-            const previewImg = document.getElementById(`${inputId}-preview`) as HTMLImageElement;
-            if (!hiddenInput || !previewImg) return;
+            if (!hiddenInput) return;
             // Get the original filename from the data attribute
             const originalFilename = hiddenInput.getAttribute('data-original-filename') || hiddenInput.value;
             // Construct the original image URL
             const originalImageUrl = constructImageUrl(originalFilename, 'input');
-            
-            // With /upload/mask, the original image file is modified in place and contains the mask
-            // So we should always pass the current image as maskSrc to check for existing alpha data
+            // The maskSrc is the current image value
             const maskSrc = constructImageUrl(hiddenInput.value, 'input');
             // Dynamically import the modal
             const { openMaskCreationModal } = await import('../common/maskCreationModal.js');
@@ -461,10 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 imageFilename: originalFilename,
                 maskSrc,
                 onMaskCreated: (newFilename: string) => {
-                    // When using /upload/mask, the original image file is modified in place
-                    // So newFilename is the same as the original filename
                     hiddenInput.value = newFilename;
-                    
                     const imageUrl = constructImageUrl(newFilename, 'input');
                     createPreviewWithMaskOverlay(previewImg, imageUrl);
                     previewImg.classList.remove('hidden');

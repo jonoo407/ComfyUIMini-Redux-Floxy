@@ -142,6 +142,9 @@ body.locked {
 .mask-creation-controls label {
     color: var(--text-primary-color);
     font-size: 1rem;
+    display: flex;
+    align-items: center;
+    height: 2.2rem;
 }
 .mask-creation-controls .tool-button {
     background: var(--background-secondary-color, #444);
@@ -157,6 +160,74 @@ body.locked {
     background: var(--background-tertiary-color, #666);
     font-weight: bold;
 }
+
+/* Slider styling for mask creation modal */
+.mask-creation-controls input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 2.2rem;
+    background: transparent;
+    outline: none;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+}
+
+.mask-creation-controls input[type="range"]::-webkit-slider-runnable-track {
+    height: 0.5rem;
+    background: var(--background-secondary-color);
+    border-radius: 0.25rem;
+}
+
+.mask-creation-controls input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-top: -0.5rem;
+    background: var(--accent-gradient);
+    border-radius: 50%;
+    border: 2px solid var(--background-primary-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+    cursor: pointer;
+}
+
+.mask-creation-controls input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.mask-creation-controls input[type="range"]::-webkit-slider-thumb:active {
+    transform: scale(0.95);
+}
+
+.mask-creation-controls input[type="range"]::-moz-range-thumb {
+    width: 1.5rem;
+    height: 1.5rem;
+    background: var(--accent-gradient);
+    border-radius: 50%;
+    border: 2px solid var(--background-primary-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+    cursor: pointer;
+}
+
+.mask-creation-controls input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.mask-creation-controls input[type="range"]::-moz-range-thumb:active {
+    transform: scale(0.95);
+}
+
+.mask-creation-controls input[type="range"]::-moz-range-track {
+    height: 0.5rem;
+    background: var(--background-secondary-color);
+    border-radius: 0.25rem;
+    border: none;
+}
+
 .mask-canvas-container {
     background: #111;
     border-radius: 0.5rem;
@@ -272,10 +343,6 @@ body.locked {
     padding: 0.4rem 0.8rem;
     font-size: 0.9rem;
     min-height: 2.5rem; /* Ensure buttons are large enough for touch */
-  }
-  
-  .mask-creation-controls input[type="range"] {
-    min-width: 80px;
   }
   
   .mask-instructions {
