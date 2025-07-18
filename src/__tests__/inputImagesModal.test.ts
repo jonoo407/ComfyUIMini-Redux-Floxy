@@ -119,7 +119,11 @@ describe('Input Images Modal', () => {
             // Simulate click on image
             imageItem?.dispatchEvent(new Event('click'));
 
-            expect(mockOnImageSelect).toHaveBeenCalledWith('test.jpg', '');
+            expect(mockOnImageSelect).toHaveBeenCalledWith({
+                filename: 'test.jpg',
+                subfolder: undefined,
+                type: 'input'
+            });
         });
 
         it('should close modal when close button is clicked', async () => {

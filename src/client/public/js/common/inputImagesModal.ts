@@ -7,7 +7,7 @@ interface InputImageData {
     subfolder?: string;
 }
 
-import { extractSubfolderInfo, constructImageUrl } from '../common/imageUtils.js';
+import { toImageFromRelativeUrl, toComfyUIUrlFromImage, Image, ImageType } from '../common/image.js';
 
 interface InputImagesPageData {
     currentSubfolder: string;
@@ -26,11 +26,13 @@ interface InputImagesPageData {
 }
 
 interface InputImagesModalOptions {
-    onImageSelect?: (filename: string, subfolder: string) => void;
+    onImageSelect?: (image: Image) => void;
     onCancel?: () => void;
     fallbackImages?: string[];
     onUploadComplete?: (filename: string) => void;
 }
+
+type DirectoryType = ImageType;
 
 /**
  * Opens a modal with input images for selection
@@ -45,7 +47,11 @@ export async function openInputImagesModal(options: InputImagesModalOptions = {}
     modalContainer.innerHTML = `
         <div class="input-images-modal-content">
             <div class="input-images-modal-header">
-                <h2>Select Input Image</h2>
+                <h2>Select Image</h2>
+                <div class="input-images-directory-toggle">
+                    <button class="directory-toggle-btn active" data-directory="input">Input</button>
+                    <button class="directory-toggle-btn" data-directory="output">Output</button>
+                </div>
                 <button class="input-images-modal-close" aria-label="Close modal">&times;</button>
             </div>
             <div class="input-images-modal-body">
@@ -65,21 +71,23 @@ export async function openInputImagesModal(options: InputImagesModalOptions = {}
     const subfoldersContainer = modalContainer.querySelector('.input-images-subfolders') as HTMLDivElement;
     const imagesGrid = modalContainer.querySelector('.input-images-grid') as HTMLDivElement;
     const paginationContainer = modalContainer.querySelector('.input-images-pagination') as HTMLDivElement;
+    const directoryToggleButtons = modalContainer.querySelectorAll('.directory-toggle-btn') as NodeListOf<HTMLButtonElement>;
 
     let currentSubfolder = '';
+    let currentDirectory: DirectoryType = 'input';
 
     // Render fallback images when API fails
     function renderFallbackImages(fallbackImages: string[]): void {
         const fallbackImageData = fallbackImages.map(filename => {
-            const { cleanFilename, subfolder } = extractSubfolderInfo(filename);
+            const imageData = toImageFromRelativeUrl(filename);
             
             return {
-                filename: cleanFilename,
-                path: constructImageUrl(filename, 'input'),
+                filename: imageData.filename,
+                path: toComfyUIUrlFromImage(imageData),
                 isVideo: false,
                 time: 0,
                 timeText: '',
-                subfolder: subfolder // Add subfolder information
+                subfolder: imageData.subfolder || '' // Add subfolder information
             };
         });
         
@@ -115,7 +123,12 @@ export async function openInputImagesModal(options: InputImagesModalOptions = {}
                 const subfolder = item.getAttribute('data-subfolder') || '';
                 
                 if (onImageSelect) {
-                    onImageSelect(filename, subfolder);
+                    // Create Image object with current directory type
+                    onImageSelect({ 
+                        filename: filename, 
+                        subfolder: subfolder || undefined, 
+                        type: currentDirectory 
+                    });
                 }
                 
                 closeModal();
@@ -123,14 +136,17 @@ export async function openInputImagesModal(options: InputImagesModalOptions = {}
         });
     }
 
-    // Load input images data
-    async function loadInputImages(subfolder: string = '', page: number = 0): Promise<void> {
+    // Load images data from current directory
+    async function loadImages(subfolder: string = '', page: number = 0): Promise<void> {
         try {
-            const url = `/api/gallery/input/${subfolder}?page=${page}&itemsPerPage=20`;
+            // Construct URL with subfolder as part of the path
+            // Always include a path component for the server route
+            const subfolderPath = subfolder ? `/${subfolder}` : '/';
+            const url = `/api/gallery/${currentDirectory}${subfolderPath}?page=${page}&itemsPerPage=20`;
             const response = await fetch(url);
             
             if (!response.ok) {
-                throw new Error(`Failed to load input images: ${response.statusText}`);
+                throw new Error(`Failed to load ${currentDirectory} images: ${response.statusText}`);
             }
 
             const data: InputImagesPageData = await response.json();
@@ -151,13 +167,13 @@ export async function openInputImagesModal(options: InputImagesModalOptions = {}
             renderPagination(data.pageInfo);
 
         } catch (error) {
-            console.error('Error loading input images:', error);
+            console.error(`Error loading ${currentDirectory} images:`, error);
             if (fallbackImages && fallbackImages.length > 0) {
                 renderFallbackImages(fallbackImages);
             } else {
                 imagesGrid.innerHTML = `
                     <div class="input-images-error">
-                        <p>Failed to load input images: ${error instanceof Error ? error.message : 'Unknown error'}</p>
+                        <p>Failed to load ${currentDirectory} images: ${error instanceof Error ? error.message : 'Unknown error'}</p>
                     </div>
                 `;
             }
@@ -177,7 +193,9 @@ export async function openInputImagesModal(options: InputImagesModalOptions = {}
         }
         
         for (const subfolder of subfolders) {
-            html += `<a href="#" class="subfolder-link" data-subfolder="${subfolder}">${subfolder}</a>`;
+            // Construct the full subfolder path
+            const fullSubfolderPath = currentSubfolder ? `${currentSubfolder}/${subfolder}` : subfolder;
+            html += `<a href="#" class="subfolder-link" data-subfolder="${fullSubfolderPath}">${subfolder}</a>`;
         }
         
         html += '</div>';
@@ -188,7 +206,7 @@ export async function openInputImagesModal(options: InputImagesModalOptions = {}
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const subfolder = (e.target as HTMLAnchorElement).getAttribute('data-subfolder') || '';
-                loadInputImages(subfolder, 0);
+                loadImages(subfolder, 0);
             });
         });
     }
@@ -202,7 +220,7 @@ export async function openInputImagesModal(options: InputImagesModalOptions = {}
 
         let html = '';
         for (const image of images) {
-            if (image.isVideo) continue; // Skip videos for image selection
+                        if (image.isVideo) continue; // Skip videos for image selection
             
             html += `
                 <div class="input-images-item" data-filename="${image.filename}" data-subfolder="${currentSubfolder}">
@@ -224,7 +242,12 @@ export async function openInputImagesModal(options: InputImagesModalOptions = {}
                 const subfolder = item.getAttribute('data-subfolder') || '';
                 
                 if (onImageSelect) {
-                    onImageSelect(filename, subfolder);
+                    // Create Image object with current directory type
+                    onImageSelect({ 
+                        filename: filename, 
+                        subfolder: subfolder || undefined, 
+                        type: currentDirectory 
+                    });
                 }
                 
                 closeModal();
@@ -261,7 +284,7 @@ export async function openInputImagesModal(options: InputImagesModalOptions = {}
             button.addEventListener('click', (e) => {
                 e.preventDefault();
                 const page = parseInt((e.target as HTMLAnchorElement).getAttribute('data-page') || '0');
-                loadInputImages(currentSubfolder, page);
+                loadImages(currentSubfolder, page);
             });
         });
     }
@@ -278,6 +301,23 @@ export async function openInputImagesModal(options: InputImagesModalOptions = {}
 
     // Event listeners
     closeButton.addEventListener('click', closeModal);
+    
+    // Directory toggle functionality
+    directoryToggleButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const directory = button.getAttribute('data-directory') as DirectoryType;
+            
+            // Update active state
+            directoryToggleButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            // Update current directory and reload images
+            // Reset to root when switching directories
+            currentDirectory = directory;
+            currentSubfolder = '';
+            loadImages('', 0);
+        });
+    });
     
     modalContainer.addEventListener('click', (e: MouseEvent) => {
         if (e.target === modalContainer) {
@@ -297,5 +337,5 @@ export async function openInputImagesModal(options: InputImagesModalOptions = {}
     (modalContainer as any)._keydownHandler = handleKeydown;
 
     // Load initial data
-    await loadInputImages();
+    await loadImages();
 } 

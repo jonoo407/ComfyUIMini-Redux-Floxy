@@ -67,7 +67,7 @@ const workflowType = passedWorkflowType;
 // @ts-expect-error - workflowDataFromEjs is fetched via the inline script supplied by EJS
 const workflowObject: WorkflowWithMetadata = workflowDataFromEjs ? workflowDataFromEjs : fetchLocalWorkflow();
 
-import { constructImageUrl } from '../common/imageUtils.js';
+import { toImageFromComfyUIUrl, toImageFromRelativeUrl, toComfyUIUrlFromImage } from '../common/image.js';
 
 // --- WebSocket Management ---
 
@@ -150,8 +150,9 @@ function applyUrlParameterValues() {
                 if (inputContainer.classList.contains('has-image-upload')) {
                     const previewImg = document.getElementById(`${inputElem.id}-preview`) as HTMLImageElement;
                     if (previewImg && urlValue) {
-                        // Update the preview image with the URL parameter value
-                        previewImg.src = constructImageUrl(urlValue, 'input');
+                        // Use the new utility to parse the value and update the preview
+                        const imageObj = toImageFromRelativeUrl(urlValue);
+                        previewImg.src = toComfyUIUrlFromImage(imageObj);
                     }
                 }
             }
@@ -432,7 +433,8 @@ function fileUploadEventListener(inputElement: HTMLElement) {
                 
                 // Update the preview image
                 if (previewImg) {
-                    previewImg.src = constructImageUrl(responseJson.externalResponse.name, 'input');
+                    const imageObj = toImageFromRelativeUrl(responseJson.externalResponse.name);
+                    previewImg.src = toComfyUIUrlFromImage(imageObj);
                 }
                 
                 // Trigger change event on the hidden input
@@ -864,25 +866,9 @@ function finishGeneration(messageData: FinishGenerationMessage) {
             mediaUrlArray.forEach((url) => {
                 // Guess type by extension (could be improved if type info is available)
                 const isVideo = url.match(/\.(mp4|webm|ogg)(\?|$)/i) !== null;
-                // Parse filename, subfolder, and type from the query string
-                let filename = url;
-                let subfolder = '';
-                let type = '';
-                try {
-                    const urlObj = new URL(url, window.location.origin);
-                    filename = urlObj.searchParams.get('filename') || '';
-                    subfolder = urlObj.searchParams.get('subfolder') || '';
-                    type = urlObj.searchParams.get('type') || '';
-                } catch (_e) {
-                    // fallback: try regex
-                    const match = url.match(/filename=([^&]+)/);
-                    if (match) filename = match[1];
-                    const subMatch = url.match(/subfolder=([^&]*)/);
-                    if (subMatch) subfolder = subMatch[1];
-                    const typeMatch = url.match(/type=([^&]*)/);
-                    if (typeMatch) type = typeMatch[1];
-                }
-                allMedia.push({ url, isVideo, filename, subfolder, type });
+                // Parse filename, subfolder, and type from the query string using shared utility
+                const { filename, subfolder, type } = toImageFromComfyUIUrl(url);
+                allMedia.push({ url, isVideo, filename, subfolder: subfolder || '', type });
             });
         }
     });
