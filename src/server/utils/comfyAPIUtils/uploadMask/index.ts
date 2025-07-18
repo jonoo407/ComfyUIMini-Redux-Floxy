@@ -1,21 +1,20 @@
 import { comfyUIAxios } from '../comfyUIAxios';
 import FormData from 'form-data';
 
-async function uploadImage(file: Express.Multer.File, subfolder?: string, overwrite?: boolean) {
+async function uploadMask(file: Express.Multer.File, originalRef: string, subfolder?: string) {
     try {
         const form = new FormData();
         form.append('image', file.buffer, {
             filename: file.originalname,
             contentType: file.mimetype,
         });
+        form.append('original_ref', originalRef);
+        
         if (subfolder) {
             form.append('subfolder', subfolder);
         }
-        if (overwrite) {
-            form.append('overwrite', 'true');
-        }
 
-        const response = await comfyUIAxios.post('/upload/image', form, {
+        const response = await comfyUIAxios.post('/upload/mask', form, {
             headers: {
                 ...form.getHeaders(),
             },
@@ -27,4 +26,4 @@ async function uploadImage(file: Express.Multer.File, subfolder?: string, overwr
     }
 }
 
-export default uploadImage;
+export default uploadMask; 

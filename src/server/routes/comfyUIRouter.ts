@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { getHistory, getQueue, interruptGeneration, getImage, uploadImage } from '../utils/comfyAPIUtils';
+import { getHistory, getQueue, interruptGeneration, getImage, uploadImage, uploadMask } from '../utils/comfyAPIUtils';
 import { getProcessedObjectInfo } from '../utils/objectInfoUtils';
 
 const upload = multer();
@@ -86,7 +86,9 @@ router.post('/upload/image', upload.single('image'), async (req, res): Promise<v
             return;
         }
 
-        const response = await uploadImage(req.file);
+        const subfolder = req.body.subfolder;
+        const overwrite = req.body.overwrite === 'true';
+        const response = await uploadImage(req.file, subfolder, overwrite);
 
         if ('error' in response) {
             res.status(500).json({ error: response.error });
@@ -100,6 +102,42 @@ router.post('/upload/image', upload.single('image'), async (req, res): Promise<v
     } catch (err) {
         console.error('Error uploading file to ComfyUI', err);
         res.status(500).json({ error: 'Failed to upload file.' });
+    }
+});
+
+router.post('/upload/mask', upload.single('image'), async (req, res): Promise<void> => {
+    try {
+        if (
+            !req.file ||
+            !req.headers['content-type'] ||
+            !req.headers['content-type'].startsWith('multipart/form-data')
+        ) {
+            res.status(400).json({ error: 'No mask file selected for upload' });
+            return;
+        }
+
+        const originalRef = req.body.original_ref;
+        const subfolder = req.body.subfolder;
+        
+        if (!originalRef) {
+            res.status(400).json({ error: 'original_ref is required' });
+            return;
+        }
+
+        const response = await uploadMask(req.file, originalRef, subfolder);
+
+        if ('error' in response) {
+            res.status(500).json({ error: response.error });
+            return;
+        }
+
+        res.status(200).json({
+            message: 'Mask uploaded successfully',
+            externalResponse: response.data,
+        });
+    } catch (err) {
+        console.error('Error uploading mask to ComfyUI', err);
+        res.status(500).json({ error: 'Failed to upload mask.' });
     }
 });
 

@@ -4,7 +4,10 @@ interface InputImageData {
     isVideo: boolean;
     time: number;
     timeText: string;
+    subfolder?: string;
 }
+
+import { extractSubfolderInfo, constructImageUrl } from '../common/imageUtils.js';
 
 interface InputImagesPageData {
     currentSubfolder: string;
@@ -67,21 +70,57 @@ export async function openInputImagesModal(options: InputImagesModalOptions = {}
 
     // Render fallback images when API fails
     function renderFallbackImages(fallbackImages: string[]): void {
-        const fallbackImageData = fallbackImages.map(filename => ({
-            filename,
-            path: `/comfyui/image?filename=${filename}&subfolder=&type=input`,
-            isVideo: false,
-            time: 0,
-            timeText: ''
-        }));
+        const fallbackImageData = fallbackImages.map(filename => {
+            const { cleanFilename, subfolder } = extractSubfolderInfo(filename);
+            
+            return {
+                filename: cleanFilename,
+                path: constructImageUrl(filename, 'input'),
+                isVideo: false,
+                time: 0,
+                timeText: '',
+                subfolder: subfolder // Add subfolder information
+            };
+        });
         
         // Hide subfolder navigation and pagination for fallback images
         subfoldersContainer.innerHTML = '';
         paginationContainer.innerHTML = '';
         
-        // Render the fallback images
-        imagesGrid.innerHTML = '';
-        renderImages(fallbackImageData);
+        // Render the fallback images with custom subfolder handling
+        if (fallbackImageData.length === 0) {
+            imagesGrid.innerHTML = '<div class="input-images-empty">No fallback images found.</div>';
+            return;
+        }
+
+        let html = '';
+        for (const image of fallbackImageData) {
+            html += `
+                <div class="input-images-item" data-filename="${image.filename}" data-subfolder="${image.subfolder || ''}">
+                    <img src="${image.path}" alt="${image.filename}" class="input-images-thumbnail">
+                    <div class="input-images-item-info">
+                        <span class="input-images-filename">${image.filename}</span>
+                        <span class="input-images-time">${image.timeText}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        imagesGrid.innerHTML = html;
+
+        // Add click handlers for image selection
+        imagesGrid.querySelectorAll('.input-images-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const filename = item.getAttribute('data-filename') || '';
+                const subfolder = item.getAttribute('data-subfolder') || '';
+                
+                if (onImageSelect) {
+                    onImageSelect(filename, subfolder);
+                }
+                
+                closeModal();
+            });
+        });
     }
 
     // Load input images data

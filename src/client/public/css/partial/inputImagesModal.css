@@ -7,7 +7,8 @@
 }
 
 .image-select-button,
-.image-upload-button {
+.image-upload-button,
+.image-edit-mask-button {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -28,12 +29,14 @@
 }
 
 .image-select-button:hover,
-.image-upload-button:hover {
+.image-upload-button:hover,
+.image-edit-mask-button:hover {
     background-color: var(--background-tertiary-color);
 }
 
 .image-select-button .icon,
-.image-upload-button .icon {
+.image-upload-button .icon,
+.image-edit-mask-button .icon {
     width: 1.2em;
     height: 1.2em;
     flex-shrink: 0;
@@ -43,8 +46,24 @@
 }
 
 .image-select-button .button-text,
-.image-upload-button .button-text {
+.image-upload-button .button-text,
+.image-edit-mask-button .button-text {
     font-weight: 500;
+}
+
+/* Disabled state for image edit mask button */
+.image-edit-mask-button.disabled,
+.image-edit-mask-button[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--background-tertiary-color);
+    color: var(--text-secondary-color);
+}
+
+.image-edit-mask-button.disabled:hover,
+.image-edit-mask-button[disabled]:hover {
+    background-color: var(--background-tertiary-color);
+    transform: none;
 }
 
 /* Ensure the hidden input is properly styled for form submission */
