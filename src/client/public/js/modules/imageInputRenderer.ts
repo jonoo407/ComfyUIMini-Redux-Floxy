@@ -52,10 +52,10 @@ export function renderImageInput(inputOptions: ImageRenderConfig): string {
     
     // Create image preview using the utility function
     const imagePreview = `<img src="${constructImageUrl(inputOptions.default, 'input')}" class="input-image-preview ${inputOptions.default ? '' : 'hidden'}" id="${id}-preview" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');" onload="this.classList.remove('hidden'); this.nextElementSibling.classList.add('hidden');">
-    <div class="input-image-placeholder ${inputOptions.default ? 'hidden' : ''}">
+    <div class="input-image-placeholder ${inputOptions.default ? 'hidden' : ''}" id="${id}-placeholder">
         <div class="placeholder-content">
             <span class="icon gallery"></span>
-            <span class="placeholder-text">No image selected</span>
+            <span class="placeholder-text">Select an image</span>
         </div>
     </div>`;
 
@@ -283,23 +283,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Handle image selection button clicks
+    // Handle image selection button clicks and placeholder clicks
     document.addEventListener('click', async (e) => {
         const target = e.target as HTMLElement;
         const selectButton = target.closest('.image-select-button') as HTMLButtonElement;
+        const placeholder = target.closest('.input-image-placeholder') as HTMLElement;
         
-        if (selectButton) {
+        if (selectButton || placeholder) {
             e.preventDefault();
-            const inputId = selectButton.id.replace('-select-button', '');
+            let inputId: string;
+            
+            if (selectButton) {
+                inputId = selectButton.id.replace('-select-button', '');
+            } else if (placeholder) {
+                inputId = placeholder.id.replace('-placeholder', '');
+            } else {
+                return;
+            }
+            
             const hiddenInput = document.getElementById(inputId) as HTMLInputElement;
             const previewImg = document.getElementById(`${inputId}-preview`) as HTMLImageElement;
 
             // Find the inputOptions.list for this input (by DOM traversal)
             // We'll store the list as a data attribute on the select button for easy access
             let fallbackImages: string[] = [];
-            if (selectButton.dataset.fallbackImages) {
+            const selectButtonForInput = document.getElementById(`${inputId}-select-button`) as HTMLButtonElement;
+            if (selectButtonForInput?.dataset.fallbackImages) {
                 try {
-                    fallbackImages = JSON.parse(selectButton.dataset.fallbackImages);
+                    fallbackImages = JSON.parse(selectButtonForInput.dataset.fallbackImages);
                 } catch {
                     // Ignore JSON parse errors, fallbackImages will remain empty array
                 }
