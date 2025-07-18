@@ -1,0 +1,87 @@
+{
+  "title": "Default Comfyui Workflow",
+  "description": "",
+  "format_version": "3",
+  "input_options": [
+    {
+      "node_id": "3",
+      "input_name_in_node": "seed",
+      "title": "[3] KSampler: seed",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "3",
+      "input_name_in_node": "steps",
+      "title": "[3] KSampler: steps",
+      "min": 4,
+      "max": 30,
+      "numberfield_format": "slider"
+    },
+    {
+      "node_id": "3",
+      "input_name_in_node": "cfg",
+      "title": "[3] KSampler: cfg",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "3",
+      "input_name_in_node": "sampler_name",
+      "title": "[3] KSampler: sampler_name"
+    },
+    {
+      "node_id": "3",
+      "input_name_in_node": "scheduler",
+      "title": "[3] KSampler: scheduler"
+    },
+    {
+      "node_id": "3",
+      "input_name_in_node": "denoise",
+      "title": "[3] KSampler: denoise",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "4",
+      "input_name_in_node": "ckpt_name",
+      "title": "[4] Load Checkpoint: ckpt_name"
+    },
+    {
+      "node_id": "5",
+      "input_name_in_node": "width",
+      "title": "[5] Empty Latent Image: width",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "5",
+      "input_name_in_node": "height",
+      "title": "[5] Empty Latent Image: height",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "5",
+      "input_name_in_node": "batch_size",
+      "title": "[5] Empty Latent Image: batch_size",
+      "min": 1,
+      "max": 12,
+      "numberfield_format": "slider"
+    },
+    {
+      "node_id": "6",
+      "input_name_in_node": "text",
+      "title": "[6] CLIP Text Encode (Prompt): text",
+      "textfield_format": "multiline"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "text",
+      "title": "[7] CLIP Text Encode (Prompt): text",
+      "textfield_format": "multiline"
+    },
+    {
+      "node_id": "9",
+      "input_name_in_node": "filename_prefix",
+      "title": "[9] Save Image: filename_prefix",
+      "textfield_format": "single"
+    }
+  ]
+}
