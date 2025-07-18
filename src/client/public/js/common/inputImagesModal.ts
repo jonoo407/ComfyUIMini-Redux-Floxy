@@ -126,7 +126,7 @@ export async function openInputImagesModal(options: InputImagesModalOptions = {}
     // Load input images data
     async function loadInputImages(subfolder: string = '', page: number = 0): Promise<void> {
         try {
-            const url = `/api/input-images/${subfolder}?page=${page}&itemsPerPage=20`;
+            const url = `/api/gallery/input/${subfolder}?page=${page}&itemsPerPage=20`;
             const response = await fetch(url);
             
             if (!response.ok) {

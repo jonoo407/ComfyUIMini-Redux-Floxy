@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <%- include('../partials/head', { title: "Gallery", theme }) %>
+    <%- include('../partials/head', { title: galleryType === 'input' ? "Input Images" : "Gallery", theme }) %>
     <link rel="stylesheet" href="/css/gallery.css">
     <link rel="stylesheet" href="/css/partial/overlay.css">
     <link rel="stylesheet" href="/css/partial/icons.css">
@@ -13,43 +13,50 @@
 <% } %>
     data-current-page="<%= pageInfo.currentPage %>"
     data-total-pages="<%= pageInfo.totalPages %>"
+    data-gallery-type="<%= galleryType %>"
 >
     <%- include('../partials/navbar') %>
-    <%- include('../partials/sidebar', { activePage: 'gallery' }) %>
+    <%- include('../partials/sidebar', { activePage: galleryType === 'input' ? 'input-images' : 'gallery' }) %>
     <div class="main-container">
         <div id="subfolders-list">
             <% if (currentSubfolder && currentSubfolder !== '') { %>
-                <a href="/gallery/" class="subfolder-link">(Default)</a>
+                <a href="/gallery/<%= galleryType %>/" class="subfolder-link">(Default)</a>
             <% } %>
             <% if (parentSubfolder !== null) { %>
-                <a href="/gallery/<%= parentSubfolder %>" class="subfolder-link">..</a>
+                <a href="/gallery/<%= galleryType %>/<%= parentSubfolder %>" class="subfolder-link">..</a>
             <% } %>
             <% 
-              const galleryPath = currentSubfolder ? `gallery/${currentSubfolder}` : 'gallery';
+              const galleryPath = currentSubfolder ? `gallery/${galleryType}/${currentSubfolder}` : `gallery/${galleryType}`;
               for (const subfolder of scanned.subfolders) { %>
                 <a href="/<%= galleryPath %>/<%= subfolder %>" class="subfolder-link"><%= subfolder %></a>
             <% } %>
         </div>
         <div id="images-grid">
-            <% for (const image of scanned.images) { %>
-                <div class="image-item" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>">
-                    <span><%= image.timeText %> </span>
-                    <div class="image-actions">
-                        <% if (!image.isVideo) { %>
-                        <button class="use-as-input-button" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>" title="Use as workflow input">
-                            📥
-                        </button>
-                        <% } %>
-                        <% if (enableGalleryDelete) { %>
-                            <button class="delete-button" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>">🗑️</button>
+            <% if (scanned.images.length === 0) { %>
+                <div class="gallery-empty">
+                    <p>No images found in this folder.</p>
+                </div>
+            <% } else { %>
+                <% for (const image of scanned.images) { %>
+                    <div class="image-item" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>">
+                        <span><%= image.timeText %> </span>
+                        <div class="image-actions">
+                            <% if (!image.isVideo && galleryType === 'output') { %>
+                            <button class="use-as-input-button" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>" title="Use as workflow input">
+                                📥
+                            </button>
+                            <% } %>
+                            <% if (enableDelete) { %>
+                                <button class="delete-button" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>">🗑️</button>
+                            <% } %>
+                        </div>
+                        <% if (image.isVideo) { %>
+                            <video src="<%= image.path %>" loop controls></video>
+                        <% } else { %>
+                            <img src="<%= image.path %>">
                         <% } %>
                     </div>
-                    <% if (image.isVideo) { %>
-                        <video src="<%= image.path %>" loop controls></video>
-                    <% } else { %>
-                        <img src="<%= image.path %>">
-                    <% } %>
-                </div>
+                <% } %>
             <% } %>
         </div>
         <div class="pagination-container">

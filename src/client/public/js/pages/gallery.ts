@@ -6,6 +6,7 @@ const pageInput = document.getElementById('page-input') as HTMLInputElement;
 // Get page information from DOM data attributes
 const currentPage = parseInt(document.body.getAttribute('data-current-page') || '0', 10);
 const totalPages = parseInt(document.body.getAttribute('data-total-pages') || '0', 10);
+const galleryType = document.body.getAttribute('data-gallery-type') || 'output';
 
 // Handle error display more gracefully
 if (document.body.hasAttribute('data-error')) {
@@ -18,9 +19,9 @@ if (document.body.hasAttribute('data-error')) {
         errorContainer.className = 'error-container';
         errorContainer.innerHTML = `
             <div class="error-message">
-                <h2>Gallery Unavailable</h2>
+                <h2>${galleryType === 'input' ? 'Input Images' : 'Gallery'} Unavailable</h2>
                 <p>${error}</p>
-                <p>Please check your configuration file and ensure the <code>output_dir</code> setting points to a valid directory.</p>
+                <p>Please check your configuration file and ensure the <code>${galleryType === 'input' ? 'input_dir' : 'output_dir'}</code> setting points to a valid directory.</p>
                 <a href="/" class="settings-link">Go Home</a>
             </div>
         `;
@@ -46,12 +47,11 @@ document.addEventListener('DOMContentLoaded', () => {
     updateNavigationButtons(currentPage, totalPages, imageItems);
     
     // Add click handlers for images using shared utility with gallery-specific options
-    // Gallery has both "Use as Input" and "Delete" buttons enabled (if delete is enabled in config)
-    // Note: Gallery uses server-rendered buttons, so the delete buttons are already conditionally rendered
     const hasDeleteButtons = document.querySelectorAll('.delete-button').length > 0;
     addMediaClickHandlers('.image-item', {
-        enableUseAsInput: true,
+        enableUseAsInput: galleryType === 'output', // Only enable for output gallery
         enableDelete: hasDeleteButtons, // Only enable delete handlers if buttons exist (config enabled)
+        deleteEndpoint: `/gallery/${galleryType}/delete`, // Use unified delete endpoint
         imageSelector: 'img'
     });
 });

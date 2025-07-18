@@ -141,42 +141,56 @@ router.get('/workflow/:type/:identifier', (req: RequestWithTheme, res) => {
     loadAndRenderWorkflow(workflowType, workflowIdentifier, req, res, 'pages/workflow');
 });
 
-router.get('/gallery/*', (req: RequestWithTheme, res) => {
+router.get('/gallery/:type/*', (req: RequestWithTheme, res) => {
+    const galleryType = req.params.type;
     const fullPath = req.params[0] || '';
     const subfolder = fullPath.split('?')[0];
     const page = Number(req.query.page) || 0;
-    const itemsPerPage = Number(req.cookies['galleryItemsPerPage']) || 20;
+    const itemsPerPage = Number(req.cookies[`${galleryType}ItemsPerPage`]) || 20;
 
-    const pageData = getGalleryPageData(page, subfolder, itemsPerPage);
+    // Validate gallery type
+    if (galleryType !== 'output' && galleryType !== 'input') {
+        res.status(400).send('Invalid gallery type. Must be "output" or "input".');
+        return;
+    }
+
+    const pageData = getGalleryPageData(page, subfolder, itemsPerPage, galleryType);
 
     renderPage(req, res, 'pages/gallery', {
-        enableGalleryDelete: config.get('enable_gallery_delete'),
+        galleryType,
+        enableDelete: config.get('enable_gallery_delete'),
         ...pageData
     });
+});
+
+// Legacy routes for backward compatibility
+router.get('/gallery/*', (req: RequestWithTheme, res) => {
+    // Redirect to output gallery
+    const fullPath = req.params[0] || '';
+    res.redirect(`/gallery/output/${fullPath}${req.url.includes('?') ? '&' + req.url.split('?')[1] : ''}`);
 });
 
 router.get('/input-images/*', (req: RequestWithTheme, res) => {
+    // Redirect to input gallery
     const fullPath = req.params[0] || '';
-    const subfolder = fullPath.split('?')[0];
-    const page = Number(req.query.page) || 0;
-    const itemsPerPage = Number(req.cookies['inputImagesItemsPerPage']) || 20;
-
-    const pageData = getGalleryPageData(page, subfolder, itemsPerPage, 'input');
-
-    renderPage(req, res, 'pages/input-images', {
-        enableInputImagesDelete: config.get('enable_gallery_delete'), // Use same setting as gallery
-        ...pageData
-    });
+    res.redirect(`/gallery/input/${fullPath}${req.url.includes('?') ? '&' + req.url.split('?')[1] : ''}`);
 });
 
-// API endpoint for input images modal
-router.get('/api/input-images/*', (req: RequestWithTheme, res) => {
+// API endpoint for unified gallery
+router.get('/api/gallery/:type/*', (req: RequestWithTheme, res) => {
+    const galleryType = req.params.type;
     const fullPath = req.params[0] || '';
     const subfolder = fullPath.split('?')[0];
     const page = Number(req.query.page) || 0;
     const itemsPerPage = Number(req.query.itemsPerPage) || 20;
 
-    const pageData = getGalleryPageData(page, subfolder, itemsPerPage, 'input');
+    // Validate gallery type
+    if (galleryType !== 'output' && galleryType !== 'input') {
+        res.status(400).json({ error: 'Invalid gallery type. Must be "output" or "input".' });
+        return;
+    }
+
+    const pageData = getGalleryPageData(page, subfolder, itemsPerPage, galleryType);
 
     if (pageData.error) {
         res.status(500).json({ error: pageData.error });
@@ -229,13 +243,19 @@ function handleDeleteImage(req: Request, res: Response, dirKey: string, errorPre
     }
 }
 
-router.delete('/gallery/delete', (req, res) => {
-    handleDeleteImage(req, res, 'output_dir', 'Gallery');
+router.delete('/gallery/:type/delete', (req, res) => {
+    const galleryType = req.params.type;
+    
+    if (galleryType === 'output') {
+        handleDeleteImage(req, res, 'output_dir', 'Gallery');
+    } else if (galleryType === 'input') {
+        handleDeleteImage(req, res, 'input_dir', 'Input images');
+    } else {
+        res.status(400).json({ error: 'Invalid gallery type' });
+    }
 });
 
-router.delete('/input-images/delete', (req, res) => {
-    handleDeleteImage(req, res, 'input_dir', 'Input images');
-});
+
 
 router.get('/settings', (req: RequestWithTheme, res) => {
     renderPage(req, res, 'pages/settings');
