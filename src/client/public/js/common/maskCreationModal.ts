@@ -1,13 +1,14 @@
+import { Image, toComfyUIUrlFromImage } from './image.js';
+
 export interface MaskCreationModalOptions {
-    imageSrc: string;
-    imageFilename: string;
-    maskSrc?: string;
+    image: Image;
+    maskImage?: Image;
     onMaskCreated?: (filename: string) => void;
     onCancel?: () => void;
 }
 
 export function openMaskCreationModal(options: MaskCreationModalOptions) {
-    const { imageSrc, imageFilename: _imageFilename, maskSrc, onMaskCreated: _onMaskCreated, onCancel } = options;
+    const { image, maskImage, onMaskCreated: _onMaskCreated, onCancel } = options;
     
     // Create modal structure
     const modal = createModalStructure();
@@ -20,16 +21,21 @@ export function openMaskCreationModal(options: MaskCreationModalOptions) {
     // Initialize state
     const state = initializeState();
     
+    // Store the image information in state
+    state.imageInfo = image;
+    
     // Set up event listeners
     setupEventListeners(elements, state, options);
     
-
-    
-    // Load the base image
-    loadBaseImage(imageSrc, elements, state, maskSrc);
+    // Load the base image - construct URL from Image object
+    const imageUrl = toComfyUIUrlFromImage(image);
+    const maskUrl = maskImage ? toComfyUIUrlFromImage(maskImage) : undefined;
+    loadBaseImage(imageUrl, elements, state, maskUrl);
     
     return { close: () => closeModal(modal, onCancel) };
 }
+
+
 
 function createModalStructure(): HTMLDivElement {
     const modal = document.createElement('div');
@@ -87,7 +93,8 @@ function initializeState() {
         img: null as HTMLImageElement | null,
         maskLayer: null as HTMLCanvasElement | null,
         maskCtx: null as CanvasRenderingContext2D | null,
-        ctx: null as CanvasRenderingContext2D | null
+        ctx: null as CanvasRenderingContext2D | null,
+        imageInfo: null as Image | null // Add imageInfo to state
     };
 }
 
@@ -198,6 +205,7 @@ function loadBaseImage(imageSrc: string, elements: any, state: any, maskSrc?: st
     
     img.onerror = (error) => {
         console.error('Error loading base image:', error);
+        console.error('Failed imageSrc:', imageSrc);
     };
     
     img.src = imageSrc;
@@ -466,29 +474,23 @@ async function saveMask(state: any, options: MaskCreationModalOptions, modal: HT
     maskCanvas.toBlob(async (blob) => {
         if (!blob) return;
         
-        const maskName = options.imageFilename.replace(/\.[^/.]+$/, '') + '_mask.png';
+        // Use the parsed image information from state
+        const imageInfo = state.imageInfo!;
+        
+        // Create mask filename using the clean filename from imageInfo
+        const baseName = imageInfo.filename.replace(/\.[^/.]+$/, '');
+        const maskName = `${baseName}_mask.png`;
         const maskFile = new File([blob], maskName, { type: 'image/png' });
         
-        // Determine the original image subfolder
-        let originalSubfolder = '';
-        if (options.imageFilename.includes('clipspace/')) {
-            originalSubfolder = 'clipspace';
-        }
-        
-        // Create the original image reference
-        const originalRef = JSON.stringify({
-            filename: options.imageFilename.replace('clipspace/', ''),
-            subfolder: originalSubfolder,
-            type: 'input'
-        });
+        // Use the clipspace subfolder for the mask
+        const maskSubfolder = 'clipspace';
         
         try {
-            // Import and use the upload mask function
-            const { uploadMaskFile } = await import('../modules/imageInputRenderer.js');
-            const filename = await uploadMaskFile(maskFile, originalRef, 'clipspace');
+            // Use the local upload mask function
+            const imageData = await uploadMaskFile(maskFile, imageInfo, maskSubfolder);
             
             if (options.onMaskCreated) {
-                options.onMaskCreated(filename);
+                options.onMaskCreated( toComfyUIUrlFromImage(imageData));
             }
             
             // Close the modal after successful save
@@ -504,4 +506,36 @@ function closeModal(modal: HTMLDivElement, onCancel?: () => void) {
     document.body.classList.remove('locked');
     modal.remove();
     if (onCancel) onCancel();
+}
+
+export async function uploadMaskFile(maskFile: File, originalImage: Image, subfolder?: string): Promise<Image> {
+    const formData = new FormData();
+    formData.append('image', maskFile);
+    formData.append('original_ref', JSON.stringify(originalImage));
+    
+    if (subfolder) {
+        formData.append('subfolder', subfolder);
+    }
+
+    const response = await fetch('/comfyui/upload/mask', {
+        method: 'POST',
+        body: formData
+    });
+
+    if (!response.ok) {
+        throw new Error('Mask upload failed');
+    }
+
+    const result = await response.json();
+    
+    // Get values from the response
+    const responseFilename = result.externalResponse?.name || maskFile.name;
+    const responseSubfolder = result.externalResponse?.subfolder;
+    const responseType = result.externalResponse?.type;
+
+    return {
+        filename: responseFilename,
+        subfolder: responseSubfolder || subfolder || undefined,
+        type: responseType || 'input'
+    };
 } 

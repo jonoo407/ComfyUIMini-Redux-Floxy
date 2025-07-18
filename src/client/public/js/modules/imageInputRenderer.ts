@@ -1,6 +1,6 @@
 import { openInputImagesModal } from '../common/inputImagesModal.js';
 import { generateInputId } from '../common/utils.js';
-import { extractSubfolderInfo, constructImageUrl } from '../common/imageUtils.js';
+import { toImageFromComfyUIUrl, toImageFromRelativeUrl, toComfyUIUrlFromImage, toRelativeFromImage, Image, ImageType } from '../common/image.js';
 
 export interface ImageRenderConfig {
     node_id: string;
@@ -51,7 +51,7 @@ export function renderImageInput(inputOptions: ImageRenderConfig): string {
     <input type="file" id="${id}-file_input" data-select-id="${id}" class="file-input" accept="image/jpeg,image/png,image/webp">`;
     
     // Create image preview using the utility function
-    const imagePreview = `<img src="${constructImageUrl(inputOptions.default, 'input')}" class="input-image-preview ${inputOptions.default ? '' : 'hidden'}" id="${id}-preview" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');" onload="this.classList.remove('hidden'); this.nextElementSibling.classList.add('hidden');">
+    const imagePreview = `<img src="${toComfyUIUrlFromImage(toImageFromRelativeUrl(inputOptions.default, 'input'))}" class="input-image-preview ${inputOptions.default ? '' : 'hidden'}" id="${id}-preview" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');" onload="this.classList.remove('hidden'); this.nextElementSibling.classList.add('hidden');">
     <div class="input-image-placeholder ${inputOptions.default ? 'hidden' : ''}" id="${id}-placeholder">
         <div class="placeholder-content">
             <span class="icon gallery"></span>
@@ -77,7 +77,7 @@ export function renderImageInput(inputOptions: ImageRenderConfig): string {
     );
 }
 
-export async function uploadImageFile(file: File, subfolder?: string, type: string = 'input', overwrite?: boolean): Promise<string> {
+export async function uploadImageFile(file: File, subfolder?: string, type: ImageType = 'input', overwrite?: boolean): Promise<Image> {
     const formData = new FormData();
     formData.append('image', file);
     
@@ -109,70 +109,34 @@ export async function uploadImageFile(file: File, subfolder?: string, type: stri
         filename = file.name;
     }
 
-    // If a subfolder was specified, prepend it to the filename
-    if (subfolder) {
-        filename = `${subfolder}/${filename}`;
-    }
-
-    return filename;
+    return {
+        filename,
+        subfolder: subfolder || undefined,
+        type
+    };
 }
 
-export async function uploadMaskFile(maskFile: File, originalImageRef: string, subfolder?: string): Promise<string> {
-    const formData = new FormData();
-    formData.append('image', maskFile);
-    formData.append('original_ref', originalImageRef);
-    
-    if (subfolder) {
-        formData.append('subfolder', subfolder);
-    }
 
-    const response = await fetch('/comfyui/upload/mask', {
-        method: 'POST',
-        body: formData
-    });
-
-    if (!response.ok) {
-        throw new Error('Mask upload failed');
-    }
-
-    const result = await response.json();
-    
-    // Try different possible locations for the filename
-    let filename = result.name || result.filename || result.externalResponse?.name || result.externalResponse?.filename;
-    
-    // If still no filename, try to get it from the file object
-    if (!filename) {
-        filename = maskFile.name;
-    }
-
-    // If a subfolder was specified, prepend it to the filename
-    if (subfolder) {
-        filename = `${subfolder}/${filename}`;
-    }
-
-    return filename;
-}
 
 // Add event handlers for image selection after DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     // Function to create preview with mask overlay
-    async function createPreviewWithMaskOverlay(previewImg: HTMLImageElement, imageSrc: string) {
+    async function createPreviewWithMaskOverlay(previewImg: HTMLImageElement, imageSrc: string, originalType?: ImageType, originalSubfolder?: string) {
         try {
             // Check if this is a masked image (contains clipspace)
             const isMaskedImage = imageSrc.includes('clipspace');
             
             if (isMaskedImage) {
                 // For masked images, we need to load the original image and overlay the mask
-                // Extract the original image filename from the masked image filename
-                const maskedFilename = imageSrc.match(/filename=([^&]+)/)?.[1];
+                // Extract the original image filename and type from the masked image URL
+                const { filename: maskedFilename, type: maskedType } = toImageFromComfyUIUrl(imageSrc);
                 if (!maskedFilename) {
                     previewImg.src = imageSrc;
                     return;
                 }
                 
-                // Remove subfolder prefix and _mask suffix to get original filename
-                const { cleanFilename: maskedCleanFilename, subfolder: _maskedSubfolder } = extractSubfolderInfo(maskedFilename);
-                let originalFilename = decodeURIComponent(maskedCleanFilename);
+                // Remove _mask suffix to get original filename
+                let originalFilename = decodeURIComponent(maskedFilename);
                 
                 // Handle different mask filename patterns
                 if (originalFilename.includes('_mask')) {
@@ -187,6 +151,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Load the original image
                 const originalImg = new Image();
                 originalImg.crossOrigin = 'anonymous';
+                
+                // Use the passed originalType if available, otherwise fall back to maskedType
+                const typeToUse = originalType || maskedType;
+                // Use the passed originalSubfolder if available, otherwise use the masked image's subfolder
+                const subfolderToUse = originalSubfolder || (toImageFromComfyUIUrl(imageSrc).subfolder);
+                const originalImageUrl = toComfyUIUrlFromImage({
+                    filename: originalFilename,
+                    subfolder: subfolderToUse,
+                    type: typeToUse
+                });
                 
                 originalImg.onload = () => {
                     // Create canvas for the result
@@ -234,6 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     maskedImg.onerror = (error) => {
                         console.error('Error loading masked image:', error);
+                        console.error('Failed masked image URL:', imageSrc);
                         // Fallback to original image
                         ctx.drawImage(originalImg, 0, 0);
                         const dataUrl = canvas.toDataURL('image/png');
@@ -246,13 +221,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 originalImg.onerror = (error) => {
                     console.error('Error loading original image:', error);
+                    console.error('Failed originalImageUrl:', originalImageUrl);
+                    console.error('Original filename:', originalFilename);
                     // Fallback to masked image
                     previewImg.src = imageSrc;
                 };
                 
-                // Load the original image - check if it has a subfolder
-                const { cleanFilename: _cleanOriginalFilename, subfolder: _originalSubfolder } = extractSubfolderInfo(originalFilename);
-                const originalImageUrl = constructImageUrl(originalFilename, 'input');
                 originalImg.src = originalImageUrl;
             } else {
                 // For non-masked images, just load normally
@@ -319,29 +293,30 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!hiddenInput) return;
             
             await openInputImagesModal({
-                onImageSelect: (filename: string, subfolder: string) => {
-                    // Combine filename with subfolder if subfolder exists
-                    const fullFilename = subfolder ? `${subfolder}/${filename}` : filename;
+                onImageSelect: (image: Image) => {
+                    // Create the full filename for storage using the utility function
+                    const fullFilename = toRelativeFromImage(image);
                     
                     // Update the hidden input value
                     hiddenInput.value = fullFilename;
                     
                     // Update the original filename attribute for mask editing
                     hiddenInput.setAttribute('data-original-filename', fullFilename);
+                    hiddenInput.setAttribute('data-original-type', image.type);
                     
                     // Update the preview image with mask overlay
                     if (previewImg) {
-                        const imageUrl = constructImageUrl(fullFilename, 'input');
+                        const imageUrl = toComfyUIUrlFromImage(image);
                         createPreviewWithMaskOverlay(previewImg, imageUrl);
                         previewImg.classList.remove('hidden');
-                        
+
                         // Hide placeholder
                         const placeholder = previewImg.nextElementSibling as HTMLElement;
                         if (placeholder && placeholder.classList.contains('input-image-placeholder')) {
                             placeholder.classList.add('hidden');
                         }
                     }
-                    
+
                     // Trigger change event on the hidden input
                     hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
                 },
@@ -381,17 +356,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const previewImg = document.getElementById(`${inputId}-preview`) as HTMLImageElement;
 
             try {
-                const filename = await uploadImageFile(file);
+                const imageData = await uploadImageFile(file);
+
+                // Create the full filename for storage using the utility function
+                const fullFilename = toRelativeFromImage(imageData);
 
                 // Update the hidden input value
-                hiddenInput.value = filename;
+                hiddenInput.value = fullFilename;
 
                 // Update the original filename attribute for mask editing
-                hiddenInput.setAttribute('data-original-filename', filename);
+                hiddenInput.setAttribute('data-original-filename', fullFilename);
+                hiddenInput.setAttribute('data-original-type', imageData.type);
 
                 // Update the preview image with mask overlay
                 if (previewImg) {
-                    const imageUrl = constructImageUrl(filename, 'input');
+                    const imageUrl = toComfyUIUrlFromImage(imageData);
                     createPreviewWithMaskOverlay(previewImg, imageUrl);
                     previewImg.classList.remove('hidden');
                     
@@ -409,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const selectButton = document.getElementById(`${inputId}-select-button`) as HTMLButtonElement;
                 if (selectButton) {
                     const currentFallbackImages = JSON.parse(selectButton.dataset.fallbackImages || '[]');
-                    const updatedFallbackImages = [...new Set([...currentFallbackImages, filename])];
+                    const updatedFallbackImages = [...new Set([...currentFallbackImages, fullFilename])];
                     selectButton.dataset.fallbackImages = JSON.stringify(updatedFallbackImages);
                 }
 
@@ -430,22 +409,39 @@ document.addEventListener('DOMContentLoaded', () => {
             const inputId = previewImg.id.replace('-preview', '');
             const hiddenInput = document.getElementById(inputId) as HTMLInputElement;
             if (!hiddenInput) return;
-            // Get the original filename from the data attribute
-            const originalFilename = hiddenInput.getAttribute('data-original-filename') || hiddenInput.value;
-            // Construct the original image URL
-            const originalImageUrl = constructImageUrl(originalFilename, 'input');
-            // The maskSrc is the current image value
-            const maskSrc = constructImageUrl(hiddenInput.value, 'input');
+            
+            // Get the original filename and type from the data attributes
+            const originalFilename = hiddenInput.getAttribute('data-original-filename');
+            const originalType = hiddenInput.getAttribute('data-original-type') as ImageType;
+            
+            if (!originalFilename) {
+                console.error('Missing data-original-filename attribute for mask editing');
+                return;
+            }
+            
+            if (!originalType) {
+                console.error('Missing data-original-type attribute for mask editing');
+                return;
+            }
+            
+            // Parse the original filename using the new utility function
+            const originalImageData = toImageFromRelativeUrl(originalFilename, originalType);
+            
             // Dynamically import the modal
             const { openMaskCreationModal } = await import('../common/maskCreationModal.js');
+            
+            // Parse the mask image if it exists
+            let maskImage: Image | undefined;
+            if (hiddenInput.value && hiddenInput.value !== originalFilename) {
+                maskImage = toImageFromRelativeUrl(hiddenInput.value);
+            }
+            
             openMaskCreationModal({
-                imageSrc: originalImageUrl,
-                imageFilename: originalFilename,
-                maskSrc,
+                image: originalImageData,
+                maskImage,
                 onMaskCreated: (newFilename: string) => {
-                    hiddenInput.value = newFilename;
-                    const imageUrl = constructImageUrl(newFilename, 'input');
-                    createPreviewWithMaskOverlay(previewImg, imageUrl);
+                    hiddenInput.value = toRelativeFromImage(toImageFromComfyUIUrl(newFilename));
+                    createPreviewWithMaskOverlay(previewImg, newFilename, originalImageData.type, originalImageData.subfolder);
                     previewImg.classList.remove('hidden');
                     const placeholder = previewImg.nextElementSibling as HTMLElement;
                     if (placeholder && placeholder.classList.contains('input-image-placeholder')) {

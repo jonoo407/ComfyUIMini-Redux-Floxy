@@ -31,19 +31,41 @@ async function generateImage(workflowPrompt: Workflow, clientWs: WebSocket, work
     const comfyWsConnection = initialiseComfyWs();
 
     comfyWsConnection.on('open', async () => {
-        const promptData = await queuePrompt(workflowPrompt);
-        const promptId = promptData.prompt_id;
+        try {
+            const promptData = await queuePrompt(workflowPrompt);
+            const promptId = promptData.prompt_id;
 
-        // Store the workflow name if provided
-        if (workflowName) {
-            storeWorkflowName(promptId, workflowName);
+            // Store the workflow name if provided
+            if (workflowName) {
+                storeWorkflowName(promptId, workflowName);
+            }
+
+            await handleOpenComfyWsConnection(clientWs);
+
+            comfyWsConnection.on('message', (data, isBinary) => handleComfyWsMessage(clientWs, comfyWsConnection, data, isBinary));
+            comfyWsConnection.on('close', async () => await handleComfyWsClose(clientWs));
+            comfyWsConnection.on('error', (error) => handleComfyWsError(comfyWsConnection, error));
+        } catch (error) {
+            logger.warn('Error queueing prompt:', error);
+            
+            // Send error message to client
+            try {
+                clientWs.send(JSON.stringify({ 
+                    type: 'error', 
+                    message: 'Failed to queue prompt. Please check your workflow configuration.',
+                    details: error instanceof Error ? error.message : 'Unknown error'
+                }));
+            } catch (wsError) {
+                logger.warn('Failed to send error message to client:', wsError);
+            }
+            
+            // Close the ComfyUI WebSocket connection
+            try {
+                comfyWsConnection.close();
+            } catch (closeError) {
+                logger.warn('Failed to close ComfyUI WebSocket connection:', closeError);
+            }
         }
-
-        await handleOpenComfyWsConnection(clientWs);
-
-        comfyWsConnection.on('message', (data, isBinary) => handleComfyWsMessage(clientWs, comfyWsConnection, data, isBinary));
-        comfyWsConnection.on('close', async () => await handleComfyWsClose(clientWs));
-        comfyWsConnection.on('error', (error) => handleComfyWsError(comfyWsConnection, error));
     });
 }
 
