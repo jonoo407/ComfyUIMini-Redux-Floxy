@@ -7,6 +7,34 @@ export interface MaskCreationModalOptions {
     onCancel?: () => void;
 }
 
+export interface MaskCreationModalElements {
+    closeBtn: HTMLButtonElement;
+    cancelBtn: HTMLButtonElement;
+    saveBtn: HTMLButtonElement;
+    brushBtn: HTMLButtonElement;
+    eraserBtn: HTMLButtonElement;
+    clearBtn: HTMLButtonElement;
+    brushSizeInput: HTMLInputElement;
+    canvas: HTMLCanvasElement;
+    modal: HTMLDivElement;
+}
+
+export interface MaskCreationModalState {
+    isDrawing: boolean;
+    lastX: number;
+    lastY: number;
+    brushSize: number;
+    tool: 'brush' | 'eraser';
+    img: HTMLImageElement | null;
+    maskLayer: HTMLCanvasElement | null;
+    maskCtx: CanvasRenderingContext2D | null;
+    ctx: CanvasRenderingContext2D | null;
+    imageInfo: Image | null;
+    scale?: number;
+    originalWidth?: number;
+    originalHeight?: number;
+}
+
 export function openMaskCreationModal(options: MaskCreationModalOptions) {
     const { image, maskImage, onMaskCreated: _onMaskCreated, onCancel } = options;
     
@@ -69,7 +97,7 @@ function createModalStructure(): HTMLDivElement {
     return modal;
 }
 
-function getModalElements(modal: HTMLDivElement) {
+function getModalElements(modal: HTMLDivElement): MaskCreationModalElements {
     return {
         closeBtn: modal.querySelector('.mask-creation-modal-close') as HTMLButtonElement,
         cancelBtn: modal.querySelector('.mask-creation-cancel') as HTMLButtonElement,
@@ -83,22 +111,26 @@ function getModalElements(modal: HTMLDivElement) {
     };
 }
 
-function initializeState() {
+function initializeState(): MaskCreationModalState {
     return {
         isDrawing: false,
         lastX: 0,
         lastY: 0,
         brushSize: 20,
-        tool: 'brush' as 'brush' | 'eraser',
-        img: null as HTMLImageElement | null,
-        maskLayer: null as HTMLCanvasElement | null,
-        maskCtx: null as CanvasRenderingContext2D | null,
-        ctx: null as CanvasRenderingContext2D | null,
-        imageInfo: null as Image | null // Add imageInfo to state
+        tool: 'brush',
+        img: null,
+        maskLayer: null,
+        maskCtx: null,
+        ctx: null,
+        imageInfo: null
     };
 }
 
-function setupEventListeners(elements: any, state: any, options: MaskCreationModalOptions) {
+function setupEventListeners(
+    elements: MaskCreationModalElements,
+    state: MaskCreationModalState,
+    options: MaskCreationModalOptions
+) {
     const { canvas, closeBtn, cancelBtn, saveBtn, brushBtn, eraserBtn, clearBtn, brushSizeInput } = elements;
     
     // Canvas drawing events - Mouse
@@ -111,13 +143,13 @@ function setupEventListeners(elements: any, state: any, options: MaskCreationMod
     canvas.addEventListener('touchstart', (e: TouchEvent) => {
         e.preventDefault();
         if (e.touches.length === 1) {
-            handlePointerDown(e.touches[0] as any, state, canvas);
+            handlePointerDown(e.touches[0], state, canvas);
         }
     });
     canvas.addEventListener('touchmove', (e: TouchEvent) => {
         e.preventDefault();
         if (e.touches.length === 1) {
-            handlePointerMove(e.touches[0] as any, state, canvas);
+            handlePointerMove(e.touches[0], state, canvas);
         }
     });
     canvas.addEventListener('touchend', (e: TouchEvent) => {
@@ -168,7 +200,12 @@ function setupEventListeners(elements: any, state: any, options: MaskCreationMod
     });
 }
 
-function loadBaseImage(imageSrc: string, elements: any, state: any, maskSrc?: string) {
+function loadBaseImage(
+    imageSrc: string,
+    elements: MaskCreationModalElements,
+    state: MaskCreationModalState,
+    maskSrc?: string
+) {
     const img = new window.Image();
     img.crossOrigin = 'anonymous';
     
@@ -211,7 +248,11 @@ function loadBaseImage(imageSrc: string, elements: any, state: any, maskSrc?: st
     img.src = imageSrc;
 }
 
-function setupCanvas(img: HTMLImageElement, canvas: HTMLCanvasElement, state: any) {
+function setupCanvas(
+    img: HTMLImageElement,
+    canvas: HTMLCanvasElement,
+    state: MaskCreationModalState
+) {
     // Calculate maximum available space for the canvas
     const container = canvas.parentElement;
     if (!container) return;
@@ -276,7 +317,7 @@ function setupCanvas(img: HTMLImageElement, canvas: HTMLCanvasElement, state: an
     state.originalHeight = img.height;
 }
 
-function loadExistingMask(maskSrc: string, state: any) {
+function loadExistingMask(maskSrc: string, state: MaskCreationModalState) {
     const maskedImg = new window.Image();
     maskedImg.crossOrigin = 'anonymous';
     
@@ -293,7 +334,7 @@ function loadExistingMask(maskSrc: string, state: any) {
     maskedImg.src = maskSrc;
 }
 
-function extractMaskFromImage(maskedImg: HTMLImageElement, state: any) {
+function extractMaskFromImage(maskedImg: HTMLImageElement, state: MaskCreationModalState) {
     // Create a temporary canvas to work with the original image size
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = maskedImg.width;
@@ -348,17 +389,25 @@ function extractMaskFromImage(maskedImg: HTMLImageElement, state: any) {
     }
 }
 
-function handlePointerDown(e: MouseEvent | Touch, state: any, canvas: HTMLCanvasElement) {
+function handlePointerDown(
+    e: MouseEvent | Touch,
+    state: MaskCreationModalState,
+    canvas: HTMLCanvasElement
+) {
     state.isDrawing = true;
     [state.lastX, state.lastY] = getXY(e, canvas);
 }
 
-function handlePointerUp(state: any) {
+function handlePointerUp(state: MaskCreationModalState) {
     state.isDrawing = false;
     state.maskCtx!.beginPath();
 }
 
-function handlePointerMove(e: MouseEvent | Touch, state: any, canvas: HTMLCanvasElement) {
+function handlePointerMove(
+    e: MouseEvent | Touch,
+    state: MaskCreationModalState,
+    canvas: HTMLCanvasElement
+) {
     if (!state.isDrawing) return;
     
     const [x, y] = getXY(e, canvas);
@@ -394,7 +443,7 @@ function getXY(e: MouseEvent | Touch, canvas: HTMLCanvasElement): [number, numbe
     ];
 }
 
-function drawPreview(state: any) {
+function drawPreview(state: MaskCreationModalState) {
     const ctx = state.ctx!;
     const img = state.img!;
     const maskLayer = state.maskLayer!;
@@ -406,7 +455,12 @@ function drawPreview(state: any) {
     ctx.globalAlpha = 1.0;
 }
 
-function setTool(tool: 'brush' | 'eraser', brushBtn: HTMLButtonElement, eraserBtn: HTMLButtonElement, state: any) {
+function setTool(
+    tool: 'brush' | 'eraser',
+    brushBtn: HTMLButtonElement,
+    eraserBtn: HTMLButtonElement,
+    state: MaskCreationModalState
+) {
     state.tool = tool;
     if (tool === 'brush') {
         brushBtn.classList.add('active');
@@ -417,19 +471,25 @@ function setTool(tool: 'brush' | 'eraser', brushBtn: HTMLButtonElement, eraserBt
     }
 }
 
-function setBrushSize(brushSizeInput: HTMLInputElement, state: any) {
+function setBrushSize(brushSizeInput: HTMLInputElement, state: MaskCreationModalState) {
     state.brushSize = parseInt(brushSizeInput.value);
 }
 
-function clearMask(state: any) {
+function clearMask(state: MaskCreationModalState) {
     state.maskCtx!.clearRect(0, 0, state.maskLayer!.width, state.maskLayer!.height);
     drawPreview(state);
 }
 
-async function saveMask(state: any, options: MaskCreationModalOptions, modal: HTMLDivElement) {
+async function saveMask(
+    state: MaskCreationModalState,
+    options: MaskCreationModalOptions,
+    modal: HTMLDivElement
+) {
     const maskCanvas = document.createElement('canvas');
-    maskCanvas.width = state.originalWidth;
-    maskCanvas.height = state.originalHeight;
+    const originalWidth = state.originalWidth ?? 1;
+    const originalHeight = state.originalHeight ?? 1;
+    maskCanvas.width = originalWidth;
+    maskCanvas.height = originalHeight;
     const maskCtx = maskCanvas.getContext('2d')!;
     
     // Get the mask data from the scaled maskLayer
@@ -437,8 +497,8 @@ async function saveMask(state: any, options: MaskCreationModalOptions, modal: HT
     
     // Create a temporary canvas to scale the mask back to original size
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = state.originalWidth;
-    tempCanvas.height = state.originalHeight;
+    tempCanvas.width = originalWidth;
+    tempCanvas.height = originalHeight;
     const tempCtx = tempCanvas.getContext('2d')!;
     
     // Create a temporary canvas with the scaled mask data
@@ -451,11 +511,11 @@ async function saveMask(state: any, options: MaskCreationModalOptions, modal: HT
     // Scale the mask back to original size
     tempCtx.imageSmoothingEnabled = true;
     tempCtx.imageSmoothingQuality = 'high';
-    tempCtx.drawImage(scaledCanvas, 0, 0, state.originalWidth, state.originalHeight);
+    tempCtx.drawImage(scaledCanvas, 0, 0, originalWidth, originalHeight);
     
     // Get the scaled mask data
-    const maskData = tempCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
-    const finalMaskData = maskCtx.createImageData(maskCanvas.width, maskCanvas.height);
+    const maskData = tempCtx.getImageData(0, 0, originalWidth, originalHeight);
+    const finalMaskData = maskCtx.createImageData(originalWidth, originalHeight);
     
     // Create the mask: white areas in our mask should become transparent (alpha=0)
     // black areas should become opaque (alpha=255)
