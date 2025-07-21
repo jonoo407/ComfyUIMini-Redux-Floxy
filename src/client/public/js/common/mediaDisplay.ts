@@ -3,6 +3,7 @@ import { HistoryData, HistoryOutput, MediaItem } from '../../../../shared/types/
 // Import imageModal functions for handling images only
 import { openImageModal } from '../common/imageModal.js';
 import { openOverlay } from '../common/overlay.js';
+import { toComfyUIUrlFromImage, toImageFromComfyUIUrl, Image } from '../common/image.js';
 
 // Configuration interface for media display options
 export interface MediaDisplayOptions {
@@ -30,11 +31,17 @@ export function extractMediaFromHistory(historyData: HistoryData, promptId: stri
             // Handle images
             if (output.images) {
                 output.images.forEach((image: { filename: string; subfolder: string; type: string }) => {
-                    const mediaUrl = `/comfyui/image?filename=${image.filename}&subfolder=${image.subfolder}&type=${image.type}`;
+                    const imageObj: Image = {
+                        filename: image.filename,
+                        subfolder: image.subfolder || undefined,
+                        type: image.type as Image['type']
+                    };
+                    const mediaUrl = toComfyUIUrlFromImage(imageObj);
                     mediaItems.push({
                         url: mediaUrl,
                         isVideo: false,
-                        filename: image.filename
+                        filename: image.filename,
+                        type: image.type as Image['type']
                     });
                 });
             }
@@ -42,11 +49,17 @@ export function extractMediaFromHistory(historyData: HistoryData, promptId: stri
             // Handle videos
             if (output.videos) {
                 output.videos.forEach((video: { filename: string; subfolder: string; type: string; format: string; frame_rate: number; fullpath: string }) => {
-                    const mediaUrl = `/comfyui/image?filename=${video.filename}&subfolder=${video.subfolder}&type=${video.type}`;
+                    const imageObj: Image = {
+                        filename: video.filename,
+                        subfolder: video.subfolder || undefined,
+                        type: video.type as Image['type']
+                    };
+                    const mediaUrl = toComfyUIUrlFromImage(imageObj);
                     mediaItems.push({
                         url: mediaUrl,
                         isVideo: true,
-                        filename: video.filename
+                        filename: video.filename,
+                        type: video.type as Image['type']
                     });
                 });
             }
@@ -87,8 +100,7 @@ export function createMediaItemsHtml(mediaItems: MediaItem[], options: MediaDisp
         enableUseAsInput = false,
         enableDelete = false,
         containerClass = 'queue-item-images',
-        itemClass = 'image-item', // always use unified class
-        subfolder = ''
+        itemClass = 'image-item'
     } = options;
 
     if (mediaItems.length === 0) {
@@ -98,44 +110,40 @@ export function createMediaItemsHtml(mediaItems: MediaItem[], options: MediaDisp
     return `
         <div class="${containerClass}">
             ${mediaItems.map((item: MediaItem) => {
+                // Parse the URL to get the complete Image object with subfolder
+                const imageObj = toImageFromComfyUIUrl(item.url);
                 const actionButtons = [];
-                
-                // Add "Use as Input" button for images only (not videos)
                 if (enableUseAsInput && !item.isVideo) {
                     actionButtons.push(`
-                        <button class="use-as-input-button" data-filename="${item.filename}" data-subfolder="${subfolder}" title="Use as workflow input">
+                        <button class="use-as-input-button" title="Use as workflow input">
                             📥
                         </button>
                     `);
                 }
-                
-                // Add "Delete" button if enabled
                 if (enableDelete) {
                     actionButtons.push(`
-                        <button class="delete-button" data-filename="${item.filename}" data-subfolder="${subfolder}">🗑️</button>
+                        <button class="delete-button">🗑️</button>
                     `);
                 }
-                
                 const actionsHtml = actionButtons.length > 0 ? `
                     <div class="image-actions">
                         ${actionButtons.join('')}
                     </div>
                 ` : '';
-
                 if (item.isVideo) {
                     return `
-                        <div class="${itemClass}" data-filename="${item.filename}" data-subfolder="${subfolder}">
-                            ${actionsHtml}
+                        <div class="${itemClass}" data-image='${JSON.stringify(imageObj)}'>
                             <video src="${item.url}" alt="Generated video" style="cursor: pointer;">
                                 Your browser does not support the video tag.
                             </video>
+                            ${actionsHtml}
                         </div>
                     `;
                 } else {
                     return `
-                        <div class="${itemClass}" data-filename="${item.filename}" data-subfolder="${subfolder}">
+                        <div class="${itemClass}" data-image='${JSON.stringify(imageObj)}'>
+                            <img src="${toComfyUIUrlFromImage(imageObj)}" alt="Generated image" style="cursor: pointer;">
                             ${actionsHtml}
-                            <img src="${item.url}" alt="Generated image" style="cursor: pointer;">
                         </div>
                     `;
                 }
@@ -154,52 +162,47 @@ export function createSingleMediaItemHtml(mediaItem: MediaItem, options: MediaDi
     const {
         enableUseAsInput = false,
         enableDelete = false,
-        itemClass = 'image-item', // always use unified class
+        itemClass = 'image-item',
         imgClass = 'previous-output-img'
     } = options;
-
+    // Parse the URL to get the complete Image object with subfolder
+    const imageObj = toImageFromComfyUIUrl(mediaItem.url);
     const actionButtons = [];
-    
-    // Add "Use as Input" button for images only (not videos)
     if (enableUseAsInput && !mediaItem.isVideo) {
         actionButtons.push(`
-            <button class="use-as-input-button" data-filename="${mediaItem.filename}" title="Use as workflow input">
+            <button class="use-as-input-button" title="Use as workflow input">
                 📥
             </button>
         `);
     }
-    
-    // Add "Delete" button if enabled
     if (enableDelete) {
         actionButtons.push(`
-            <button class="delete-button" data-filename="${mediaItem.filename}">🗑️</button>
+            <button class="delete-button">🗑️</button>
         `);
     }
-    
     const actionsHtml = actionButtons.length > 0 ? `
         <div class="image-actions">
             ${actionButtons.join('')}
         </div>
     ` : '';
-
     if (mediaItem.isVideo) {
         return `
-            <div class="${itemClass}" data-filename="${mediaItem.filename}">
-                ${actionsHtml}
+            <div class="${itemClass}" data-image='${JSON.stringify(imageObj)}'>
                 <a href="${mediaItem.url}" target="_blank">
                     <video src="${mediaItem.url}" alt="Previously generated video" class="${imgClass}" loading="lazy" controls>
                         Your browser does not support the video tag.
                     </video>
                 </a>
+                ${actionsHtml}
             </div>
         `;
     } else {
         return `
-            <div class="${itemClass}" data-filename="${mediaItem.filename}">
-                ${actionsHtml}
-                <a href="${mediaItem.url}" target="_blank">
-                    <img src="${mediaItem.url}" alt="Previously generated image" class="${imgClass}" loading="lazy">
+            <div class="${itemClass}" data-image='${JSON.stringify(imageObj)}'>
+                <a href="${toComfyUIUrlFromImage(imageObj)}" target="_blank">
+                    <img src="${toComfyUIUrlFromImage(imageObj)}" alt="Previously generated image" class="${imgClass}" loading="lazy">
                 </a>
+                ${actionsHtml}
             </div>
         `;
     }
@@ -242,15 +245,16 @@ export function addMediaClickHandlers(containerSelector: string, options: MediaD
                 e.stopPropagation();
                 
                 const useAsInputButton = button as HTMLButtonElement;
-                const filename = useAsInputButton.dataset.filename;
-                
-                if (!filename) {
-                    console.error('No filename found for use as input button');
-                    return;
-                }
-                
                 const imageItem = useAsInputButton.closest('.image-item') as HTMLElement;
                 if (imageItem) {
+                    const imageData = JSON.parse(imageItem.dataset.image || '{}');
+                    const filename = imageData.filename;
+                    
+                    if (!filename) {
+                        console.error('No filename found for use as input button');
+                        return;
+                    }
+                    
                     // Show confirmation overlay before uploading
                     openOverlay({
                         content: 'Use image for workflow inputs?',
@@ -271,10 +275,8 @@ export function addMediaClickHandlers(containerSelector: string, options: MediaD
                                         parent: imageItem
                                     });
                                     try {
-                                        const imgElement = imageItem.querySelector('img') as HTMLImageElement;
-                                        const imagePath = imgElement?.src;
                                         // Fetch the image as a blob
-                                        const imageResponse = await fetch(imagePath);
+                                        const imageResponse = await fetch(toComfyUIUrlFromImage(imageData));
                                         if (!imageResponse.ok) {
                                             throw new Error('Failed to fetch image from gallery');
                                         }
@@ -329,16 +331,16 @@ export function addMediaClickHandlers(containerSelector: string, options: MediaD
                 e.stopPropagation();
                 
                 const deleteButton = button as HTMLButtonElement;
-                const filename = deleteButton.dataset.filename;
-                const subfolder = deleteButton.dataset.subfolder || '';
-                
-                if (!filename) {
-                    console.error('No filename found for delete button');
-                    return;
-                }
-                
                 const imageItem = deleteButton.closest('.image-item') as HTMLElement;
                 if (imageItem) {
+                    const imageData = JSON.parse(imageItem.dataset.image || '{}');
+                    const filename = imageData.filename;
+                    
+                    if (!filename) {
+                        console.error('No filename found for delete button');
+                        return;
+                    }
+                    
                     // Show generic overlay for confirmation
                     openOverlay({
                         content: 'Are you sure you want to delete?',
@@ -359,7 +361,7 @@ export function addMediaClickHandlers(containerSelector: string, options: MediaD
                                             },
                                             body: JSON.stringify({
                                                 filename: filename,
-                                                subfolder: subfolder
+                                                subfolder: imageData.subfolder
                                             })
                                         });
                                         const result = await response.json();

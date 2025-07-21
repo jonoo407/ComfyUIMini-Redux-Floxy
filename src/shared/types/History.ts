@@ -72,4 +72,5 @@ export interface MediaItem {
     url: string;
     isVideo: boolean;
     filename: string;
+    type: 'output' | 'input' | 'temp';
 }

@@ -56,12 +56,52 @@ describe('Media Display Module', () => {
       expect(result[0]).toEqual({
         url: '/comfyui/image?filename=image1.png&subfolder=output&type=output',
         isVideo: false,
-        filename: 'image1.png'
+        filename: 'image1.png',
+        type: 'output'
       });
       expect(result[1]).toEqual({
         url: '/comfyui/image?filename=image2.jpg&subfolder=temp&type=temp',
         isVideo: false,
-        filename: 'image2.jpg'
+        filename: 'image2.jpg',
+        type: 'temp'
+      });
+    });
+
+    it('should preserve type information from history data', () => {
+      const historyData: HistoryData = {
+        'prompt-123': {
+          outputs: {
+            'node-1': {
+              images: [
+                { filename: 'temp_image.png', subfolder: 'temp', type: 'temp' },
+                { filename: 'output_image.png', subfolder: 'output', type: 'output' },
+                { filename: 'input_image.png', subfolder: 'input', type: 'input' }
+              ]
+            }
+          }
+        }
+      };
+
+      const result = extractMediaFromHistory(historyData, 'prompt-123');
+
+      expect(result).toHaveLength(3);
+      expect(result[0]).toEqual({
+        url: '/comfyui/image?filename=temp_image.png&subfolder=temp&type=temp',
+        isVideo: false,
+        filename: 'temp_image.png',
+        type: 'temp'
+      });
+      expect(result[1]).toEqual({
+        url: '/comfyui/image?filename=output_image.png&subfolder=output&type=output',
+        isVideo: false,
+        filename: 'output_image.png',
+        type: 'output'
+      });
+      expect(result[2]).toEqual({
+        url: '/comfyui/image?filename=input_image.png&subfolder=input&type=input',
+        isVideo: false,
+        filename: 'input_image.png',
+        type: 'input'
       });
     });
 
@@ -91,7 +131,8 @@ describe('Media Display Module', () => {
       expect(result[0]).toEqual({
         url: '/comfyui/image?filename=video1.mp4&subfolder=output&type=output',
         isVideo: true,
-        filename: 'video1.mp4'
+        filename: 'video1.mp4',
+        type: 'output'
       });
     });
 
@@ -124,12 +165,14 @@ describe('Media Display Module', () => {
       expect(result[0]).toEqual({
         url: '/comfyui/image?filename=image1.png&subfolder=output&type=output',
         isVideo: false,
-        filename: 'image1.png'
+        filename: 'image1.png',
+        type: 'output'
       });
       expect(result[1]).toEqual({
         url: '/comfyui/image?filename=video1.mp4&subfolder=output&type=output',
         isVideo: true,
-        filename: 'video1.mp4'
+        filename: 'video1.mp4',
+        type: 'output'
       });
     });
 
@@ -244,7 +287,8 @@ describe('Media Display Module', () => {
       expect(result[0]).toEqual({
         url: '/comfyui/image?filename=image1.png&subfolder=output&type=output',
         isVideo: false,
-        filename: 'image1.png'
+        filename: 'image1.png',
+        type: 'output'
       });
     });
 
@@ -286,12 +330,14 @@ describe('Media Display Module', () => {
         {
           url: '/comfyui/image?filename=image1.png&subfolder=output&type=output',
           isVideo: false,
-          filename: 'image1.png'
+          filename: 'image1.png',
+          type: 'output'
         },
         {
           url: '/comfyui/image?filename=image2.jpg&subfolder=temp&type=temp',
           isVideo: false,
-          filename: 'image2.jpg'
+          filename: 'image2.jpg',
+          type: 'temp'
         }
       ];
 

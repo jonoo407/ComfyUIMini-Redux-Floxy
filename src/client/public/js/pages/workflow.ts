@@ -11,6 +11,7 @@ import {
 import { WorkflowWithMetadata } from '@shared/types/Workflow.js';
 import { NodeInputValues } from '@shared/types/SavedInputs.js';
 import { WorkflowInstance } from '@shared/classes/Workflow.js';
+import { MediaItem } from '@shared/types/History.js';
 
 // Internal modules
 import { getLocalWorkflow } from '../modules/getLocalWorkflow.js';
@@ -860,15 +861,15 @@ function finishGeneration(messageData: FinishGenerationMessage) {
 
     // Extract all image URLs from the message data
     // messageData is Record<string, string[]> where keys are node IDs and values are arrays of image URLs
-    const allMedia: { url: string; isVideo: boolean; filename: string; subfolder: string; type: string }[] = [];
+    const allMedia: MediaItem[] = [];
     Object.values(messageData).forEach((mediaUrlArray) => {
         if (Array.isArray(mediaUrlArray)) {
             mediaUrlArray.forEach((url) => {
                 // Guess type by extension (could be improved if type info is available)
                 const isVideo = url.match(/\.(mp4|webm|ogg)(\?|$)/i) !== null;
                 // Parse filename, subfolder, and type from the query string using shared utility
-                const { filename, subfolder, type } = toImageFromComfyUIUrl(url);
-                allMedia.push({ url, isVideo, filename, subfolder: subfolder || '', type });
+                const { filename, type } = toImageFromComfyUIUrl(url);
+                allMedia.push({ url, isVideo, filename, type });
             });
         }
     });

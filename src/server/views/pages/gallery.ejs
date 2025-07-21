@@ -38,16 +38,17 @@
                 </div>
             <% } else { %>
                 <% for (const image of scanned.images) { %>
-                    <div class="image-item" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>">
+                    <div class="image-item" 
+                         data-image='<%- JSON.stringify({ filename: image.filename, subfolder: currentSubfolder, type: galleryType }) %>'>
                         <span><%= image.timeText %> </span>
                         <div class="image-actions">
                             <% if (!image.isVideo && galleryType === 'output') { %>
-                            <button class="use-as-input-button" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>" title="Use as workflow input">
+                            <button class="use-as-input-button" title="Use as workflow input">
                                 📥
                             </button>
                             <% } %>
                             <% if (enableDelete) { %>
-                                <button class="delete-button" data-filename="<%= image.filename %>" data-subfolder="<%= currentSubfolder %>">🗑️</button>
+                                <button class="delete-button">🗑️</button>
                             <% } %>
                         </div>
                         <% if (image.isVideo) { %>

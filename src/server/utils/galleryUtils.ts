@@ -39,6 +39,11 @@ function getRelativeTimeText(timestamp: number): string {
     return 'just now';
 }
 
+function toComfyUIUrlFromImage({ filename, subfolder, type }: { filename: string; subfolder?: string; type: string }) {
+    const subfolderParam = subfolder ? `&subfolder=${subfolder}` : '';
+    return `/comfyui/image?filename=${filename}${subfolderParam}&type=${type}`;
+}
+
 /**
  * Gets a list of images at the page.
  *
@@ -89,7 +94,7 @@ function getGalleryPageData(page = 0, subfolder = '', itemsPerPage = 20, type = 
             const stats = fs.statSync(filePath);
             
             return {
-                path: `/comfyui/image?filename=${file}&subfolder=${subfolder}&type=${type}`,
+                path: toComfyUIUrlFromImage({ filename: file, subfolder, type }),
                 filename: file,
                 isVideo: VIDEO_EXTENSIONS.includes(ext),
                 time: stats.mtime.getTime(),
