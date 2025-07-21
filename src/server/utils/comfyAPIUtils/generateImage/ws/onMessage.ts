@@ -3,6 +3,103 @@ import WebSocket from "ws";
 import getQueue from "../../getQueue";
 import getOutputImages from "../getOutputImages";
 import { QueueItem } from "@shared/types/History";
+import { 
+    ProgressMessage, 
+    NodeExecutingMessage, 
+    NodeExecutedMessage, 
+    ExecutionSuccessMessage, 
+    ExecutionInterruptedMessage,
+    FinishGenerationMessage,
+    PreviewMessage,
+    WorkflowStructureMessage
+} from "@shared/types/WebSocket";
+
+// Type definitions for ComfyUI WebSocket messages
+interface ComfyUIMessage {
+    type: string;
+    data: unknown;
+}
+
+interface StatusMessage extends ComfyUIMessage {
+    type: 'status';
+    data: {
+        status: {
+            exec_info: {
+                queue_remaining: number;
+            };
+        };
+    };
+}
+
+interface ProgressComfyMessage extends ComfyUIMessage {
+    type: 'progress';
+    data: ProgressMessage;
+}
+
+interface ExecutingMessage extends ComfyUIMessage {
+    type: 'executing';
+    data: NodeExecutingMessage;
+}
+
+interface ExecutedMessage extends ComfyUIMessage {
+    type: 'executed';
+    data: NodeExecutedMessage;
+}
+
+interface ExecutionSuccessComfyMessage extends ComfyUIMessage {
+    type: 'execution_success';
+    data: ExecutionSuccessMessage;
+}
+
+interface ExecutionInterruptedComfyMessage extends ComfyUIMessage {
+    type: 'execution_interrupted';
+    data: ExecutionInterruptedMessage;
+}
+
+type ComfyUIMessageTypes = 
+    | StatusMessage 
+    | ProgressComfyMessage 
+    | ExecutingMessage 
+    | ExecutedMessage 
+    | ExecutionSuccessComfyMessage 
+    | ExecutionInterruptedComfyMessage;
+
+// Type for the preview image payload
+interface PreviewImagePayload {
+    type: 'preview';
+    data: PreviewMessage;
+}
+
+// Type for workflow structure message
+interface WorkflowStructurePayload {
+    type: 'workflow_structure';
+    data: WorkflowStructureMessage;
+}
+
+// Type for node executing message
+interface NodeExecutingPayload {
+    type: 'node_executing';
+    data: NodeExecutingMessage;
+}
+
+// Type for node executed message
+interface NodeExecutedPayload {
+    type: 'node_executed';
+    data: NodeExecutedMessage;
+}
+
+// Type for completion message
+interface CompletionPayload {
+    type: 'completed';
+    data: FinishGenerationMessage;
+}
+
+// Type for queue response
+interface QueueResponse {
+    queue_running: QueueItem[];
+    queue_pending: QueueItem[];
+    queue_completed: QueueItem[];
+}
 
 /**
  * Handles recieving messages from ComfyUI WebSocket.
@@ -10,9 +107,8 @@ import { QueueItem } from "@shared/types/History";
  * @param comfyWs The WebSocket connection to the ComfyUI instance.
  * @param data The data recieved from the ComfyUI WebSocket.
  * @param isBinary Whether the data is binary or not, i.e. if it is an image.
- * @param promptId The prompt ID for the current generation.
  */
-async function handleComfyWsMessage(clientWs: WebSocket, comfyWs: WebSocket, data: WebSocket.Data, isBinary: boolean) {
+async function handleComfyWsMessage(clientWs: WebSocket, comfyWs: WebSocket, data: WebSocket.Data, isBinary: boolean): Promise<void> {
     if (!Buffer.isBuffer(data)) {
         logger.warn('Recieved non-buffer data from ComfyUI websocket:', data);
         return;
@@ -33,10 +129,10 @@ async function handleComfyWsMessage(clientWs: WebSocket, comfyWs: WebSocket, dat
     }
 }
 
-function handleSendImageBuffer(clientWs: WebSocket, buffer: Buffer<ArrayBufferLike>) {
+function handleSendImageBuffer(clientWs: WebSocket, buffer: Buffer): void {
     // Handle image buffers like ComfyUI client
     const imageType = buffer.readUInt32BE(0);
-    let imageMime;
+    let imageMime: string;
 
     switch (imageType) {
         case 1:
@@ -52,7 +148,7 @@ function handleSendImageBuffer(clientWs: WebSocket, buffer: Buffer<ArrayBufferLi
     const imageBlob = buffer.slice(8);
     const base64Image = imageBlob.toString('base64');
 
-    const jsonPayload = {
+    const jsonPayload: PreviewImagePayload = {
         type: 'preview',
         data: { image: base64Image, mimetype: imageMime },
     };
@@ -60,41 +156,40 @@ function handleSendImageBuffer(clientWs: WebSocket, buffer: Buffer<ArrayBufferLi
     clientWs.send(JSON.stringify(jsonPayload));
 }
 
-async function handleSendMessage(clientWs: WebSocket, comfyWs: WebSocket, data: Buffer<ArrayBufferLike>) {
+async function handleSendMessage(clientWs: WebSocket, comfyWs: WebSocket, data: Buffer): Promise<void> {
     const messageString = data.toString();
-    const message = JSON.parse(messageString);
+    const message: ComfyUIMessageTypes = JSON.parse(messageString);
 
     switch (message.type) {
         case 'status':
-            await handleStatusMessage(clientWs, comfyWs, message);
+            await handleStatusMessage(clientWs, comfyWs, message as StatusMessage);
             break;
         case 'progress':
-            handleProgressMessage(clientWs, message);
+            handleProgressMessage(clientWs, message as ProgressComfyMessage);
             break;
         case 'executing':
-            handleExecutingMessage(clientWs, message);
+            handleExecutingMessage(clientWs, message as ExecutingMessage);
             break;
         case 'executed':
-            handleExecutedMessage(clientWs, message);
+            handleExecutedMessage(clientWs, message as ExecutedMessage);
             break;
         case 'execution_success':
-            await handleExecutionSuccessMessage(clientWs, message);
+            await handleExecutionSuccessMessage(clientWs, message as ExecutionSuccessComfyMessage);
             break;
         case 'execution_interrupted':
-            await handleExecutionInterruptedMessage(clientWs, message);
+            await handleExecutionInterruptedMessage(clientWs, message as ExecutionInterruptedComfyMessage);
             break;
     }
 }
 
-async function handleStatusMessage(clientWs: WebSocket, comfyWs: WebSocket, message: any) {
-
+async function handleStatusMessage(clientWs: WebSocket, comfyWs: WebSocket, message: StatusMessage): Promise<void> {
     // Nothing else in the queue, just close the connection
     if (message.data.status.exec_info.queue_remaining == 0) {
         comfyWs.close();
         return;
     }
     
-    const queueJson = await getQueue();
+    const queueJson: QueueResponse = await getQueue();
 
     // Check if prompt is currently running
     if (queueJson['queue_running'].length > 0) {
@@ -103,55 +198,49 @@ async function handleStatusMessage(clientWs: WebSocket, comfyWs: WebSocket, mess
         
         // Send workflow structure for progress tracking
         const workflowStructure = runningItem[2] || {};
-        clientWs.send(JSON.stringify({ 
+        const workflowPayload: WorkflowStructurePayload = {
             type: 'workflow_structure', 
             data: {
                 totalNodes: Object.keys(workflowStructure).length,
                 workflow: workflowStructure,
                 promptId: runningPromptId
             }
-        }));
+        };
+        clientWs.send(JSON.stringify(workflowPayload));
     }
 }
 
-function handleProgressMessage(clientWs: WebSocket, message: any) {
+function handleProgressMessage(clientWs: WebSocket, message: ProgressComfyMessage): void {
     clientWs.send(JSON.stringify(message));
 }
 
-function handleExecutingMessage(clientWs: WebSocket, message: any) {
-    clientWs.send(JSON.stringify({
+function handleExecutingMessage(clientWs: WebSocket, message: ExecutingMessage): void {
+    const nodeExecutingPayload: NodeExecutingPayload = {
         type: 'node_executing',
-        data: {
-            node: message.data.node,
-            display_node: message.data.display_node,
-            prompt_id: message.data.prompt_id
-        }
-    }));
+        data: message.data
+    };
+    clientWs.send(JSON.stringify(nodeExecutingPayload));
 }
 
-function handleExecutedMessage(clientWs: WebSocket, message: any) {
-    clientWs.send(JSON.stringify({
+function handleExecutedMessage(clientWs: WebSocket, message: ExecutedMessage): void {
+    const nodeExecutedPayload: NodeExecutedPayload = {
         type: 'node_executed',
-        data: {
-            node: message.data.node,
-            display_node: message.data.display_node,
-            output: message.data.output,
-            prompt_id: message.data.prompt_id
-        }
-    }));
+        data: message.data
+    };
+    clientWs.send(JSON.stringify(nodeExecutedPayload));
 }
 
-async function handleExecutionSuccessMessage(clientWs: WebSocket, message: any) {
+async function handleExecutionSuccessMessage(clientWs: WebSocket, message: ExecutionSuccessComfyMessage): Promise<void> {
     logger.logOptional('generation_finish', 'Image generation finished.');
     await sendCompletionMessage(clientWs, message.data.prompt_id);
 }
 
-async function handleExecutionInterruptedMessage(clientWs: WebSocket, message: any) {
+async function handleExecutionInterruptedMessage(clientWs: WebSocket, message: ExecutionInterruptedComfyMessage): Promise<void> {
     logger.logOptional('generation_finish', 'Image generation interrupted.');
     await sendCompletionMessage(clientWs, message.data.prompt_id);
 }
 
-async function sendCompletionMessage(clientWs: WebSocket, promptId: string) {
+async function sendCompletionMessage(clientWs: WebSocket, promptId: string): Promise<void> {
     // Get output images and send completion message
     try {
         const outputImages = await getOutputImages(promptId);
@@ -164,7 +253,11 @@ async function sendCompletionMessage(clientWs: WebSocket, promptId: string) {
             return;
         }
 
-        clientWs.send(JSON.stringify({ type: 'completed', data: outputImages }));
+        const completionPayload: CompletionPayload = { 
+            type: 'completed', 
+            data: outputImages 
+        };
+        clientWs.send(JSON.stringify(completionPayload));
     } catch (error) {
         logger.warn('Error retrieving output images: ' + error);
     }
