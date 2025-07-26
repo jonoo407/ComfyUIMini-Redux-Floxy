@@ -8,11 +8,31 @@ A mobile-friendly PWA to run ComfyUI workflows with advanced features and optimi
 
 ## About This Fork
 
-This is a personal fork of [ComfyUIMini-Redux](https://github.com/a1lazydog/ComfyUIMini-Redux) focused on:
-- 🔧 **Quality of Life Improvements**: Enhanced user experience and workflow efficiency
-- 🎯 **Professional Workflows**: Optimized for advanced AI image generation pipelines
-- 📱 **Enhanced UI/UX**: Improved interface design and mobile optimization
-- ⚡ **Performance Enhancements**: Better workflow management and processing efficiency
+This is a personal fork of [ComfyUIMini-Redux](https://github.com/a1lazydog/ComfyUIMini-Redux) enhanced with **professional AI image generation workflows** and **advanced quality of life improvements**:
+
+### 🎯 **Professional Workflow Collection** (7 Workflows)
+- **🚀 flux_floxy.json**: RTX 5090 optimized FLUX with Detail Daemon + Face Detailer (bf16)
+- **🖼️ Kontext.json**: Advanced image editing with FLUX Kontext
+- **🔗 Kotext Chain.json**: Dual image style transfer and fusion workflows  
+- **🧩 Kontext Stitch.json**: Professional image composition and stitching
+- **⬆️ SUPIR Floxy.json**: State-of-the-art AI upscaling with SUPIR v0F
+- **🎨 default_comfyui_workflow.json**: Classic SD1.5 realistic generation
+- **⚡ Plus additional specialized workflows**: All with validated model links and installation guides
+
+### ⚡ **Advanced Quality of Life Enhancements**
+- **🗑️ Clear All Button**: Instantly clear all text input fields with one click (next to "Run workflow")
+- **💀 Individual Clear Buttons**: Skull icons next to each field for selective clearing with hover animations
+- **🎲 Extended Seed Randomizer**: Works for both `seed` AND `noise_seed` inputs with dice toggle (🎲/🔒) and manual randomize (↻)
+- **🎨 Professional UI Integration**: Flexbox layouts, responsive design, smooth transitions and hover effects
+- **📱 Enhanced Mobile Experience**: Touch-optimized interface with pull-to-refresh and PWA support
+- **🎥 Advanced Gallery**: Full video support (MP4), subfolder navigation, and professional modal viewing
+
+### 🔧 **Professional Features**
+- **📊 RTX 5090 Optimization**: Specialized configurations for high-end hardware (24GB VRAM)
+- **🔄 Enhanced Workflow Management**: Automatic metadata preservation, format auto-conversion, backup systems
+- **🌐 Tailscale Integration**: Complete remote access documentation for mobile/anywhere use
+- **📚 Comprehensive Documentation**: Validated model download links, installation guides, troubleshooting
+- **⚙️ Advanced Configuration**: Custom output management, flexible path configuration, deployment settings
 
 ## Features
 
