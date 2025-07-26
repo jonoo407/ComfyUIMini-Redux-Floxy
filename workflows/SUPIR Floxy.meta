@@ -1,0 +1,248 @@
+{
+  "title": "SUPIR Floxy",
+  "description": "The best upscaler.",
+  "format_version": "3",
+  "input_options": [
+    {
+      "node_id": "2",
+      "input_name_in_node": "image",
+      "title": "[2] Load Image: image"
+    },
+    {
+      "node_id": "5",
+      "input_name_in_node": "use_tiled_vae",
+      "title": "[5] SUPIR First Stage (Denoiser): use_tiled_vae",
+      "disabled": true
+    },
+    {
+      "node_id": "5",
+      "input_name_in_node": "encoder_tile_size",
+      "title": "[5] SUPIR First Stage (Denoiser): encoder_tile_size",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "5",
+      "input_name_in_node": "decoder_tile_size",
+      "title": "[5] SUPIR First Stage (Denoiser): decoder_tile_size",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "5",
+      "input_name_in_node": "encoder_dtype",
+      "title": "[5] SUPIR First Stage (Denoiser): encoder_dtype",
+      "disabled": true
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "seed",
+      "title": "[7] SUPIR Sampler: seed",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "steps",
+      "title": "[7] SUPIR Sampler: steps",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "cfg_scale_start",
+      "title": "[7] SUPIR Sampler: cfg_scale_start",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "cfg_scale_end",
+      "title": "[7] SUPIR Sampler: cfg_scale_end",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "EDM_s_churn",
+      "title": "[7] SUPIR Sampler: EDM_s_churn",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "s_noise",
+      "title": "[7] SUPIR Sampler: s_noise",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "DPMPP_eta",
+      "title": "[7] SUPIR Sampler: DPMPP_eta",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "control_scale_start",
+      "title": "[7] SUPIR Sampler: control_scale_start",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "control_scale_end",
+      "title": "[7] SUPIR Sampler: control_scale_end",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "restore_cfg",
+      "title": "[7] SUPIR Sampler: restore_cfg",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "keep_model_loaded",
+      "title": "[7] SUPIR Sampler: keep_model_loaded",
+      "disabled": true
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "sampler",
+      "title": "[7] SUPIR Sampler: sampler"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "sampler_tile_size",
+      "title": "[7] SUPIR Sampler: sampler_tile_size",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "sampler_tile_stride",
+      "title": "[7] SUPIR Sampler: sampler_tile_stride",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "9",
+      "input_name_in_node": "positive_prompt",
+      "title": "[9] SUPIR Conditioner: positive_prompt",
+      "textfield_format": "multiline"
+    },
+    {
+      "node_id": "9",
+      "input_name_in_node": "negative_prompt",
+      "title": "[9] SUPIR Conditioner: negative_prompt",
+      "disabled": true,
+      "textfield_format": "multiline"
+    },
+    {
+      "node_id": "10",
+      "input_name_in_node": "use_tiled_vae",
+      "title": "[10] SUPIR Decode: use_tiled_vae",
+      "disabled": true
+    },
+    {
+      "node_id": "10",
+      "input_name_in_node": "decoder_tile_size",
+      "title": "[10] SUPIR Decode: decoder_tile_size",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "11",
+      "input_name_in_node": "use_tiled_vae",
+      "title": "[11] SUPIR Encode: use_tiled_vae",
+      "disabled": true
+    },
+    {
+      "node_id": "11",
+      "input_name_in_node": "encoder_tile_size",
+      "title": "[11] SUPIR Encode: encoder_tile_size",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "11",
+      "input_name_in_node": "encoder_dtype",
+      "title": "[11] SUPIR Encode: encoder_dtype",
+      "disabled": true
+    },
+    {
+      "node_id": "13",
+      "input_name_in_node": "interpolation",
+      "title": "[13] 🔧 Image Resize: interpolation",
+      "disabled": true
+    },
+    {
+      "node_id": "13",
+      "input_name_in_node": "method",
+      "title": "[13] 🔧 Image Resize: method",
+      "disabled": true
+    },
+    {
+      "node_id": "13",
+      "input_name_in_node": "condition",
+      "title": "[13] 🔧 Image Resize: condition",
+      "disabled": true
+    },
+    {
+      "node_id": "13",
+      "input_name_in_node": "multiple_of",
+      "title": "[13] 🔧 Image Resize: multiple_of",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "method",
+      "title": "[14] Color Match: method",
+      "disabled": true
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "strength",
+      "title": "[14] Color Match: strength",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "21",
+      "input_name_in_node": "supir_model",
+      "title": "[21] SUPIR Model Loader (v2): supir_model",
+      "disabled": true
+    },
+    {
+      "node_id": "21",
+      "input_name_in_node": "fp8_unet",
+      "title": "[21] SUPIR Model Loader (v2): fp8_unet"
+    },
+    {
+      "node_id": "21",
+      "input_name_in_node": "diffusion_dtype",
+      "title": "[21] SUPIR Model Loader (v2): diffusion_dtype",
+      "disabled": true
+    },
+    {
+      "node_id": "21",
+      "input_name_in_node": "high_vram",
+      "title": "[21] SUPIR Model Loader (v2): high_vram",
+      "disabled": true
+    },
+    {
+      "node_id": "22",
+      "input_name_in_node": "ckpt_name",
+      "title": "[22] Load Checkpoint: ckpt_name"
+    },
+    {
+      "node_id": "105",
+      "input_name_in_node": "upscale_method",
+      "title": "[105] Upscale Image By: upscale_method",
+      "disabled": true
+    },
+    {
+      "node_id": "105",
+      "input_name_in_node": "scale_by",
+      "title": "[105] Upscale Image By: scale_by",
+      "numberfield_format": "type"
+    }
+  ]
+}

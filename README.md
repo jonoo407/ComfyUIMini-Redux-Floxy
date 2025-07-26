@@ -332,7 +332,7 @@ Advanced FLUX Kontext workflow for precise image editing with text instructions.
 - **FLUX Kontext**: [FLUX.1-Kontext-dev](https://huggingface.co/black-forest-labs/FLUX.1-Kontext-dev) (Official Black Forest Labs model)
 - **CLIP Models**: [clip_l.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors) + [t5xxl_fp16.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors)
 
-### 🔗 **kontext_chain.json** - Dual Image Style Transfer
+### 🔗 **Kotext Chain.json** - Dual Image Style Transfer
 **Takes two input images, processes them in a chain. Useful for applying styles and combining elements from both images. Requires some trial and error**
 
 Advanced workflow for combining elements from multiple images using FLUX processing chain. Ideal for style transfer and image fusion projects.
@@ -341,7 +341,7 @@ Advanced workflow for combining elements from multiple images using FLUX process
 - **FLUX Model**: FLUX_CRAFT_Fill_NSFW.safetensors (NSFW-capable FLUX variant)
 - **CLIP Models**: [clip_l.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors) + [t5xxl_fp16.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors)
 
-### 🧩 **kontext_stitch.json** - Image Composition
+### 🧩 **Kontext Stitch.json** - Image Composition
 **Takes two input images, stitches them together for input to Flux Kontext. Refer to first image as image on left and second image as image on right. Use text prompt to describe what you want**
 
 Professional image stitching workflow that combines two images before processing with FLUX Kontext for seamless composition results.
@@ -350,13 +350,15 @@ Professional image stitching workflow that combines two images before processing
 - **FLUX Kontext**: [FLUX.1-Kontext-dev](https://huggingface.co/black-forest-labs/FLUX.1-Kontext-dev)
 - **CLIP Models**: [clip_l.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors) + [t5xxl_fp16.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors)
 
-### ⬆️ **SUPIR.json** - Professional Upscaling
-**The best upscaler**
+### ⬆️ **SUPIR Floxy.json** - Professional AI Upscaling
+**Professional upscaling workflow using SUPIR v0F with SDXL Lightning for highest quality results**
 
-High-quality image upscaling workflow using SUPIR technology with SDXL Lightning for fast, professional results.
+Advanced AI upscaling workflow combining SUPIR (Scaling-UP Image Restoration) technology with SDXL Lightning for ultra-high quality image enhancement and restoration.
 
 **Required Models:**
-- **SDXL Model**: [Juggernaut XL v9RD Lightning](https://civitai.com/models/133005/juggernaut-xl) (Professional SDXL checkpoint)
+- **SUPIR Model**: [SUPIR_v0F_fp16.safetensors](https://huggingface.co/camenduru/SUPIR) (Official SUPIR v0F model)
+- **SDXL Checkpoint**: [Juggernaut XL v9RD Lightning](https://civitai.com/models/133005/juggernaut-xl) (Fast, high-quality SDXL)
+- **SUPIR Nodes**: Install via ComfyUI Manager → Search "SUPIR" → Install SUPIR node pack
 
 ### 🎨 **default_comfyui_workflow.json** - Classic Stable Diffusion
 **Standard ComfyUI workflow for traditional image generation**
@@ -394,6 +396,11 @@ Lightweight FLUX workflow for testing and simple image generation without advanc
 ### SDXL Models
 - **Juggernaut XL**: [Civitai - Most Popular SDXL](https://civitai.com/models/133005/juggernaut-xl)
 - **Juggernaut Reborn**: [Civitai - SD1.5 Version](https://civitai.com/models/46422/juggernaut)
+
+### SUPIR Models
+- **SUPIR v0F**: [Hugging Face - Official SUPIR](https://huggingface.co/camenduru/SUPIR/resolve/main/SUPIR_v0F_fp16.safetensors)
+- **Alternative**: [SUPIR Collection](https://huggingface.co/models?search=SUPIR) (Various SUPIR versions)
+- **SUPIR Nodes**: Install via ComfyUI Manager → Search "SUPIR"
 
 ### Installation Notes
 - Most models auto-download through ComfyUI Manager when workflows are loaded
