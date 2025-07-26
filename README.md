@@ -77,13 +77,21 @@ npm run build
 npm start
 ```
 
-### Required ComfyUI Node Packs
+See [SETUP_FLOXY.md](SETUP_FLOXY.md) for additional configuration details.
 
-To use the included **flux_realism_dd_face_2.json** workflow, install these node packs in ComfyUI Manager:
+---
 
-#### Core Node Packs (Required):
+## Featured Custom Workflow: flux_realism_dd_face_2.json
+
+**🚀 RTX 5090 Optimized - Highest quality FLUX image generation using bf16 weights, detail daemon, and face detailer with variable settings (can set to 0 to disable)**
+
+*Note: This is a custom workflow included with this fork. The node packs and models listed below are only required if you want to use this specific workflow.*
+
+### Required Node Packs (For This Workflow Only):
+
+#### Core Node Packs:
 ```bash
-# Install via ComfyUI Manager or manually:
+# Install via ComfyUI Manager:
 
 1. ComfyUI-KJNodes
    - Provides: DiffusionModelLoaderKJ (bf16 weight support)
@@ -112,18 +120,14 @@ To use the included **flux_realism_dd_face_2.json** workflow, install these node
 3. Click Install and restart ComfyUI
 4. Alternatively, install via URL using the "Install from Git URL" option
 
-#### Required Models:
-- **FLUX Model**: Compatible FLUX model (bf16 format recommended)
+#### Required Models (For This Workflow):
+- **FLUX Model**: Compatible FLUX model (bf16 format recommended for RTX 5090)
 - **LoRA**: xlabs_realism_lora.safetensors or compatible realism LoRA
 - **Face Detection**: bbox/face_yolov8n.pt (auto-downloaded with Impact-Subpack)
 - **SAM Model**: sam_vit_b_01ec64.pth (auto-downloaded with Impact-Pack)
 
-## Featured Workflow: flux_realism_dd_face_2.json
-
-**Highest quality FLUX image generation using bf16 weights, detail daemon, and face detailer with variable settings (can set to 0 to disable)**
-
 ### Workflow Features:
-- 🎯 **FLUX bf16 Optimization**: Uses optimized bf16 weight loading for maximum quality and VRAM efficiency
+- 🎯 **RTX 5090 Optimized**: Uses bf16 weight loading for maximum quality and VRAM efficiency on high-end hardware
 - 🔍 **Detail Daemon Enhancement**: Advanced detail enhancement during generation (adjustable, set detail_amount to 0 to disable)
 - 👤 **Professional Face Detailing**: Automatic face detection and enhancement with customizable settings
 - 🎨 **Realism LoRA Integration**: Built-in support for realism enhancement LoRA
@@ -131,7 +135,7 @@ To use the included **flux_realism_dd_face_2.json** workflow, install these node
 - ⚙️ **Variable Settings**: All enhancement features can be fine-tuned or disabled
 
 ### Quality Features:
-- **BF16 Weight Loading**: Maximum model quality with efficient VRAM usage
+- **BF16 Weight Loading**: Maximum model quality with efficient VRAM usage (ideal for 24GB+ VRAM)
 - **Detail Daemon**: Adds fine details during generation process (0.0-1.0 range, 0 = disabled)
 - **Face Enhancement**: Separate positive/negative prompts for face-specific improvements
 - **Smart Sampling**: Uses beta scheduler with dpmpp_sde for optimal results
@@ -143,7 +147,9 @@ To use the included **flux_realism_dd_face_2.json** workflow, install these node
 - **Aspect Ratios**: Portrait/landscape with flexible sizing
 - **LoRA Strength**: Adjustable realism enhancement (0-1 range)
 
-This workflow represents a professional-grade setup for generating ultra-high quality realistic images with FLUX, combining multiple enhancement techniques that can be individually controlled or disabled as needed.
+This workflow represents a professional-grade setup for generating ultra-high quality realistic images with FLUX on RTX 5090 hardware, combining multiple enhancement techniques that can be individually controlled or disabled as needed.
+
+---
 
 ## Usage
 
@@ -179,8 +185,6 @@ This fork includes enhanced configuration options:
 }
 ```
 
-See [SETUP_FLOXY.md](SETUP_FLOXY.md) for additional configuration details.
-
 ## FAQ
 
 ### **Q**: How does this differ from the original ComfyUIMini?
@@ -198,6 +202,10 @@ See [SETUP_FLOXY.md](SETUP_FLOXY.md) for additional configuration details.
 ### **Q**: Can I suggest new features or improvements?
 
 **A**: This is a personal fork focused on specific workflow needs. However, feedback is always welcome for potential future enhancements.
+
+### **Q**: Do I need to install all those node packs?
+
+**A**: No! The node packs listed are only required for the specific custom workflow (flux_realism_dd_face_2.json). ComfyUIMini-Redux-Floxy works with any ComfyUI setup and workflows.
 
 ## Credits & Support
 
