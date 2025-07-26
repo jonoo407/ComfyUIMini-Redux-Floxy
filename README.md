@@ -67,6 +67,29 @@ This is a personal fork of [ComfyUIMini-Redux](https://github.com/a1lazydog/Comf
 
 ## Installation
 
+### Prerequisites (For Complete Beginners)
+
+If you're new to development tools, you'll need to install these first:
+
+**📋 Required Tools:**
+1. **Git** - Tool for downloading and managing code
+   - **Windows**: [Git for Windows Installation Guide](https://github.com/git-guides/install-git#install-git-on-windows)
+   - **macOS**: [Git for Mac Installation Guide](https://github.com/git-guides/install-git#install-git-on-macos)
+   - **Alternative**: [Complete Beginner's Git Tutorial](https://www.atlassian.com/git/tutorials/install-git)
+
+2. **Node.js & npm** - Runtime and package manager for the application
+   - **Official Guide**: [Download Node.js](https://nodejs.org/en/download/) (includes npm automatically)
+   - **Beginner Tutorial**: [How to Install Node.js and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+   - **Video Guide**: Search "How to install Node.js" on YouTube for visual guides
+
+**✅ Quick Check**: After installation, open Command Prompt/Terminal and type:
+```bash
+git --version
+node --version
+npm --version
+```
+If all commands show version numbers, you're ready to proceed!
+
 ### Basic Installation
 ```bash
 git clone https://github.com/jonoo407/ComfyUIMini-Redux-Floxy.git
@@ -76,6 +99,12 @@ npm run build
 # Configure config/default.json with your paths
 npm start
 ```
+
+**💡 Need Help?** If you're completely new to command line:
+- **Windows**: Search "Command Prompt" in Start Menu
+- **macOS**: Press Cmd+Space, type "Terminal"
+- **Copy and paste** each command one at a time
+- Press Enter after each command and wait for it to complete
 
 See [SETUP_FLOXY.md](SETUP_FLOXY.md) for additional configuration details.
 
