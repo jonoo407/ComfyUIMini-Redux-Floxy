@@ -94,7 +94,10 @@ cd ComfyUIMini-Redux-Floxy
 npm install
 ```
 
-This will download all required packages. It may take 2-5 minutes.
+This will:
+- Download all required packages (may take 2-5 minutes)
+- Automatically create a `config/default.json` file for you
+- Display a message reminding you to update the paths
 
 ### Step 4: Build the Application
 
