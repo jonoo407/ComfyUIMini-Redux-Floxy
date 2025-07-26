@@ -501,4 +501,4 @@ This fork is developed and maintained by **jonoo407** for professional AI image 
 
 ---
 
-**🌐 Professional AI Services**: [floxy.net](https://floxy.net)
+**🌐 Professional AI image generation services**: [floxy.net](https://floxy.net)
