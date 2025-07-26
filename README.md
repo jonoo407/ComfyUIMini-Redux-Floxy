@@ -106,8 +106,6 @@ npm start
 - **Copy and paste** each command one at a time
 - Press Enter after each command and wait for it to complete
 
-See [SETUP_FLOXY.md](SETUP_FLOXY.md) for additional configuration details.
-
 ---
 
 ## Featured Custom Workflow: flux_realism_dd_face_2.json
@@ -201,7 +199,7 @@ This workflow represents a professional-grade setup for generating ultra-high qu
 
 ## Configuration
 
-This fork includes enhanced configuration options:
+This fork includes enhanced configuration options. Copy `config/default.example.json` to `config/default.json` and update with your paths:
 
 ```json
 {
@@ -213,6 +211,8 @@ This fork includes enhanced configuration options:
     "auto_convert_comfyui_workflows": true
 }
 ```
+
+**Important**: Update the `output_dir` and `input_dir` paths to match your ComfyUI installation.
 
 ## FAQ
 
