@@ -113,6 +113,15 @@ Basic configuration in `config/default.json`:
 
 [→ Advanced configuration options](docs/CONFIGURATION.md)
 
+## 🐛 Recent Bug Fixes
+
+### Node ID Colon Bug (Fixed: January 26, 2025)
+Fixed an issue where workflow inputs for nodes with colons in their IDs (e.g., "54:0", "54:1") weren't saving or loading correctly. The bug was caused by ID sanitization not being properly reversed during parsing. 
+
+**Symptoms**: Prompt changes wouldn't persist for certain nodes, always reverting to default values.  
+**Solution**: Updated ID parsing logic to properly handle sanitized node IDs.  
+**Status**: ✅ Fixed in current version
+
 ## 📚 Documentation
 
 - [**Installation Guide**](docs/INSTALLATION.md) - Detailed setup instructions

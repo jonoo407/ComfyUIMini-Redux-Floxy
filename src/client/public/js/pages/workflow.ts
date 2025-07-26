@@ -128,7 +128,9 @@ function applyUrlParameterValues() {
         const inputElem = inputContainer.querySelector('.workflow-input') as HTMLInputElement;
         if (!inputElem) return;
         
-        const [, nodeId, nodeInputName] = inputElem.id.split('-');
+        const [, sanitizedNodeId, nodeInputName] = inputElem.id.split('-');
+        // Reverse the sanitization - convert underscores back to colons
+        const nodeId = sanitizedNodeId.replace(/_/g, ':');
         
         // Check if this node and input have a URL parameter override
         const nodeInputs = nodeParams[nodeId];
@@ -180,7 +182,9 @@ function updateUrlWithCurrentParams() {
         const inputElem = inputContainer.querySelector('.workflow-input') as HTMLInputElement;
         if (!inputElem) return;
         
-        const [, nodeId, nodeInputName] = inputElem.id.split('-');
+        const [, sanitizedNodeId, nodeInputName] = inputElem.id.split('-');
+        // Reverse the sanitization - convert underscores back to colons
+        const nodeId = sanitizedNodeId.replace(/_/g, ':');
         const inputValue = inputElem.value;
         
         // Only add non-empty values
@@ -640,7 +644,9 @@ function generateNodeInputValues(): NodeInputValues {
 
         const inputElem = inputContainer.querySelector('.workflow-input') as HTMLInputElement;
 
-        const [, nodeId, nodeInputName] = inputElem.id.split('-');
+        const [, sanitizedNodeId, nodeInputName] = inputElem.id.split('-');
+        // Reverse the sanitization - convert underscores back to colons
+        const nodeId = sanitizedNodeId.replace(/_/g, ':');
 
         // For textarea elements, save the original template string but use formatted date for execution
         // Note: This will include any URL parameter values that were applied to the input fields
