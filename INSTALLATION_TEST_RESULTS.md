@@ -36,7 +36,7 @@
    - Updated paths to match ComfyUI installation
 
 6. **Start Application** ✅
-   - Application started successfully on port 3001
+   - Application started successfully on port 3000
    - Connected to ComfyUI on port 8188
    - ComfyUI version 0.3.45 detected
    - 1 workflow found and loaded
