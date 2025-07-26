@@ -26,6 +26,31 @@ This is a personal fork of [ComfyUIMini-Redux](https://github.com/a1lazydog/Comf
 -   🎥 **Video Support**: Full MP4 video generation and playback
 -   🔧 **Professional Metadata Management**: Separate .meta files preserve original workflows
 
+## ✨ Latest Quality of Life Improvements
+
+### 🗑️ **Clear All Button**
+- **Location**: Next to the "Run workflow" button
+- **Function**: Instantly clears all text input fields (prompts) with one click
+- **Smart Features**: Auto-adjusts textarea heights and focuses cleared fields
+
+### 💀 **Individual Clear Buttons**
+- **Location**: Skull icon (💀) next to each text input field
+- **Function**: Clear specific individual fields for selective editing
+- **Enhanced UX**: Smooth hover animations with scale, rotation, and glow effects
+- **Focus Management**: Automatically focuses the cleared field for immediate typing
+
+### 🎲 **Extended Seed Randomizer**
+- **Enhanced Coverage**: Now works for both 'seed' AND 'noise_seed' inputs (was 'seed' only)
+- **Dice Toggle**: Click the dice (🎲) to enable/disable auto-randomization on workflow run
+- **Manual Randomize**: Refresh button (↻) for immediate randomization
+- **Lock Mode**: Locked dice (🔒) indicates disabled auto-randomization
+
+### 🎨 **Professional UI Integration**
+- **Flexbox Layout**: Clean, properly aligned button arrangements
+- **Consistent Styling**: All buttons match the professional design aesthetic
+- **Responsive Design**: Optimized for both desktop and mobile interfaces
+- **Smooth Transitions**: Enhanced hover effects and visual feedback
+
 ## Recent Enhancements
 
 ### 🎥 **Advanced Gallery**
@@ -105,6 +130,123 @@ npm start
 - **macOS**: Press Cmd+Space, type "Terminal"
 - **Copy and paste** each command one at a time
 - Press Enter after each command and wait for it to complete
+
+### 📋 Easy Desktop Shortcut
+
+Create a desktop shortcut to start the application easily:
+
+**Windows (.bat file):**
+```batch
+@echo off
+cd /d "C:\path\to\your\ComfyUIMini-Redux-Floxy"
+npm start
+pause
+```
+
+**macOS/Linux (.sh file):**
+```bash
+#!/bin/bash
+cd "/path/to/your/ComfyUIMini-Redux-Floxy"
+npm start
+```
+
+**Instructions:**
+1. Copy the appropriate code above
+2. Save as `start-comfyuimini.bat` (Windows) or `start-comfyuimini.sh` (macOS/Linux)
+3. Update the path to match your installation directory
+4. Copy to your desktop
+5. Double-click to start the application instantly!
+
+---
+
+## Configuration & Port Setup
+
+### 🔌 ComfyUI Port Configuration
+
+**Default Setup** (Most Users):
+ComfyUI typically runs on port `8188`. If you're using the default setup, no changes needed.
+
+**Custom Port Configuration**:
+If your ComfyUI runs on a different port, update `config/default.json`:
+
+```json
+{
+    "app_port": 3000,
+    "comfyui_url": "http://127.0.0.1:XXXX",
+    "comfyui_ws_url": "ws://127.0.0.1:XXXX",
+    "output_dir": "path/to/your/comfyui/output",
+    "input_dir": "path/to/your/comfyui/input"
+}
+```
+
+**Common Port Scenarios:**
+- **Default ComfyUI**: `8188` (no changes needed)
+- **Custom ComfyUI Port**: Replace `8188` with your custom port
+- **Docker ComfyUI**: Often uses `8188` but check your docker configuration
+- **Remote ComfyUI**: Replace `127.0.0.1` with the IP address of the remote machine
+
+**🔍 How to Find Your ComfyUI Port:**
+1. Look at the ComfyUI startup message in console
+2. Check your browser URL when accessing ComfyUI (e.g., `localhost:8188`)
+3. If using custom launch scripts, check the `--port` parameter
+
+### 🌐 Remote Access with Tailscale
+
+Access your ComfyUIMini-Redux-Floxy from anywhere using Tailscale:
+
+**Step 1: Install Tailscale**
+1. Sign up at [Tailscale.com](https://tailscale.com)
+2. Install Tailscale on both your host PC and mobile device
+3. Log in with the same account on both devices
+
+**Step 2: Configure for Remote Access**
+```json
+{
+    "app_port": 3000,
+    "comfyui_url": "http://YOUR-TAILSCALE-IP:8188",
+    "comfyui_ws_url": "ws://YOUR-TAILSCALE-IP:8188",
+    "output_dir": "path/to/your/comfyui/output",
+    "input_dir": "path/to/your/comfyui/input"
+}
+```
+
+**Step 3: Find Your Tailscale IP**
+- **Windows**: Run `tailscale ip -4` in Command Prompt
+- **macOS/Linux**: Run `tailscale ip -4` in Terminal
+- **Alternative**: Check Tailscale admin console at [login.tailscale.com](https://login.tailscale.com)
+
+**Step 4: Access Remotely**
+- On your mobile device, navigate to: `http://YOUR-TAILSCALE-IP:3000`
+- Bookmark for easy access!
+
+**🔐 Security Benefits:**
+- **Encrypted Connection**: All traffic encrypted end-to-end
+- **No Port Forwarding**: No need to open ports on your router
+- **Private Network**: Only your devices can access the application
+- **Easy Management**: Add/remove devices through Tailscale admin console
+
+**📱 Mobile PWA with Tailscale:**
+- Add to home screen for app-like experience
+- Works seamlessly over Tailscale connection
+- Full offline workflow editing capabilities
+- Automatic reconnection when network changes
+
+### Enhanced Configuration
+
+This fork includes enhanced configuration options. Copy `config/default.example.json` to `config/default.json` and update with your paths:
+
+```json
+{
+    "app_port": 3000,
+    "comfyui_url": "http://127.0.0.1:8188",
+    "comfyui_ws_url": "ws://127.0.0.1:8188",
+    "output_dir": "D:\\AI\\UIs\\SwarmUI_install\\SwarmUI\\Output\\local\\raw",
+    "input_dir": "D:\\AI\\UIs\\ComfyUI_install\\ComfyUI\\input",
+    "auto_convert_comfyui_workflows": true
+}
+```
+
+**Important**: Update the `output_dir` and `input_dir` paths to match your ComfyUI installation.
 
 ---
 
@@ -197,28 +339,29 @@ This workflow represents a professional-grade setup for generating ultra-high qu
 - **Mobile Refresh**: Pull-to-refresh functionality optimized for mobile
 - **Automatic Updates**: Smart image detection and queue management
 
-## Configuration
+### Quality of Life Features in Action
 
-This fork includes enhanced configuration options. Copy `config/default.example.json` to `config/default.json` and update with your paths:
+**🗑️ Clear All Workflow:**
+1. Fill out your prompts and settings
+2. Want to start fresh? Click the "🗑️ Clear" button next to "Run workflow"
+3. All text fields instantly cleared and ready for new input
 
-```json
-{
-    "app_port": 3000,
-    "comfyui_url": "http://127.0.0.1:8188",
-    "comfyui_ws_url": "ws://127.0.0.1:8188",
-    "output_dir": "D:\\AI\\UIs\\SwarmUI_install\\SwarmUI\\Output\\local\\raw",
-    "input_dir": "D:\\AI\\UIs\\ComfyUI_install\\ComfyUI\\input",
-    "auto_convert_comfyui_workflows": true
-}
-```
+**💀 Individual Clear Workflow:**
+1. Working with multiple prompts
+2. Want to clear just one field? Click the skull (💀) next to that specific input
+3. Field clears and automatically focuses for immediate typing
 
-**Important**: Update the `output_dir` and `input_dir` paths to match your ComfyUI installation.
+**🎲 Seed Randomization Workflow:**
+1. Click dice (🎲) next to seed/noise_seed to enable auto-randomization
+2. Each run will use a random seed automatically
+3. Click again to lock (🔒) and use fixed seeds
+4. Use refresh button (↻) for manual randomization anytime
 
 ## FAQ
 
 ### **Q**: How does this differ from the original ComfyUIMini?
 
-**A**: This fork focuses on quality of life improvements, enhanced UI/UX design, better workflow management, and improved mobile experience. It includes custom enhancements for professional AI image generation workflows.
+**A**: This fork focuses on quality of life improvements, enhanced UI/UX design, better workflow management, and improved mobile experience. It includes custom enhancements for professional AI image generation workflows, plus the new Clear All, individual clear buttons, and extended seed randomizer features.
 
 ### **Q**: I can't import my workflow.
 
@@ -226,7 +369,15 @@ This fork includes enhanced configuration options. Copy `config/default.example.
 
 ### **Q**: What quality of life improvements are included?
 
-**A**: Enhanced workflow management, improved mobile interface, better video support, streamlined queue management, and various UI/UX improvements that make the experience more professional and efficient.
+**A**: Enhanced workflow management, improved mobile interface, better video support, streamlined queue management, Clear All button, individual clear buttons (💀), extended seed randomizer for both seed and noise_seed, and various UI/UX improvements that make the experience more professional and efficient.
+
+### **Q**: My ComfyUI runs on a different port, how do I configure it?
+
+**A**: Update the `comfyui_url` and `comfyui_ws_url` in `config/default.json` to match your ComfyUI port. Replace `8188` with your custom port number.
+
+### **Q**: Can I access this remotely from my phone?
+
+**A**: Yes! Use Tailscale for secure remote access. Install Tailscale on both your host PC and mobile device, then update the configuration with your Tailscale IP address. See the Tailscale section above for detailed instructions.
 
 ### **Q**: Can I suggest new features or improvements?
 
@@ -235,6 +386,10 @@ This fork includes enhanced configuration options. Copy `config/default.example.
 ### **Q**: Do I need to install all those node packs?
 
 **A**: No! The node packs listed are only required for the specific custom workflow (flux_floxy.json). ComfyUIMini-Redux-Floxy works with any ComfyUI setup and workflows.
+
+### **Q**: The clear buttons aren't working, what's wrong?
+
+**A**: Make sure you've run `npm run build` after installation to compile the latest TypeScript changes. If issues persist, try refreshing your browser cache (Ctrl+F5 or Cmd+Shift+R).
 
 ## Credits & Support
 
@@ -261,3 +416,7 @@ This fork is developed and maintained by **jonoo407** for professional AI image 
 **Repository**: Private development fork - focused on quality of life improvements and professional workflow enhancements.
 
 **License**: AGPL-3.0 (inherited from original projects)
+
+---
+
+**🌐 Professional AI Services**: [floxy.net](https://floxy.net)
