@@ -67,10 +67,7 @@ This is a personal fork of [ComfyUIMini-Redux](https://github.com/a1lazydog/Comf
 
 ## Installation
 
-### Quick Start
-See the **[Complete Installation Guide](SETUP_FLOXY.md)** for detailed step-by-step instructions.
-
-### For Experienced Users
+### Basic Installation
 ```bash
 git clone https://github.com/jonoo407/ComfyUIMini-Redux-Floxy.git
 cd ComfyUIMini-Redux-Floxy
@@ -182,7 +179,7 @@ This fork includes enhanced configuration options:
 }
 ```
 
-See [SETUP_FLOXY.md](SETUP_FLOXY.md) for complete configuration details.
+See [SETUP_FLOXY.md](SETUP_FLOXY.md) for additional configuration details.
 
 ## FAQ
 
