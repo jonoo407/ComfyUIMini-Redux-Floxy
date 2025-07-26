@@ -108,7 +108,7 @@ npm start
 
 ---
 
-## Featured Custom Workflow: flux_realism_dd_face_2.json
+## Featured Custom Workflow: flux_floxy.json
 
 **🚀 RTX 5090 Optimized - Highest quality FLUX image generation using bf16 weights, detail daemon, and face detailer with variable settings (can set to 0 to disable)**
 
@@ -234,7 +234,7 @@ This fork includes enhanced configuration options. Copy `config/default.example.
 
 ### **Q**: Do I need to install all those node packs?
 
-**A**: No! The node packs listed are only required for the specific custom workflow (flux_realism_dd_face_2.json). ComfyUIMini-Redux-Floxy works with any ComfyUI setup and workflows.
+**A**: No! The node packs listed are only required for the specific custom workflow (flux_floxy.json). ComfyUIMini-Redux-Floxy works with any ComfyUI setup and workflows.
 
 ## Credits & Support
 
