@@ -1,6 +1,6 @@
 # ComfyUIMini-Redux-Floxy
 
-**Personal fork of ComfyUIMini-Redux optimized for RTX 5090 workflows and enhanced AI image generation**
+**Personal fork of ComfyUIMini-Redux with quality of life improvements and enhanced UI features**
 
 A mobile-friendly PWA to run ComfyUI workflows with advanced features and optimizations.
 
@@ -9,10 +9,10 @@ A mobile-friendly PWA to run ComfyUI workflows with advanced features and optimi
 ## About This Fork
 
 This is a personal fork of [ComfyUIMini-Redux](https://github.com/a1lazydog/ComfyUIMini-Redux) focused on:
-- 🚀 **RTX 5090 Optimization**: Enhanced performance for high-end GPU workflows
-- 🎯 **Professional Workflows**: Optimized for realistic image generation and detail enhancement
-- 🔧 **Custom Configurations**: Tailored settings for advanced AI pipelines
-- 📱 **Enhanced Mobile Experience**: Improved PWA functionality and mobile optimization
+- 🔧 **Quality of Life Improvements**: Enhanced user experience and workflow efficiency
+- 🎯 **Professional Workflows**: Optimized for advanced AI image generation pipelines
+- 📱 **Enhanced UI/UX**: Improved interface design and mobile optimization
+- ⚡ **Performance Enhancements**: Better workflow management and processing efficiency
 
 ## Features
 
@@ -40,7 +40,7 @@ This is a personal fork of [ComfyUIMini-Redux](https://github.com/a1lazydog/Comf
 - **API Format Auto-Conversion**: Seamless workflow import from any ComfyUI format
 
 ### ⚡ **Performance & UX**
-- **RTX 5090 Optimized**: Custom configurations for high-end GPU performance
+- **Quality of Life Enhancements**: Streamlined workflow management and improved user experience
 - **Smart Queue Management**: Automatic image queuing and progress tracking
 - **Dynamic Placeholders**: Advanced date/time replacement in workflow inputs
 - **Mobile-First Design**: Optimized touch interface and responsive design
@@ -57,8 +57,8 @@ This is a personal fork of [ComfyUIMini-Redux](https://github.com/a1lazydog/Comf
 
 -   **ComfyUI**: Version 0.3.45+ recommended (tested with latest builds)
 -   **NodeJS**: Version 20.0.0 or higher
--   **GPU**: RTX 5090 recommended for optimal performance
--   **RAM**: 32GB+ recommended for complex workflows
+-   **Hardware**: Modern GPU recommended for optimal workflow performance
+-   **RAM**: 16GB+ recommended for complex workflows
 
 ### Mobile (Accessing WebUI):
 
@@ -120,19 +120,19 @@ See [SETUP_FLOXY.md](SETUP_FLOXY.md) for complete configuration details.
 
 ### **Q**: How does this differ from the original ComfyUIMini?
 
-**A**: This fork focuses on professional workflows, RTX 5090 optimization, enhanced video support, and improved mobile experience. It includes custom configurations for advanced AI image generation pipelines.
+**A**: This fork focuses on quality of life improvements, enhanced UI/UX design, better workflow management, and improved mobile experience. It includes custom enhancements for professional AI image generation workflows.
 
 ### **Q**: I can't import my workflow.
 
 **A**: Save your workflow in API Format in ComfyUI (Settings → Enable "Save (API Format)"). This fork includes enhanced auto-conversion that handles most workflow formats automatically.
 
-### **Q**: Can I use this with other GPUs besides RTX 5090?
+### **Q**: What quality of life improvements are included?
 
-**A**: Absolutely! While optimized for RTX 5090, this fork works with any GPU that supports ComfyUI. The optimizations simply provide better performance on high-end hardware.
+**A**: Enhanced workflow management, improved mobile interface, better video support, streamlined queue management, and various UI/UX improvements that make the experience more professional and efficient.
 
-### **Q**: How do I update workflows?
+### **Q**: Can I suggest new features or improvements?
 
-**A**: Same process as standard ComfyUI - save in API format and the enhanced auto-detection will handle the rest. This fork provides better workflow management than the original.
+**A**: This is a personal fork focused on specific workflow needs. However, feedback is always welcome for potential future enhancements.
 
 ## Credits & Support
 
@@ -148,14 +148,14 @@ This fork is developed and maintained by **jonoo407** for professional AI image 
 <a href="https://coff.ee/kwude1bkpg" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-yellow.png" alt="Buy Me A Coffee" height="41" width="174"></a>
 
 ### Development Focus
-- RTX 5090 workflow optimization
-- Professional image generation pipelines  
+- Quality of life UI/UX improvements
+- Professional image generation workflow optimization
 - Enhanced mobile and PWA experience
 - Advanced video generation support
-- Custom AI model integration
+- Custom workflow management features
 
 ---
 
-**Repository**: Private development fork - optimized for professional AI workflows and high-end GPU performance.
+**Repository**: Private development fork - focused on quality of life improvements and professional workflow enhancements.
 
 **License**: AGPL-3.0 (inherited from original projects)
