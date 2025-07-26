@@ -38,15 +38,6 @@ Yes! This fork maintains full compatibility:
 
 ## Installation Issues
 
-### I get "Cannot find module 'ejs'" error
-
-The 'ejs' template engine didn't install properly. Fix it by running:
-```bash
-npm install ejs
-```
-
-This occasionally happens with npm installations. After installing ejs, try starting the application again.
-
 ### "npm: command not found"
 
 Node.js is not installed or not in PATH:
