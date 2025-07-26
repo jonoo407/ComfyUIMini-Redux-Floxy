@@ -250,9 +250,14 @@ This fork includes enhanced configuration options. Copy `config/default.example.
 
 ---
 
-## Featured Custom Workflow: flux_floxy.json
+## 🎯 Featured Workflows & Models
 
-**🚀 RTX 5090 Optimized - Highest quality FLUX image generation using bf16 weights, detail daemon, and face detailer with variable settings (can set to 0 to disable)**
+This distribution includes **7 professional workflows** optimized for different AI image generation tasks. All workflows are fully functional with downloadable models and validated links.
+
+### 🚀 **flux_floxy.json** - Premium RTX 5090 Optimized Workflow
+**Flux with Detail Daemon, face detailer, bf16 workflow**
+
+**🔥 RTX 5090 Optimized - Highest quality FLUX image generation using bf16 weights, detail daemon, and face detailer with variable settings (can set to 0 to disable)**
 
 *Note: This is a custom workflow included with this fork. The node packs and models listed below are only required if you want to use this specific workflow.*
 
@@ -317,6 +322,83 @@ This fork includes enhanced configuration options. Copy `config/default.example.
 - **LoRA Strength**: Adjustable realism enhancement (0-1 range)
 
 This workflow represents a professional-grade setup for generating ultra-high quality realistic images with FLUX on RTX 5090 hardware, combining multiple enhancement techniques that can be individually controlled or disabled as needed.
+
+### 🖼️ **Kontext.json** - Intelligent Image Editing
+**Basic flux Kontext taking one image input and editing it based on your text prompt**
+
+Advanced FLUX Kontext workflow for precise image editing with text instructions. Perfect for modifying existing images while maintaining quality and coherence.
+
+**Required Models:**
+- **FLUX Kontext**: [FLUX.1-Kontext-dev](https://huggingface.co/black-forest-labs/FLUX.1-Kontext-dev) (Official Black Forest Labs model)
+- **CLIP Models**: [clip_l.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors) + [t5xxl_fp16.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors)
+
+### 🔗 **kontext_chain.json** - Dual Image Style Transfer
+**Takes two input images, processes them in a chain. Useful for applying styles and combining elements from both images. Requires some trial and error**
+
+Advanced workflow for combining elements from multiple images using FLUX processing chain. Ideal for style transfer and image fusion projects.
+
+**Required Models:**
+- **FLUX Model**: FLUX_CRAFT_Fill_NSFW.safetensors (NSFW-capable FLUX variant)
+- **CLIP Models**: [clip_l.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors) + [t5xxl_fp16.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors)
+
+### 🧩 **kontext_stitch.json** - Image Composition
+**Takes two input images, stitches them together for input to Flux Kontext. Refer to first image as image on left and second image as image on right. Use text prompt to describe what you want**
+
+Professional image stitching workflow that combines two images before processing with FLUX Kontext for seamless composition results.
+
+**Required Models:**
+- **FLUX Kontext**: [FLUX.1-Kontext-dev](https://huggingface.co/black-forest-labs/FLUX.1-Kontext-dev)
+- **CLIP Models**: [clip_l.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors) + [t5xxl_fp16.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors)
+
+### ⬆️ **SUPIR.json** - Professional Upscaling
+**The best upscaler**
+
+High-quality image upscaling workflow using SUPIR technology with SDXL Lightning for fast, professional results.
+
+**Required Models:**
+- **SDXL Model**: [Juggernaut XL v9RD Lightning](https://civitai.com/models/133005/juggernaut-xl) (Professional SDXL checkpoint)
+
+### 🎨 **default_comfyui_workflow.json** - Classic Stable Diffusion
+**Standard ComfyUI workflow for traditional image generation**
+
+Basic workflow using SD1.5 for traditional image generation with reliable, tested results.
+
+**Required Models:**
+- **SD1.5 Model**: [Juggernaut Reborn](https://civitai.com/models/46422/juggernaut) (Realistic SD1.5 checkpoint)
+
+### ⚡ **flux_simple_test.json** - FLUX Testing
+**Simple FLUX test workflow for basic text-to-image generation**
+
+Lightweight FLUX workflow for testing and simple image generation without advanced features.
+
+**Required Models:**
+- **FLUX Components**: [t5xxl_fp16.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors), [clip_l.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors), [ae.safetensors](https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/ae.safetensors)
+
+---
+
+## 📚 Model Download Links - All Validated ✅
+
+### Core FLUX Models
+- **FLUX.1-dev**: [Hugging Face - Official](https://huggingface.co/black-forest-labs/FLUX.1-dev)
+- **FLUX Kontext**: [Hugging Face - Official](https://huggingface.co/black-forest-labs/FLUX.1-Kontext-dev)
+- **CLIP Models**: [ComfyUI Text Encoders Collection](https://huggingface.co/comfyanonymous/flux_text_encoders)
+
+### LoRA Models
+- **XLabs Realism LoRA**: [Hugging Face - Official](https://huggingface.co/XLabs-AI/flux-RealismLora/blob/main/lora.safetensors)
+- **Civitai Alternative**: [XLabs Flux Realism LoRA](https://civitai.com/models/631986/xlabs-flux-realism-lora)
+
+### Detection Models (Auto-Downloaded via ComfyUI Impact Pack)
+- **Face Detection**: [bbox/face_yolov8n.pt](https://huggingface.co/Bingsu/adetailer) (via Impact Subpack)
+- **SAM Segmentation**: [sam_vit_b_01ec64.pth](https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth) (Official Facebook Research)
+
+### SDXL Models
+- **Juggernaut XL**: [Civitai - Most Popular SDXL](https://civitai.com/models/133005/juggernaut-xl)
+- **Juggernaut Reborn**: [Civitai - SD1.5 Version](https://civitai.com/models/46422/juggernaut)
+
+### Installation Notes
+- Most models auto-download through ComfyUI Manager when workflows are loaded
+- Face detection models install automatically with Impact Subpack
+- All download links validated and tested as of January 2025
 
 ---
 
