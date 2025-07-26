@@ -30,6 +30,7 @@ const elements = {
     outputImagesContainer: document.querySelector('.output-images-container') as HTMLElement,
     runButton: document.querySelector('.run-workflow') as HTMLButtonElement,
     cancelRunButton: document.querySelector('.cancel-run-button') as HTMLButtonElement,
+    clearPromptsButton: document.querySelector('.clear-prompts-button') as HTMLButtonElement,
     saveToGalleryToggle: document.querySelector('#save-to-gallery-toggle') as HTMLInputElement,
     toggleLabelText: document.querySelector('#toggle-label-text') as HTMLElement,
     get allFileInputs() {
@@ -273,6 +274,7 @@ function updateToggleLabel() {
 function startEventListeners() {
     elements.runButton.addEventListener('click', runWorkflow);
     elements.cancelRunButton.addEventListener('click', cancelRun);
+    elements.clearPromptsButton.addEventListener('click', clearAllPrompts);
 
     elements.inputsContainer.addEventListener('click', handleInputContainerClick);
 
@@ -450,6 +452,21 @@ function fileUploadEventListener(inputElement: HTMLElement) {
 
 
 /**
+ * Clears all prompt text areas in the workflow.
+ */
+function clearAllPrompts() {
+    const textareas = document.querySelectorAll('textarea.workflow-input') as NodeListOf<HTMLTextAreaElement>;
+    
+    textareas.forEach(textarea => {
+        textarea.value = '';
+        // Trigger auto-expand adjustment
+        adjustTextareaHeight(textarea);
+    });
+    
+    console.log(`Cleared ${textareas.length} prompt field(s)`);
+}
+
+/**
  * Handles clicks on elements inside the input container.
  *
  * @param event The click mouse event.
@@ -476,6 +493,25 @@ function handleInputContainerClick(event: MouseEvent) {
         }
 
         randomiseInput(linkedInputId);
+    } else if (target.classList.contains('clear-individual-button') || target.closest('.clear-individual-button')) {
+        // Handle individual clear button clicks
+        const button = target.classList.contains('clear-individual-button') ? target : target.closest('.clear-individual-button') as HTMLElement;
+        const targetId = button.getAttribute('data-target');
+        
+        if (targetId) {
+            const targetElement = document.getElementById(targetId) as HTMLInputElement | HTMLTextAreaElement;
+            if (targetElement) {
+                targetElement.value = '';
+                targetElement.focus(); // Nice UX touch - focus the cleared field
+                
+                // Trigger auto-expand adjustment for textareas
+                if (targetElement instanceof HTMLTextAreaElement) {
+                    adjustTextareaHeight(targetElement);
+                }
+                
+                console.log(`Cleared individual field: ${targetId}`);
+            }
+        }
     }
 }
 

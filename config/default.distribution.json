@@ -1,0 +1,20 @@
+{
+    "app_port": 3000,
+    "comfyui_url": "http://127.0.0.1:8188",
+    "comfyui_ws_url": "ws://127.0.0.1:8188",
+    "reject_unauthorised_cert": true,
+    "optional_log": {
+        "generation_finish": true,
+        "queue_image": false,
+        "fetch_queue": false,
+        "fetch_history": false
+    },
+    "auto_convert_comfyui_workflows": true,
+    "hide_all_input_on_auto_covert": false,
+    "enable_gallery_delete": false,
+    "output_dir": "path/to/comfyui/output",
+    "input_dir": "path/to/comfyui/input",
+    "developer": {
+        "min_comfyui_version": "v0.2.2-50-7183fd1"
+    }
+}

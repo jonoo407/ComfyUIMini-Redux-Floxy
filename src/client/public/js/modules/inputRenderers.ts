@@ -82,11 +82,17 @@ export function renderTextInput(inputOptions: TextRenderConfig): string {
     const id = generateInputId(inputOptions.node_id, inputOptions.input_name_in_node);
     const format = inputOptions.format || 'multiline';
     
+    const clearButtonHTML = `
+    <div class="clear-individual-button-container">
+        <span class="clear-individual-button" data-target="${id}" title="Clear this field">💀</span>
+    </div>`;
+    
     let inputHtml = '';
     
     switch (format) {
         case 'single':
-            inputHtml = `<input type="text" id="${id}" class="workflow-input" value="${inputOptions.default}">`;
+            inputHtml = `<input type="text" id="${id}" class="workflow-input has-additional-button" value="${inputOptions.default}">
+            ${clearButtonHTML}`;
             break;
         case 'dropdown':
             if (inputOptions.dropdownOptions && inputOptions.dropdownOptions.length > 0) {
@@ -96,13 +102,15 @@ export function renderTextInput(inputOptions: TextRenderConfig): string {
                 inputHtml = `<select id="${id}" class="workflow-input">${optionsHtml}</select>`;
             } else {
                 // Fallback to single line if no dropdown options
-                inputHtml = `<input type="text" id="${id}" class="workflow-input" value="${inputOptions.default}">`;
+                inputHtml = `<input type="text" id="${id}" class="workflow-input has-additional-button" value="${inputOptions.default}">
+                ${clearButtonHTML}`;
             }
             break;
         case 'multiline':
         default:
-            const textareaClass = `workflow-input auto-expand`;
-            inputHtml = `<textarea id="${id}" class="${textareaClass}" data-multiline="true">${inputOptions.default}</textarea>`;
+            const textareaClass = `workflow-input auto-expand has-additional-button`;
+            inputHtml = `<textarea id="${id}" class="${textareaClass}" data-multiline="true">${inputOptions.default}</textarea>
+            ${clearButtonHTML}`;
             break;
     }
     
@@ -115,7 +123,7 @@ export function renderTextInput(inputOptions: TextRenderConfig): string {
  * @returns {string}
  */
 export function renderNumberInput(inputOptions: NumberRenderConfig & { numberfield_format?: 'type' | 'slider' }): string {
-    const showRandomiseToggle = inputOptions.input_name_in_node === 'seed';
+    const showRandomiseToggle = inputOptions.input_name_in_node === 'seed' || inputOptions.input_name_in_node === 'noise_seed';
     const showResolutionSelector =
         inputOptions.input_name_in_node === 'width' || inputOptions.input_name_in_node === 'height';
 

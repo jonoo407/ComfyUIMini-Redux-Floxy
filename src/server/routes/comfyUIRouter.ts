@@ -29,6 +29,8 @@ router.get('/image', async (req, res): Promise<void> => {
     const subfolder = typeof queries.subfolder === 'string' ? queries.subfolder : '';
     const imageType = typeof queries.type === 'string' ? queries.type : null;
 
+    console.log('Image request:', { filename, subfolder, imageType });
+
     if (!filename || !imageType) {
         res.status(400).send('Missing parameters');
         return;
