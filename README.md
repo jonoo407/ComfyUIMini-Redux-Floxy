@@ -80,6 +80,74 @@ npm run build
 npm start
 ```
 
+### Required ComfyUI Node Packs
+
+To use the included **flux_realism_dd_face_2.json** workflow, install these node packs in ComfyUI Manager:
+
+#### Core Node Packs (Required):
+```bash
+# Install via ComfyUI Manager or manually:
+
+1. ComfyUI-KJNodes
+   - Provides: DiffusionModelLoaderKJ (bf16 weight support)
+   - URL: https://github.com/kijai/ComfyUI-KJNodes
+
+2. ComfyUI-Impact-Pack  
+   - Provides: FaceDetailer, BasicGuider, SamplerCustomAdvanced
+   - URL: https://github.com/ltdrdata/ComfyUI-Impact-Pack
+
+3. ComfyUI-Impact-Subpack
+   - Provides: UltralyticsDetectorProvider, SAMLoader  
+   - URL: https://github.com/ltdrdata/ComfyUI-Impact-Subpack
+
+4. ComfyUI-Detail-Daemon
+   - Provides: DetailDaemonSamplerNode (advanced detail enhancement)
+   - URL: https://github.com/Jordach/comfyui-detail-daemon
+
+5. WLSH Nodes
+   - Provides: Empty Latent by Ratio (WLSH) (aspect ratio management)
+   - URL: https://github.com/wallish77/wlsh_nodes
+```
+
+#### Installation via ComfyUI Manager:
+1. Open ComfyUI → Manager → Install Custom Nodes
+2. Search for each node pack name
+3. Click Install and restart ComfyUI
+4. Alternatively, install via URL using the "Install from Git URL" option
+
+#### Required Models:
+- **FLUX Model**: Compatible FLUX model (bf16 format recommended)
+- **LoRA**: xlabs_realism_lora.safetensors or compatible realism LoRA
+- **Face Detection**: bbox/face_yolov8n.pt (auto-downloaded with Impact-Subpack)
+- **SAM Model**: sam_vit_b_01ec64.pth (auto-downloaded with Impact-Pack)
+
+## Featured Workflow: flux_realism_dd_face_2.json
+
+**Highest quality FLUX image generation using bf16 weights, detail daemon, and face detailer with variable settings (can set to 0 to disable)**
+
+### Workflow Features:
+- 🎯 **FLUX bf16 Optimization**: Uses optimized bf16 weight loading for maximum quality and VRAM efficiency
+- 🔍 **Detail Daemon Enhancement**: Advanced detail enhancement during generation (adjustable, set detail_amount to 0 to disable)
+- 👤 **Professional Face Detailing**: Automatic face detection and enhancement with customizable settings
+- 🎨 **Realism LoRA Integration**: Built-in support for realism enhancement LoRA
+- 📐 **Flexible Aspect Ratios**: Smart aspect ratio management with portrait/landscape options
+- ⚙️ **Variable Settings**: All enhancement features can be fine-tuned or disabled
+
+### Quality Features:
+- **BF16 Weight Loading**: Maximum model quality with efficient VRAM usage
+- **Detail Daemon**: Adds fine details during generation process (0.0-1.0 range, 0 = disabled)
+- **Face Enhancement**: Separate positive/negative prompts for face-specific improvements
+- **Smart Sampling**: Uses beta scheduler with dpmpp_sde for optimal results
+- **Professional Output**: Optimized for realistic, high-quality portrait generation
+
+### Customization Options:
+- **Detail Amount**: Adjust detail enhancement strength (0 = off, 0.3 = default, 1 = maximum)
+- **Face Processing**: Can be bypassed by setting bbox_threshold to 0
+- **Aspect Ratios**: Portrait/landscape with flexible sizing
+- **LoRA Strength**: Adjustable realism enhancement (0-1 range)
+
+This workflow represents a professional-grade setup for generating ultra-high quality realistic images with FLUX, combining multiple enhancement techniques that can be individually controlled or disabled as needed.
+
 ## Usage
 
 ### Professional Workflow Management
