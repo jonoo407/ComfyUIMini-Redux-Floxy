@@ -199,6 +199,10 @@ Create shortcuts for easy access:
 #### "Cannot find module" errors
 - Dependencies not installed properly
 - Run `npm install` again
+- If specific module missing (e.g., 'ejs'), install it directly:
+  ```bash
+  npm install ejs
+  ```
 
 #### "EADDRINUSE" error
 - Port 3000 is already in use

@@ -51,6 +51,8 @@ cd ComfyUIMini-Redux-Floxy
 npm install
 npm run build
 
+# Note: If you get "Cannot find module 'ejs'" error later, run: npm install ejs
+
 # Configure (update paths to match your ComfyUI)
 cp config/default.example.json config/default.json
 # Edit config/default.json with your paths
