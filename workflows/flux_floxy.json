@@ -1,0 +1,335 @@
+{
+  "4": {
+    "inputs": {
+      "lora_name": "xlabs_realism_lora.safetensors",
+      "strength_model": "0.5000000000000001",
+      "strength_clip": 0.5000000000000001,
+      "model": [
+        "77",
+        0
+      ],
+      "clip": [
+        "74",
+        0
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  },
+  "14": {
+    "inputs": {
+      "guide_size": 512,
+      "guide_size_for": true,
+      "max_size": 512,
+      "seed": 240461281356637,
+      "steps": "25",
+      "cfg": 2,
+      "sampler_name": "dpmpp_sde",
+      "scheduler": "beta",
+      "denoise": 0.4000000000000001,
+      "feather": 5,
+      "noise_mask": true,
+      "force_inpaint": true,
+      "bbox_threshold": 0.5000000000000001,
+      "bbox_dilation": 10,
+      "bbox_crop_factor": 3,
+      "sam_detection_hint": "center-1",
+      "sam_dilation": 0,
+      "sam_threshold": 0.9300000000000002,
+      "sam_bbox_expansion": 0,
+      "sam_mask_hint_threshold": 0.7000000000000002,
+      "sam_mask_hint_use_negative": "False",
+      "drop_size": 50,
+      "wildcard": "",
+      "cycle": 1,
+      "inpaint_model": true,
+      "noise_mask_feather": 20,
+      "tiled_encode": false,
+      "tiled_decode": false,
+      "image": [
+        "47:3",
+        0
+      ],
+      "model": [
+        "4",
+        0
+      ],
+      "clip": [
+        "4",
+        1
+      ],
+      "vae": [
+        "75",
+        0
+      ],
+      "positive": [
+        "54:2",
+        0
+      ],
+      "negative": [
+        "54:3",
+        0
+      ],
+      "bbox_detector": [
+        "49:0",
+        0
+      ],
+      "sam_model_opt": [
+        "49:1",
+        0
+      ]
+    },
+    "class_type": "FaceDetailer",
+    "_meta": {
+      "title": "FaceDetailer"
+    }
+  },
+  "73": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "14",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "74": {
+    "inputs": {
+      "clip_name1": "t5xxl_fp16.safetensors",
+      "clip_name2": "clip_l.safetensors",
+      "type": "flux",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "DualCLIPLoader"
+    }
+  },
+  "75": {
+    "inputs": {
+      "vae_name": "FLUX_VAE.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "77": {
+    "inputs": {
+      "model_name": "FLUX_TRAIN_jon407_real.safetensors",
+      "weight_dtype": "bf16",
+      "compute_dtype": "bf16",
+      "patch_cublaslinear": false,
+      "sage_attention": "auto",
+      "enable_fp16_accumulation": false
+    },
+    "class_type": "DiffusionModelLoaderKJ",
+    "_meta": {
+      "title": "Diffusion Model Loader KJ"
+    }
+  },
+  "78": {
+    "inputs": {
+      "sampler_name": "dpmpp_sde"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "79": {
+    "inputs": {
+      "noise_seed": "994302063050225"
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "81": {
+    "inputs": {
+      "scheduler": "beta",
+      "steps": "40",
+      "denoise": 1,
+      "model": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "BasicScheduler"
+    }
+  },
+  "86": {
+    "inputs": {
+      "aspect": "3:2",
+      "direction": "portrait",
+      "shortside": "832",
+      "batch_size": "1"
+    },
+    "class_type": "Empty Latent by Ratio (WLSH)",
+    "_meta": {
+      "title": "Empty Latent by Ratio (WLSH)"
+    }
+  },
+  "49:0": {
+    "inputs": {
+      "model_name": "bbox/face_yolov8n.pt"
+    },
+    "class_type": "UltralyticsDetectorProvider",
+    "_meta": {
+      "title": "UltralyticsDetectorProvider"
+    }
+  },
+  "49:1": {
+    "inputs": {
+      "model_name": "sam_vit_b_01ec64.pth",
+      "device_mode": "AUTO"
+    },
+    "class_type": "SAMLoader",
+    "_meta": {
+      "title": "SAMLoader"
+    }
+  },
+  "54:0": {
+    "inputs": {
+      "text": "jon407 green eyed man as a troll,  realistic, natural lighting, sharp, flying over new york city",
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "54:1": {
+    "inputs": {
+      "text": "plastic skin, artificial skin, smooth skin, fake, oversaturated, low quality, blurry",
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Negative)"
+    }
+  },
+  "54:2": {
+    "inputs": {
+      "text": "detailed realistic skin texture, natural skin pores, facial details, soft lighting, high resolution",
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Face Enhancement Positive"
+    }
+  },
+  "54:3": {
+    "inputs": {
+      "text": "plastic skin, artificial, smooth skin, fake, blurry, low quality",
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Face Enhancement Negative"
+    }
+  },
+  "47:0": {
+    "inputs": {
+      "detail_amount": "0.30000000000000004",
+      "start": 0.10000000000000002,
+      "end": 0.9000000000000001,
+      "bias": 0.5,
+      "exponent": 1,
+      "start_offset": 0,
+      "end_offset": 0,
+      "fade": 0,
+      "smooth": true,
+      "cfg_scale_override": 0,
+      "sampler": [
+        "78",
+        0
+      ]
+    },
+    "class_type": "DetailDaemonSamplerNode",
+    "_meta": {
+      "title": "Detail Daemon Sampler"
+    }
+  },
+  "47:1": {
+    "inputs": {
+      "model": [
+        "4",
+        0
+      ],
+      "conditioning": [
+        "54:0",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "BasicGuider"
+    }
+  },
+  "47:2": {
+    "inputs": {
+      "noise": [
+        "79",
+        0
+      ],
+      "guider": [
+        "47:1",
+        0
+      ],
+      "sampler": [
+        "47:0",
+        0
+      ],
+      "sigmas": [
+        "81",
+        0
+      ],
+      "latent_image": [
+        "86",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "47:3": {
+    "inputs": {
+      "samples": [
+        "47:2",
+        0
+      ],
+      "vae": [
+        "75",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  }
+}

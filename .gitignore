@@ -6,6 +6,15 @@ workflows/*
 !/workflows/default_comfyui_workflow.meta
 !/workflows/flux_simple_test.json
 !/workflows/SUPIR Floxy.meta
+!/workflows/flux_floxy.json
+!/workflows/flux_floxy.meta
+!/workflows/Kontext.json
+!/workflows/Kontext.meta
+!/workflows/Kontext Stitch.json
+!/workflows/Kontext Stitch.meta
+!/workflows/Kotext Chain.json
+!/workflows/Kotext Chain.meta
+!/workflows/SUPIR Floxy.json
 
 /config/default.json
 dist/

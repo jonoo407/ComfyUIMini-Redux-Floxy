@@ -1,0 +1,448 @@
+{
+  "title": "Flux Floxy",
+  "description": "Flux with Detail Daemon,  face detailer, bf16 workflow",
+  "format_version": "3",
+  "input_options": [
+    {
+      "node_id": "4",
+      "input_name_in_node": "lora_name",
+      "title": "[4] Load LoRA: lora_name"
+    },
+    {
+      "node_id": "4",
+      "input_name_in_node": "strength_model",
+      "title": "[4] Load LoRA: strength_model",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "4",
+      "input_name_in_node": "strength_clip",
+      "title": "[4] Load LoRA: strength_clip",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "guide_size",
+      "title": "[14] FaceDetailer: guide_size",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "guide_size_for",
+      "title": "[14] FaceDetailer: guide_size_for",
+      "disabled": true
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "max_size",
+      "title": "[14] FaceDetailer: max_size",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "seed",
+      "title": "[14] FaceDetailer: seed",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "steps",
+      "title": "[14] FaceDetailer: steps",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "cfg",
+      "title": "[14] FaceDetailer: cfg",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "sampler_name",
+      "title": "[14] FaceDetailer: sampler_name"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "scheduler",
+      "title": "[14] FaceDetailer: scheduler"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "denoise",
+      "title": "[14] FaceDetailer: denoise",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "feather",
+      "title": "[14] FaceDetailer: feather",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "noise_mask",
+      "title": "[14] FaceDetailer: noise_mask",
+      "disabled": true
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "force_inpaint",
+      "title": "[14] FaceDetailer: force_inpaint",
+      "disabled": true
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "bbox_threshold",
+      "title": "[14] FaceDetailer: bbox_threshold",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "bbox_dilation",
+      "title": "[14] FaceDetailer: bbox_dilation",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "bbox_crop_factor",
+      "title": "[14] FaceDetailer: bbox_crop_factor",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "sam_detection_hint",
+      "title": "[14] FaceDetailer: sam_detection_hint",
+      "disabled": true
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "sam_dilation",
+      "title": "[14] FaceDetailer: sam_dilation",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "sam_threshold",
+      "title": "[14] FaceDetailer: sam_threshold",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "sam_bbox_expansion",
+      "title": "[14] FaceDetailer: sam_bbox_expansion",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "sam_mask_hint_threshold",
+      "title": "[14] FaceDetailer: sam_mask_hint_threshold",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "sam_mask_hint_use_negative",
+      "title": "[14] FaceDetailer: sam_mask_hint_use_negative",
+      "disabled": true
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "drop_size",
+      "title": "[14] FaceDetailer: drop_size",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "wildcard",
+      "title": "[14] FaceDetailer: wildcard",
+      "disabled": true,
+      "textfield_format": "multiline"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "cycle",
+      "title": "[14] FaceDetailer: cycle",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "inpaint_model",
+      "title": "[14] FaceDetailer: inpaint_model",
+      "disabled": true
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "noise_mask_feather",
+      "title": "[14] FaceDetailer: noise_mask_feather",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "tiled_encode",
+      "title": "[14] FaceDetailer: tiled_encode",
+      "disabled": true
+    },
+    {
+      "node_id": "14",
+      "input_name_in_node": "tiled_decode",
+      "title": "[14] FaceDetailer: tiled_decode",
+      "disabled": true
+    },
+    {
+      "node_id": "73",
+      "input_name_in_node": "filename_prefix",
+      "title": "[73] Save Image: filename_prefix",
+      "disabled": true,
+      "textfield_format": "multiline"
+    },
+    {
+      "node_id": "74",
+      "input_name_in_node": "clip_name1",
+      "title": "[74] DualCLIPLoader: clip_name1",
+      "disabled": true
+    },
+    {
+      "node_id": "74",
+      "input_name_in_node": "clip_name2",
+      "title": "[74] DualCLIPLoader: clip_name2",
+      "disabled": true
+    },
+    {
+      "node_id": "74",
+      "input_name_in_node": "type",
+      "title": "[74] DualCLIPLoader: type",
+      "disabled": true
+    },
+    {
+      "node_id": "74",
+      "input_name_in_node": "device",
+      "title": "[74] DualCLIPLoader: device",
+      "disabled": true
+    },
+    {
+      "node_id": "75",
+      "input_name_in_node": "vae_name",
+      "title": "[75] Load VAE: vae_name",
+      "disabled": true
+    },
+    {
+      "node_id": "77",
+      "input_name_in_node": "model_name",
+      "title": "[77] Diffusion Model Loader KJ: model_name"
+    },
+    {
+      "node_id": "77",
+      "input_name_in_node": "weight_dtype",
+      "title": "[77] Diffusion Model Loader KJ: weight_dtype",
+      "disabled": true
+    },
+    {
+      "node_id": "77",
+      "input_name_in_node": "compute_dtype",
+      "title": "[77] Diffusion Model Loader KJ: compute_dtype",
+      "disabled": true
+    },
+    {
+      "node_id": "77",
+      "input_name_in_node": "patch_cublaslinear",
+      "title": "[77] Diffusion Model Loader KJ: patch_cublaslinear",
+      "disabled": true
+    },
+    {
+      "node_id": "77",
+      "input_name_in_node": "sage_attention",
+      "title": "[77] Diffusion Model Loader KJ: sage_attention",
+      "disabled": true
+    },
+    {
+      "node_id": "77",
+      "input_name_in_node": "enable_fp16_accumulation",
+      "title": "[77] Diffusion Model Loader KJ: enable_fp16_accumulation",
+      "disabled": true
+    },
+    {
+      "node_id": "78",
+      "input_name_in_node": "sampler_name",
+      "title": "[78] KSamplerSelect: sampler_name"
+    },
+    {
+      "node_id": "79",
+      "input_name_in_node": "noise_seed",
+      "title": "[79] RandomNoise: noise_seed",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "81",
+      "input_name_in_node": "scheduler",
+      "title": "[81] BasicScheduler: scheduler"
+    },
+    {
+      "node_id": "81",
+      "input_name_in_node": "steps",
+      "title": "[81] BasicScheduler: steps",
+      "numberfield_format": "slider",
+      "min": 10,
+      "max": 60
+    },
+    {
+      "node_id": "81",
+      "input_name_in_node": "denoise",
+      "title": "[81] BasicScheduler: denoise",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "86",
+      "input_name_in_node": "aspect",
+      "title": "[86] Empty Latent by Ratio (WLSH): aspect"
+    },
+    {
+      "node_id": "86",
+      "input_name_in_node": "direction",
+      "title": "[86] Empty Latent by Ratio (WLSH): direction"
+    },
+    {
+      "node_id": "86",
+      "input_name_in_node": "shortside",
+      "title": "[86] Empty Latent by Ratio (WLSH): shortside",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "86",
+      "input_name_in_node": "batch_size",
+      "title": "[86] Empty Latent by Ratio (WLSH): batch_size",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "49:0",
+      "input_name_in_node": "model_name",
+      "title": "[49:0] UltralyticsDetectorProvider: model_name",
+      "disabled": true
+    },
+    {
+      "node_id": "49:1",
+      "input_name_in_node": "model_name",
+      "title": "[49:1] SAMLoader: model_name",
+      "disabled": true
+    },
+    {
+      "node_id": "49:1",
+      "input_name_in_node": "device_mode",
+      "title": "[49:1] SAMLoader: device_mode",
+      "disabled": true
+    },
+    {
+      "node_id": "54:0",
+      "input_name_in_node": "text",
+      "title": "[54:0] CLIP Text Encode (Prompt): text",
+      "textfield_format": "multiline"
+    },
+    {
+      "node_id": "54:1",
+      "input_name_in_node": "text",
+      "title": "[54:1] CLIP Text Encode (Negative): text",
+      "disabled": true,
+      "textfield_format": "multiline"
+    },
+    {
+      "node_id": "54:2",
+      "input_name_in_node": "text",
+      "title": "[54:2] Face Enhancement Positive: text",
+      "disabled": true,
+      "textfield_format": "multiline"
+    },
+    {
+      "node_id": "54:3",
+      "input_name_in_node": "text",
+      "title": "[54:3] Face Enhancement Negative: text",
+      "disabled": true,
+      "textfield_format": "multiline"
+    },
+    {
+      "node_id": "47:0",
+      "input_name_in_node": "detail_amount",
+      "title": "[47:0] Detail Daemon Sampler: detail_amount",
+      "numberfield_format": "slider",
+      "min": 0,
+      "max": 1
+    },
+    {
+      "node_id": "47:0",
+      "input_name_in_node": "start",
+      "title": "[47:0] Detail Daemon Sampler: start",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "47:0",
+      "input_name_in_node": "end",
+      "title": "[47:0] Detail Daemon Sampler: end",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "47:0",
+      "input_name_in_node": "bias",
+      "title": "[47:0] Detail Daemon Sampler: bias",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "47:0",
+      "input_name_in_node": "exponent",
+      "title": "[47:0] Detail Daemon Sampler: exponent",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "47:0",
+      "input_name_in_node": "start_offset",
+      "title": "[47:0] Detail Daemon Sampler: start_offset",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "47:0",
+      "input_name_in_node": "end_offset",
+      "title": "[47:0] Detail Daemon Sampler: end_offset",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "47:0",
+      "input_name_in_node": "fade",
+      "title": "[47:0] Detail Daemon Sampler: fade",
+      "disabled": true,
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "47:0",
+      "input_name_in_node": "smooth",
+      "title": "[47:0] Detail Daemon Sampler: smooth",
+      "disabled": true
+    },
+    {
+      "node_id": "47:0",
+      "input_name_in_node": "cfg_scale_override",
+      "title": "[47:0] Detail Daemon Sampler: cfg_scale_override",
+      "disabled": true,
+      "numberfield_format": "type"
+    }
+  ]
+}

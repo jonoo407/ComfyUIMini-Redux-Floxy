@@ -1,0 +1,156 @@
+{
+  "title": "Kontext Stitch",
+  "description": "Flux Kontext workflow that sticthes two images together.  Reference first image as image on left and second as image on right.  E.g. man on left shaking hands with man on right.  Results vary so you will need to experiment.",
+  "format_version": "3",
+  "input_options": [
+    {
+      "node_id": "1",
+      "input_name_in_node": "unet_name",
+      "title": "[1] Load Diffusion Model: unet_name"
+    },
+    {
+      "node_id": "1",
+      "input_name_in_node": "weight_dtype",
+      "title": "[1] Load Diffusion Model: weight_dtype",
+      "disabled": true
+    },
+    {
+      "node_id": "3",
+      "input_name_in_node": "clip_name1",
+      "title": "[3] DualCLIPLoader: clip_name1",
+      "disabled": true
+    },
+    {
+      "node_id": "3",
+      "input_name_in_node": "clip_name2",
+      "title": "[3] DualCLIPLoader: clip_name2",
+      "disabled": true
+    },
+    {
+      "node_id": "3",
+      "input_name_in_node": "type",
+      "title": "[3] DualCLIPLoader: type",
+      "disabled": true
+    },
+    {
+      "node_id": "3",
+      "input_name_in_node": "device",
+      "title": "[3] DualCLIPLoader: device",
+      "disabled": true
+    },
+    {
+      "node_id": "6",
+      "input_name_in_node": "vae_name",
+      "title": "[6] Load VAE: vae_name",
+      "disabled": true
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "seed",
+      "title": "[7] KSampler: seed",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "steps",
+      "title": "[7] KSampler: steps",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "cfg",
+      "title": "[7] KSampler: cfg",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "sampler_name",
+      "title": "[7] KSampler: sampler_name"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "scheduler",
+      "title": "[7] KSampler: scheduler"
+    },
+    {
+      "node_id": "7",
+      "input_name_in_node": "denoise",
+      "title": "[7] KSampler: denoise",
+      "numberfield_format": "type",
+      "disabled": true
+    },
+    {
+      "node_id": "8",
+      "input_name_in_node": "text",
+      "title": "[8] CLIP Text Encode (Prompt): text",
+      "textfield_format": "multiline"
+    },
+    {
+      "node_id": "9",
+      "input_name_in_node": "guidance",
+      "title": "[9] FluxGuidance: guidance",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "11",
+      "input_name_in_node": "dimensions",
+      "title": "[11] SDXL Empty Latent Image (rgthree): dimensions"
+    },
+    {
+      "node_id": "11",
+      "input_name_in_node": "clip_scale",
+      "title": "[11] SDXL Empty Latent Image (rgthree): clip_scale",
+      "numberfield_format": "type",
+      "disabled": true
+    },
+    {
+      "node_id": "11",
+      "input_name_in_node": "batch_size",
+      "title": "[11] SDXL Empty Latent Image (rgthree): batch_size",
+      "numberfield_format": "type",
+      "disabled": true
+    },
+    {
+      "node_id": "13",
+      "input_name_in_node": "filename_prefix",
+      "title": "[13] Save Image: filename_prefix",
+      "textfield_format": "multiline",
+      "disabled": true
+    },
+    {
+      "node_id": "15",
+      "input_name_in_node": "image",
+      "title": "[15] Load Image: image"
+    },
+    {
+      "node_id": "17",
+      "input_name_in_node": "image",
+      "title": "[17] Load Image: image"
+    },
+    {
+      "node_id": "18",
+      "input_name_in_node": "direction",
+      "title": "[18] Image Stitch: direction",
+      "disabled": true
+    },
+    {
+      "node_id": "18",
+      "input_name_in_node": "match_image_size",
+      "title": "[18] Image Stitch: match_image_size",
+      "disabled": true
+    },
+    {
+      "node_id": "18",
+      "input_name_in_node": "spacing_width",
+      "title": "[18] Image Stitch: spacing_width",
+      "numberfield_format": "type",
+      "disabled": true
+    },
+    {
+      "node_id": "18",
+      "input_name_in_node": "spacing_color",
+      "title": "[18] Image Stitch: spacing_color",
+      "disabled": true
+    }
+  ]
+}

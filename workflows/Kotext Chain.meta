@@ -1,0 +1,147 @@
+{
+  "title": "Kotext Chain",
+  "description": "Uses two images as input to Kontext in a chain.  Another technique for combining two images within flux.  Use text field to describe desired output.",
+  "format_version": "3",
+  "input_options": [
+    {
+      "node_id": "2",
+      "input_name_in_node": "image",
+      "title": "[2] Load Image: image"
+    },
+    {
+      "node_id": "3",
+      "input_name_in_node": "image",
+      "title": "[3] Load Image: image"
+    },
+    {
+      "node_id": "10",
+      "input_name_in_node": "clip_name1",
+      "title": "[10] DualCLIPLoader: clip_name1",
+      "disabled": true
+    },
+    {
+      "node_id": "10",
+      "input_name_in_node": "clip_name2",
+      "title": "[10] DualCLIPLoader: clip_name2",
+      "disabled": true
+    },
+    {
+      "node_id": "10",
+      "input_name_in_node": "type",
+      "title": "[10] DualCLIPLoader: type",
+      "disabled": true
+    },
+    {
+      "node_id": "10",
+      "input_name_in_node": "device",
+      "title": "[10] DualCLIPLoader: device",
+      "disabled": true
+    },
+    {
+      "node_id": "11",
+      "input_name_in_node": "vae_name",
+      "title": "[11] Load VAE: vae_name",
+      "disabled": true
+    },
+    {
+      "node_id": "16",
+      "input_name_in_node": "seed",
+      "title": "[16] KSampler: seed",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "16",
+      "input_name_in_node": "steps",
+      "title": "[16] KSampler: steps",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "16",
+      "input_name_in_node": "cfg",
+      "title": "[16] KSampler: cfg",
+      "numberfield_format": "type",
+      "disabled": true
+    },
+    {
+      "node_id": "16",
+      "input_name_in_node": "sampler_name",
+      "title": "[16] KSampler: sampler_name"
+    },
+    {
+      "node_id": "16",
+      "input_name_in_node": "scheduler",
+      "title": "[16] KSampler: scheduler"
+    },
+    {
+      "node_id": "16",
+      "input_name_in_node": "denoise",
+      "title": "[16] KSampler: denoise",
+      "numberfield_format": "type",
+      "disabled": true
+    },
+    {
+      "node_id": "19",
+      "input_name_in_node": "batch_size",
+      "title": "[19] EmptySD3LatentImage: batch_size",
+      "numberfield_format": "type",
+      "disabled": true
+    },
+    {
+      "node_id": "21",
+      "input_name_in_node": "filename_prefix",
+      "title": "[21] Save Image: filename_prefix",
+      "textfield_format": "multiline",
+      "disabled": true
+    },
+    {
+      "node_id": "23",
+      "input_name_in_node": "megapixel",
+      "title": "[23] Flux Resolution Calc: megapixel"
+    },
+    {
+      "node_id": "23",
+      "input_name_in_node": "aspect_ratio",
+      "title": "[23] Flux Resolution Calc: aspect_ratio"
+    },
+    {
+      "node_id": "23",
+      "input_name_in_node": "divisible_by",
+      "title": "[23] Flux Resolution Calc: divisible_by"
+    },
+    {
+      "node_id": "23",
+      "input_name_in_node": "custom_ratio",
+      "title": "[23] Flux Resolution Calc: custom_ratio",
+      "disabled": true
+    },
+    {
+      "node_id": "23",
+      "input_name_in_node": "custom_aspect_ratio",
+      "title": "[23] Flux Resolution Calc: custom_aspect_ratio",
+      "textfield_format": "multiline",
+      "disabled": true
+    },
+    {
+      "node_id": "32",
+      "input_name_in_node": "guidance",
+      "title": "[32] FluxGuidance: guidance",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "33",
+      "input_name_in_node": "text",
+      "title": "[33] CLIP Text Encode (Prompt): text",
+      "textfield_format": "multiline"
+    },
+    {
+      "node_id": "36",
+      "input_name_in_node": "unet_name",
+      "title": "[36] Load Diffusion Model: unet_name"
+    },
+    {
+      "node_id": "36",
+      "input_name_in_node": "weight_dtype",
+      "title": "[36] Load Diffusion Model: weight_dtype"
+    }
+  ]
+}

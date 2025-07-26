@@ -1,0 +1,143 @@
+{
+  "title": "Flux Kontext",
+  "description": "Basic flux Kontext taking one image input and editing it based on your text prompt.",
+  "format_version": "3",
+  "input_options": [
+    {
+      "node_id": "6",
+      "input_name_in_node": "text",
+      "title": "[6] CLIP Text Encode (Positive Prompt): text",
+      "textfield_format": "multiline"
+    },
+    {
+      "node_id": "9",
+      "input_name_in_node": "filename_prefix",
+      "disabled": true,
+      "title": "[9] SaveImage: filename_prefix",
+      "textfield_format": "multiline"
+    },
+    {
+      "node_id": "10",
+      "input_name_in_node": "vae_name",
+      "disabled": true,
+      "title": "[10] VAELoader: vae_name"
+    },
+    {
+      "node_id": "11",
+      "input_name_in_node": "clip_name1",
+      "disabled": true,
+      "title": "[11] DualCLIPLoader: clip_name1"
+    },
+    {
+      "node_id": "11",
+      "input_name_in_node": "clip_name2",
+      "disabled": true,
+      "title": "[11] DualCLIPLoader: clip_name2"
+    },
+    {
+      "node_id": "11",
+      "input_name_in_node": "type",
+      "disabled": true,
+      "title": "[11] DualCLIPLoader: type"
+    },
+    {
+      "node_id": "11",
+      "input_name_in_node": "device",
+      "disabled": true,
+      "title": "[11] DualCLIPLoader: device"
+    },
+    {
+      "node_id": "12",
+      "input_name_in_node": "unet_name",
+      "title": "[12] UNETLoader: unet_name"
+    },
+    {
+      "node_id": "12",
+      "input_name_in_node": "weight_dtype",
+      "disabled": true,
+      "title": "[12] UNETLoader: weight_dtype"
+    },
+    {
+      "node_id": "16",
+      "input_name_in_node": "sampler_name",
+      "title": "[16] KSamplerSelect: sampler_name"
+    },
+    {
+      "node_id": "17",
+      "input_name_in_node": "scheduler",
+      "title": "[17] BasicScheduler: scheduler"
+    },
+    {
+      "node_id": "17",
+      "input_name_in_node": "steps",
+      "title": "[17] BasicScheduler: steps",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "17",
+      "input_name_in_node": "denoise",
+      "title": "[17] BasicScheduler: denoise",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "25",
+      "input_name_in_node": "noise_seed",
+      "title": "[25] RandomNoise: noise_seed",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "26",
+      "input_name_in_node": "guidance",
+      "title": "[26] FluxGuidance: guidance",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "27",
+      "input_name_in_node": "width",
+      "title": "[27] EmptySD3LatentImage: width",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "27",
+      "input_name_in_node": "height",
+      "title": "[27] EmptySD3LatentImage: height",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "27",
+      "input_name_in_node": "batch_size",
+      "disabled": true,
+      "title": "[27] EmptySD3LatentImage: batch_size",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "30",
+      "input_name_in_node": "width",
+      "title": "[30] ModelSamplingFlux: width",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "30",
+      "input_name_in_node": "height",
+      "title": "[30] ModelSamplingFlux: height",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "30",
+      "input_name_in_node": "max_shift",
+      "title": "[30] ModelSamplingFlux: max_shift",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "30",
+      "input_name_in_node": "base_shift",
+      "title": "[30] ModelSamplingFlux: base_shift",
+      "numberfield_format": "type"
+    },
+    {
+      "node_id": "41",
+      "input_name_in_node": "image",
+      "title": "[41] Load Image: image"
+    }
+  ]
+}
