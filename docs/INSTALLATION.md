@@ -106,27 +106,17 @@ This compiles the TypeScript code into JavaScript.
 
 ### Step 5: Configure Paths
 
-1. Copy the example configuration:
-   ```bash
-   # Windows
-   copy config\default.example.json config\default.json
-   
-   # macOS/Linux
-   cp config/default.example.json config/default.json
-   ```
+The installation automatically created `config/default.json` for you. Now you need to update the paths:
 
-2. Edit `config/default.json` with a text editor:
+1. Open `config/default.json` with a text editor
+2. Update these two paths to match your ComfyUI installation:
    ```json
    {
-       "app_port": 3000,
-       "comfyui_url": "http://127.0.0.1:8188",
-       "comfyui_ws_url": "ws://127.0.0.1:8188",
        "output_dir": "C:\\path\\to\\your\\ComfyUI\\output",
        "input_dir": "C:\\path\\to\\your\\ComfyUI\\input"
    }
    ```
    
-   Update the paths to match your ComfyUI installation:
    - **Windows**: Use double backslashes `\\` in paths
    - **macOS/Linux**: Use forward slashes `/` in paths
 

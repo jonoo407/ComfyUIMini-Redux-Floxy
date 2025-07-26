@@ -51,9 +51,8 @@ cd ComfyUIMini-Redux-Floxy
 npm install
 npm run build
 
-# Configure (update paths to match your ComfyUI)
-cp config/default.example.json config/default.json
-# Edit config/default.json with your paths
+# Update paths in config/default.json to match your ComfyUI installation
+# Edit output_dir and input_dir paths
 
 # Start the application
 npm start

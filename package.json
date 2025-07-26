@@ -3,6 +3,7 @@
     "version": "1.7.0",
     "main": "dist/server/index.js",
     "scripts": {
+        "postinstall": "node scripts/postinstall.js",
         "start": "tsx --tsconfig src/server/tsconfig.json src/server/index.ts",
         "build": "npm run build:client",
         "build:client": "tsc -p src/client/tsconfig.json",
