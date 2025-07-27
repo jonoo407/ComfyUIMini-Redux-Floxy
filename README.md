@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/badge/license-AGPL--3.0-orange)](LICENSE)
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/78a52443-ac9c-498c-8df3-129acd94a48c" alt="App Preview" width="600">
+  <img src="docs/images/app-preview.png" alt="App Preview" width="600">
 </p>
 
 ## ✨ What Makes This Fork Special
